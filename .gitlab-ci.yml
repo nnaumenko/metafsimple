@@ -1,0 +1,70 @@
+build-clang:
+  stage: build
+  image: ubuntu:18.04
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+  - apt-get update
+  - apt-get -y --no-install-recommends install wget gnupg2 ca-certificates
+  - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|apt-key add - 
+  - apt-get update
+  - apt-get -y --no-install-recommends install clang-8 lld-8 llvm make
+  - clang++-8 --version
+  - mkdir /opt/cmake
+  - pushd /opt/cmake
+  - wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz
+  - tar -xvzf cmake-3.15.3-Linux-x86_64.tar.gz
+  - popd
+  - ln -s /opt/cmake/cmake-3.15.3-Linux-x86_64/bin/cmake /usr/local/bin/cmake
+  - whereis clang-8
+  - export CC="clang-8"
+  - whereis clang++-8
+  - export CXX="clang++-8"
+  - cmake .
+  - make
+  - mkdir -p ci-build/test
+  - mv build/debug/tests ci-build/test/tests-clang
+  artifacts:
+    paths:
+      - ci-build
+
+build-gcc:
+  stage: build
+  image: ubuntu:18.04
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+  - apt-get update
+  - apt-get -y --no-install-recommends install build-essential wget make ca-certificates
+  - gcc --version
+  - wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.sh
+  - mkdir /opt/cmake
+  - pushd /opt/cmake
+  - wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz
+  - tar -xvzf cmake-3.15.3-Linux-x86_64.tar.gz
+  - popd
+  - ln -s /opt/cmake/cmake-3.15.3-Linux-x86_64/bin/cmake /usr/local/bin/cmake
+  - export CXX="g++"
+  - cmake .
+  - make
+  - mkdir -p ci-build/test
+  - mv build/debug/tests ci-build/test/tests-gcc
+  artifacts:
+    paths:
+      - ci-build
+
+tests-clang:
+  stage: test
+  image: ubuntu:18.04
+  script:
+    - ci-build/test/tests-clang
+  dependencies:
+    - build-clang
+
+tests-gcc:
+  stage: test
+  image: ubuntu:18.04
+  script:
+    - ci-build/test/tests-gcc
+  dependencies:
+    - build-gcc
