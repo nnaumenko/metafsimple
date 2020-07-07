@@ -180,6 +180,8 @@ TEST(ParseSimplifyReport, basicMetar) {
               std::optional<int>());
 
     EXPECT_EQ(result.forecast.trends.size(), 0u);
+    EXPECT_FALSE(result.forecast.windShearConditions);
+    EXPECT_FALSE(result.forecast.noSignificantChanges);
     EXPECT_EQ(result.forecast.minTemperature.temperature, std::optional<int>());
     EXPECT_EQ(result.forecast.minTemperatureTime.day, std::optional<int>());
     EXPECT_EQ(result.forecast.minTemperatureTime.hour, std::optional<int>());
@@ -188,7 +190,6 @@ TEST(ParseSimplifyReport, basicMetar) {
     EXPECT_EQ(result.forecast.maxTemperatureTime.day, std::optional<int>());
     EXPECT_EQ(result.forecast.maxTemperatureTime.hour, std::optional<int>());
     EXPECT_EQ(result.forecast.maxTemperatureTime.minute, std::optional<int>());
-    EXPECT_FALSE(result.forecast.windShearConditions);
     EXPECT_EQ(result.forecast.icing.size(), 0u);
     EXPECT_EQ(result.forecast.turbulence.size(), 0u);
     EXPECT_EQ(result.forecast.lowestQnh.pressure, std::optional<int>());

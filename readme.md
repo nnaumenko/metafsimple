@@ -8,10 +8,14 @@ This project is work in progress.
 The following example illustrates the principle.
 
 <table>
-<tr>
+<tr align=center>
 <td colspan=2>
-METAR UKLI 071600Z 28003MPS 250V330 9999 -SHRA BKN019CB BKN028 13/12 Q1015 NOSIG=
+Report: **METAR UKLI 071600Z 28003MPS 250V330 9999 -SHRA BKN019CB BKN028 13/12 Q1015 NOSIG=**
 </td>
+</tr>
+<tr align=center>
+<td>Parsed by Metaf library</td>
+<td>Simplified by MetafSimple</td>
 </tr>
 <tr valign=top>
 <td>

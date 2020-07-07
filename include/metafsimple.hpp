@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 1;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -459,14 +459,13 @@ struct TurbulenceForecast {
 // Weather trend
 struct Trend {
     enum class Type {
-        NOSIG,
         BECMG,
         TEMPO,
         INTER,
         TIMED,
         PROB
     };
-    Type type = Type::NOSIG;
+    Type type = Type::TEMPO;
     std::optional<int> probability;
     Time timeFrom;
     Time timeUntil;
@@ -822,11 +821,12 @@ struct Historical {
 // minimum and maximum temperature, pressure, icing and turbulence forecast, etc
 struct Forecast {
     std::vector<Trend> trends;
+    bool noSignificantChanges = false;
+    bool windShearConditions = false;
     Temperature minTemperature;
     Time minTemperatureTime;
     Temperature maxTemperature;
     Time maxTemperatureTime;
-    bool windShearConditions = false;
     std::vector<IcingForecast> icing;
     std::vector<TurbulenceForecast> turbulence;
     Pressure lowestQnh;
@@ -3271,20 +3271,20 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
     auto trendType = [](metaf::TrendGroup::Type type) {
         switch (type) {
             case metaf::TrendGroup::Type::NOSIG:
-                return Trend::Type::NOSIG;
+                return std::optional<Trend::Type>();
             case metaf::TrendGroup::Type::BECMG:
-                return Trend::Type::BECMG;
+                return std::optional<Trend::Type>(Trend::Type::BECMG);
             case metaf::TrendGroup::Type::TEMPO:
-                return Trend::Type::TEMPO;
+                return std::optional<Trend::Type>(Trend::Type::TEMPO);
             case metaf::TrendGroup::Type::INTER:
-                return Trend::Type::INTER;
+                return std::optional<Trend::Type>(Trend::Type::INTER);
             case metaf::TrendGroup::Type::FROM:
             case metaf::TrendGroup::Type::UNTIL:
             case metaf::TrendGroup::Type::AT:
             case metaf::TrendGroup::Type::TIME_SPAN:
-                return Trend::Type::TIMED;
+                return std::optional<Trend::Type>(Trend::Type::TIMED);
             case metaf::TrendGroup::Type::PROB:
-                return Trend::Type::PROB;
+                return std::optional<Trend::Type>(Trend::Type::PROB);
         }
     };
     auto trendProb = [](metaf::TrendGroup::Probability prob) {
@@ -3299,8 +3299,21 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
     };
     // TODO: check for duplicate trends?
     assert(forecast);
+    if (forecast->noSignificantChanges) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return;
+    }
+    const auto type = trendType(t);
+    if (!type.has_value()) {
+        // NOSIG trend
+        if (forecast->trends.size()) {
+            log(Report::Warning::Message::DUPLICATED_DATA);
+            return;
+        }
+        forecast->noSignificantChanges = true;
+    }
     forecast->trends.push_back(Trend{
-        trendType(t),
+        *type,
         trendProb(p),
         BasicDataAdapter::time(tfrom),
         BasicDataAdapter::time(tuntil),
@@ -3614,8 +3627,7 @@ void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,
                                                  group.gustSpeed(),
                                                  group.varSectorBegin(),
                                                  group.varSectorEnd());
-        }
-        break;
+        } break;
         case metaf::WindGroup::Type::WIND_SHEAR:
             currentData().addWindShear(group.height(),
                                        group.direction(),
