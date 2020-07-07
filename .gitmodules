@@ -1,0 +1,6 @@
+[submodule "metaf"]
+	path = metaf
+	url = https://gitlab.com/nnaumenko/metaf
+[submodule "googletest"]
+	path = googletest
+	url = https://github.com/google/googletest
