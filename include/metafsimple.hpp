@@ -21,8 +21,8 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 1;
-    inline static const int patch = 1;
+    inline static const int minor = 2;
+    inline static const int patch = 0;
     inline static const char tag[] = "";
 };
 
@@ -46,7 +46,7 @@ enum class CardinalDirection {
 // Convert value in degrees to cardinal direction. Negative values and values
 // above 360 degrees are valid. Empty std::optional results in
 // CardinalDirection::NOT_SPECIFIED
-CardinalDirection directionToCardinal(std::optional<int> degrees);
+inline CardinalDirection directionToCardinal(std::optional<int> degrees);
 
 // Runway identification: runway heading and designator to distinguish
 // parallel runways.
@@ -78,7 +78,7 @@ struct Temperature {
     };
     std::optional<int> temperature;
     Unit unit = Unit::C;
-    std::optional<double> toUnit(Unit u) const;
+    inline std::optional<double> toUnit(Unit u) const;
 };
 
 // Speed value in knots, meters per second, kilometers per hour, miles per hour
@@ -91,7 +91,7 @@ struct Speed {
     };
     std::optional<int> speed;
     Unit unit = Unit::KT;
-    std::optional<double> toUnit(Unit u) const;
+    inline std::optional<double> toUnit(Unit u) const;
 };
 
 // Distance in meters, statute miles, 1/16s of statute mile, or feet; distance
@@ -130,9 +130,9 @@ struct Distance {
     Details details = Details::EXACTLY;
     std::optional<int> distance;
     Unit unit = Unit::METERS;
-    std::optional<double> toUnit(Unit u) const;
-    std::optional<int> milesInt() const;
-    Fraction milesFraction() const;
+    inline std::optional<double> toUnit(Unit u) const;
+    inline std::optional<int> milesInt() const;
+    inline Fraction milesFraction() const;
 };
 
 // Prevailing distance and/or minimum/maximum distance range
@@ -150,7 +150,7 @@ struct Height {
     };
     std::optional<int> height;
     Unit unit = Unit::FEET;
-    std::optional<double> toUnit(Unit u) const;
+    inline std::optional<double> toUnit(Unit u) const;
 };
 
 // Ceiling as a fixed and/or variable height value
@@ -170,7 +170,7 @@ struct Pressure {
     };
     std::optional<int> pressure;
     Unit unit = Unit::HPA;
-    std::optional<double> toUnit(Unit u) const;
+    inline std::optional<double> toUnit(Unit u) const;
 };
 
 // Precipitation or accumulation in millimeters, inches or 1/100s of inch
@@ -182,7 +182,7 @@ struct Precipitation {
     };
     std::optional<int> amount;
     Unit unit = Unit::MM;
-    std::optional<double> toUnit(Unit u) const;
+    inline std::optional<double> toUnit(Unit u) const;
 };
 
 // Wave height expressed as a descriptive state of sea surface or numerical wave
@@ -209,8 +209,8 @@ struct WaveHeight {
     };
     std::optional<int> waveHeight;
     Unit unit = Unit::DECIMETERS;
-    std::optional<double> toUnit(Unit u) const;
-    StateOfSurface stateOfSurface() const;
+    inline std::optional<double> toUnit(Unit u) const;
+    inline StateOfSurface stateOfSurface() const;
 };
 
 // Weather, either a weather phenomena or one or more kinds of precipitation
@@ -653,7 +653,7 @@ struct Aerodrome {
         Precipitation depositDepth;
         std::optional<int> coefficient;  //in 1/100s
         bool surfaceFrictionUnreliable = false;
-        BrakingAction brakingAction() const;
+        inline BrakingAction brakingAction() const;
         DistanceRange visualRange;
         RvrTrend visualRangeTrend = RvrTrend::UNKNOWN;
         Ceiling ceiling;
@@ -849,7 +849,245 @@ inline bool operator<(const Runway &l, const Runway &r) {
             (r.number * 10 + static_cast<int>(r.designator)));
 }
 
-};  // namespace metafsimple
+std::optional<double> Temperature::toUnit(Unit u) const {
+    const auto convertC = [](Unit uu, double c) {
+        switch (uu) {
+            case Unit::C:
+                return c;
+            case Unit::TENTH_C:
+                return (c * 10.0);
+            case Unit::F:
+                return (c * 1.8 + 32);
+        }
+    };
+    if (!temperature.has_value()) return std::optional<double>();
+    switch (unit) {
+        case Unit::C:
+            return convertC(u, *temperature);
+        case Unit::TENTH_C:
+            return convertC(u, *temperature / 10.0);
+        case Unit::F:
+            return convertC(u, (*temperature - 32) / 1.8);
+    }
+}
+
+std::optional<double> Speed::toUnit(Unit u) const {
+    static const auto ktPerMps = 1.943844;
+    static const auto kmhPerMps = 3.6;
+    static const auto mphPerMps = 2.236936;
+    auto convertMps = [](Unit uu, double mps) {
+        switch (uu) {
+            case Unit::KT:
+                return mps * ktPerMps;
+            case Unit::MPS:
+                return mps;
+            case Unit::KMH:
+                return mps * kmhPerMps;
+            case Unit::MPH:
+                return mps * mphPerMps;
+        }
+    };
+    if (!speed.has_value()) return std::optional<double>();
+    switch (unit) {
+        case Unit::KT:
+            return convertMps(u, *speed / ktPerMps);
+        case Unit::MPS:
+            return convertMps(u, *speed);
+        case Unit::KMH:
+            return convertMps(u, *speed / kmhPerMps);
+        case Unit::MPH:
+            return convertMps(u, *speed / mphPerMps);
+    }
+}
+
+std::optional<double> Distance::toUnit(Unit u) const {
+    static const auto metersPerMile = 1609.347;
+    static const auto metersPerFoot = 0.3048;
+    auto convertMeters = [](Unit uu, double m) {
+        switch (uu) {
+            case Unit::METERS:
+                return m;
+            case Unit::STATUTE_MILES:
+                return (m / metersPerMile);
+            case Unit::STATUTE_MILE_1_16S:
+                return (m / metersPerMile * 16.0);
+            case Unit::FEET:
+                return (m / metersPerFoot);
+        }
+    };
+    if (!distance.has_value()) return std::optional<double>();
+    switch (unit) {
+        case Unit::METERS:
+            return convertMeters(u, *distance);
+        case Unit::STATUTE_MILES:
+            return convertMeters(u, *distance * metersPerMile);
+        case Unit::STATUTE_MILE_1_16S:
+            return convertMeters(u, *distance * metersPerMile / 16.0);
+        case Unit::FEET:
+            return convertMeters(u, *distance * metersPerFoot);
+    }
+}
+
+std::optional<int> Distance::milesInt() const {
+    const auto t = toUnit(Unit::STATUTE_MILES);
+    if (!t.has_value()) return std::optional<int>();
+    return std::floor(*t);
+}
+
+Distance::Fraction Distance::milesFraction() const {
+    const auto miles = toUnit(Unit::STATUTE_MILE_1_16S);
+    if (!miles.has_value()) return Fraction::F_0;
+    return static_cast<Fraction>(static_cast<int>(std::floor(*miles)) % 16);
+}
+
+std::optional<double> Height::toUnit(Unit u) const {
+    static const auto metersPerFoot = 0.3048;
+    auto convertFeet = [](Unit uu, double m) {
+        switch (uu) {
+            case Unit::METERS:
+                return m * metersPerFoot;
+            case Unit::FEET:
+                return m;
+        }
+    };
+    if (!height.has_value()) return std::optional<double>();
+    switch (unit) {
+        case Unit::METERS:
+            return convertFeet(u, *height / metersPerFoot);
+        case Unit::FEET:
+            return convertFeet(u, *height);
+    }
+}
+
+std::optional<double> Pressure::toUnit(Unit u) const {
+    static const auto hpaPerInHg = 33.8639;
+    static const auto hpaPerMmHg = 1.3332;
+    auto convertHpa = [](Unit uu, double hpa) {
+        switch (uu) {
+            case Unit::HPA:
+                return hpa;
+            case Unit::IN_HG:
+                return (hpa / hpaPerInHg);
+            case Unit::HUNDREDTHS_IN_HG:
+                return (hpa / hpaPerInHg * 100.0);
+            case Unit::MM_HG:
+                return (hpa / hpaPerMmHg);
+        }
+    };
+    if (!pressure.has_value()) return std::optional<double>();
+    switch (unit) {
+        case Unit::HPA:
+            return convertHpa(u, *pressure);
+        case Unit::IN_HG:
+            return convertHpa(u, *pressure * hpaPerInHg);
+        case Unit::HUNDREDTHS_IN_HG:
+            return convertHpa(u, *pressure * hpaPerInHg * 100.0);
+        case Unit::MM_HG:
+            return convertHpa(u, *pressure * hpaPerMmHg);
+    }
+}
+
+std::optional<double> Precipitation::toUnit(Unit u) const {
+    static const auto mmPerInch = 25.4;
+    auto convertMm = [](Unit uu, double mm) {
+        switch (uu) {
+            case Unit::MM:
+                return mm;
+            case Unit::IN:
+                return (mm / mmPerInch);
+            case Unit::HUNDREDTHS_IN:
+                return (mm / mmPerInch * 100.0);
+        }
+    };
+    if (!amount.has_value()) return std::optional<double>();
+    switch (u) {
+        case Unit::MM:
+            return convertMm(u, *amount);
+        case Unit::IN:
+            return convertMm(u, *amount * mmPerInch);
+        case Unit::HUNDREDTHS_IN:
+            return convertMm(u, *amount * mmPerInch * 100.0);
+    }
+}
+
+std::optional<double> WaveHeight::toUnit(Unit u) const {
+    static const auto decimetersPerMeter = 10.0;
+    static const auto feetPerMeter = 0.3048;
+    static const auto yardsPerMeter = 0.9144;
+    auto convertDecimeters = [](Unit uu, double dm) {
+        switch (uu) {
+            case Unit::DECIMETERS:
+                return dm;
+            case Unit::METERS:
+                return (dm / decimetersPerMeter);
+            case Unit::FEET:
+                return (dm / decimetersPerMeter * feetPerMeter);
+            case Unit::YARDS:
+                return (dm / decimetersPerMeter * yardsPerMeter);
+        }
+    };
+    if (!waveHeight.has_value()) return std::optional<double>();
+    switch (unit) {
+        case Unit::DECIMETERS:
+            return convertDecimeters(u, *waveHeight);
+        case Unit::METERS:
+            return convertDecimeters(u, *waveHeight * decimetersPerMeter);
+        case Unit::FEET:
+            return convertDecimeters(u, *waveHeight *
+                                            decimetersPerMeter /
+                                            feetPerMeter);
+        case Unit::YARDS:
+            return convertDecimeters(u, *waveHeight *
+                                            decimetersPerMeter /
+                                            yardsPerMeter);
+    }
+}
+
+WaveHeight::StateOfSurface WaveHeight::stateOfSurface() const {
+    const auto h = toUnit(Unit::DECIMETERS);
+    if (!h.has_value()) return StateOfSurface::NOT_SPECIFIED;
+    // See Table 3700 in Manual on Codes (WMO No. 306)
+    if (!*h) return StateOfSurface::CALM_GLASSY;
+    if (*h <= 1) return StateOfSurface::CALM_RIPPLED;
+    if (*h <= 5) return StateOfSurface::SMOOTH;
+    if (*h <= 12) return StateOfSurface::SLIGHT;
+    if (*h <= 25) return StateOfSurface::MODERATE;
+    if (*h <= 40) return StateOfSurface::ROUGH;
+    if (*h <= 60) return StateOfSurface::VERY_ROUGH;
+    if (*h <= 90) return StateOfSurface::HIGH;
+    if (*h <= 140) return StateOfSurface::VERY_HIGH;
+    return StateOfSurface::PHENOMENAL;
+}
+
+CardinalDirection directionToCardinal(std::optional<int> degrees) {
+    if (!degrees.has_value()) return CardinalDirection::NOT_SPECIFIED;
+    const int fullCircle = 360;         // 360 degrees: full circle
+    const int octant = fullCircle / 8;  // 45 degrees: octant
+    const int half = octant / 2 + 1;    // 23 degrees (int): half octant
+    auto d = *degrees % fullCircle;
+    if (d < 0) d += fullCircle;
+    if (d <= half) return CardinalDirection::N;
+    if (d <= (half + octant)) return CardinalDirection::NE;
+    if (d <= (half + octant * 2)) return CardinalDirection::E;
+    if (d <= (half + octant * 3)) return CardinalDirection::SE;
+    if (d <= (half + octant * 4)) return CardinalDirection::S;
+    if (d <= (half + octant * 5)) return CardinalDirection::SW;
+    if (d <= (half + octant * 6)) return CardinalDirection::W;
+    if (d <= (half + octant * 7)) return CardinalDirection::NW;
+    return CardinalDirection::N;
+}
+
+Aerodrome::BrakingAction Aerodrome::RunwayData::brakingAction() const {
+    if (surfaceFrictionUnreliable) return BrakingAction::UNRELIABLE;
+    if (!coefficient.has_value()) return BrakingAction::UNKNOWN;
+    if (*coefficient <= 25) return BrakingAction::POOR;
+    if (*coefficient <= 29) return BrakingAction::MEDIUM_POOR;
+    if (*coefficient <= 35) return BrakingAction::MEDIUM;
+    if (*coefficient <= 40) return BrakingAction::MEDIUM_GOOD;
+    return BrakingAction::GOOD;
+}
+
+}  // namespace metafsimple
 
 namespace metafsimple::detail {
 
@@ -1682,7 +1920,7 @@ void MetadataAdapter::setReportType(metaf::ReportType t, bool speci) {
             if (speci) log(Report::Warning::Message::SPECI_IN_TAF);
             break;
     }
-};
+}
 
 void MetadataAdapter::setReportError(metaf::ReportError e) {
     auto convertError = [](metaf::ReportError e) {
@@ -1711,7 +1949,7 @@ void MetadataAdapter::setReportError(metaf::ReportError e) {
         }
     };
     report->error = convertError(e);
-};
+}
 
 void MetadataAdapter::setLocation(const std::string &location) {
     if (!station->icaoCode.empty() && station->icaoCode != location) {
@@ -1997,7 +2235,7 @@ bool EssentialsAdapter::hasSurfaceWind() const {
             essentials->windSpeed.speed.has_value() ||
             essentials->gustSpeed.speed.has_value() ||
             essentials->windCalm);
-};
+}
 
 void EssentialsAdapter::setVisibility(metaf::Distance vis) {
     const auto v = BasicDataAdapter::distance(vis);
@@ -2027,7 +2265,7 @@ void EssentialsAdapter::setSkyCondition(metaf::CloudGroup::Amount a,
                     std::optional<int>()});
                 break;
             }
-            // fallthrough
+            [[fallthrough]];
         default:
             log(Report::Warning::Message::DUPLICATED_DATA);
             return;
@@ -3519,8 +3757,8 @@ CollateVisitor::CollateVisitor(
     for (const auto &g : src.groups) {
         setGroupString(g.rawString);
         visit(g);
-    };
-};
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -3822,6 +4060,7 @@ void CollateVisitor::visitWeatherGroup(const metaf::WeatherGroup &group,
             for (const auto &w : group.weatherPhenomena()) {
                 historicalData().addRecentWeather(w);
             }
+            break;
         case metaf::WeatherGroup::Type::PWINO:
             stationData().addMissingData(Station::MissingData::PWINO);
             break;
@@ -4300,7 +4539,7 @@ void CollateVisitor::visitUnknownGroup(const metaf::UnknownGroup &group,
     result.report.plainText.push_back(rawString);
 }
 
-};  // namespace metafsimple::detail
+}  // namespace metafsimple::detail
 
 namespace metafsimple {
 
@@ -4313,6 +4552,6 @@ inline Simple simplify(const std::string &report) {
     return simplify(metaf::Parser::parse(report));
 }
 
-};  // namespace metafsimple
+}  // namespace metafsimple
 
 #endif  // #ifndef METAFSIMPLE_HPP

@@ -4,7 +4,7 @@ project(metafsimple)
 
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-pedantic -Wall -Wextra -fcxx-exceptions")
+set(CMAKE_CXX_FLAGS "-pedantic -Wall -Wextra")
 
 include_directories(
     include
@@ -18,13 +18,8 @@ add_executable(test
     test/main.cpp
     test/unit_datatypes.cpp
     test/unit_warninglogger.cpp
-    test/unit_dataadapter.cpp
     test/unit_metadataadapter.cpp
     test/unit_essentialsdataadapter.cpp
-    test/unit_currentdataadapter.cpp
-    test/unit_stationdataadapter.cpp
-    test/unit_aerodromedataadapter.cpp
-    test/unit_forecastdataadapter.cpp
     test/integration_parse_simplify_report.cpp
 )
 
@@ -38,5 +33,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(TEST_LINK_FLAGS "-pthread")
 endif()	
 
-set_target_properties(test PROPERTIES 
+set_target_properties(test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
     LINK_FLAGS ${TEST_LINK_FLAGS})

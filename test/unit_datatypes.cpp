@@ -6,20 +6,21 @@
 * of the MIT license. See the LICENSE file for details.
 */
 
-#include <metafsimple.hpp>
-
+#include "metafsimple.hpp"
 #include "gtest/gtest.h"
+
+const auto margin = 0.01 / 2;
 
 class DataTypes : public ::testing::Test {
    protected:
     DataTypes() {}
 
     static const inline metafsimple::Temperature t_m5c{
-        -11, metafsimple::Temperature::Unit::C};
+        -5, metafsimple::Temperature::Unit::C};
     static const inline metafsimple::Temperature t_11_5c{
         115, metafsimple::Temperature::Unit::TENTH_C};
     static const inline metafsimple::Temperature t_10f{
-        10, metafsimple::Temperature::Unit::C};
+        10, metafsimple::Temperature::Unit::F};
     static const inline metafsimple::Temperature t_empty;
 
     static const inline metafsimple::Speed s_10kt{
@@ -49,7 +50,6 @@ class DataTypes : public ::testing::Test {
         33000,
         metafsimple::Distance::Unit::FEET};
     static const inline metafsimple::Distance d_empty;
-
 
     static const inline metafsimple::Height h_2000m{
         33000, metafsimple::Height::Unit::METERS};
@@ -85,15 +85,52 @@ class DataTypes : public ::testing::Test {
         4, metafsimple::WaveHeight::Unit::YARDS};
     static const inline metafsimple::WaveHeight wh_empty;
 };
-/*
+
 TEST_F(DataTypes, directionToCardinal) {
-    //TODO
+    EXPECT_EQ(metafsimple::directionToCardinal(std::optional<int>()),
+              metafsimple::CardinalDirection::NOT_SPECIFIED);
+    EXPECT_EQ(metafsimple::directionToCardinal(0),
+              metafsimple::CardinalDirection::N);
+    EXPECT_EQ(metafsimple::directionToCardinal(45),
+              metafsimple::CardinalDirection::NE);
+    EXPECT_EQ(metafsimple::directionToCardinal(90),
+              metafsimple::CardinalDirection::E);
+    EXPECT_EQ(metafsimple::directionToCardinal(135),
+              metafsimple::CardinalDirection::SE);
+    EXPECT_EQ(metafsimple::directionToCardinal(180),
+              metafsimple::CardinalDirection::S);
+    EXPECT_EQ(metafsimple::directionToCardinal(225),
+              metafsimple::CardinalDirection::SW);
+    EXPECT_EQ(metafsimple::directionToCardinal(270),
+              metafsimple::CardinalDirection::W);
+    EXPECT_EQ(metafsimple::directionToCardinal(315),
+              metafsimple::CardinalDirection::NW);
+    EXPECT_EQ(metafsimple::directionToCardinal(360),
+              metafsimple::CardinalDirection::N);
+    EXPECT_EQ(metafsimple::directionToCardinal(360 + 45),
+              metafsimple::CardinalDirection::NE);
+    EXPECT_EQ(metafsimple::directionToCardinal(-90),
+              metafsimple::CardinalDirection::W);
 }
 
 TEST_F(DataTypes, temperature_toUnit_c) {
-    //TODO
+    const auto t0 = t_empty.toUnit(metafsimple::Temperature::Unit::C);
+    EXPECT_FALSE(t0.has_value()); 
+
+    const auto t1 = t_m5c.toUnit(metafsimple::Temperature::Unit::C);
+    ASSERT_TRUE(t1.has_value()); 
+    EXPECT_NEAR(*t1, -5.0, margin);
+
+    const auto t2 = t_11_5c.toUnit(metafsimple::Temperature::Unit::C);
+    ASSERT_TRUE(t2.has_value()); 
+    EXPECT_NEAR(*t2, 11.5, margin);
+
+    const auto t3 = t_10f.toUnit(metafsimple::Temperature::Unit::C);
+    ASSERT_TRUE(t3.has_value()); 
+    EXPECT_NEAR(*t3, -12.222, margin);
 }
 
+/*
 TEST_F(DataTypes, temperature_toUnit_tenths_c) {
     //TODO
 }
@@ -182,7 +219,6 @@ TEST_F(DataTypes, waveheight_toUnit_feet) {
     //TODO
 }
 
-TEST_F(DataTypes, waveheight_toUnit_yards) {
+TEST_F(DataTypes, waveheight_toUnit_yards){
     //TODO
-}
-*/
+} */
