@@ -23,7 +23,7 @@ build-clang:
   - cmake .
   - make
   - mkdir -p ci-build/test
-  - mv build/debug/tests ci-build/test/tests-clang
+  - mv bin/test ci-build/test/test-clang
   artifacts:
     paths:
       - ci-build
@@ -48,7 +48,7 @@ build-gcc:
   - cmake .
   - make
   - mkdir -p ci-build/test
-  - mv build/debug/tests ci-build/test/tests-gcc
+  - mv bin/test ci-build/test/test-gcc
   artifacts:
     paths:
       - ci-build
@@ -57,7 +57,7 @@ tests-clang:
   stage: test
   image: ubuntu:18.04
   script:
-    - ci-build/test/tests-clang
+    - ci-build/test/test-clang
   dependencies:
     - build-clang
 
@@ -65,6 +65,6 @@ tests-gcc:
   stage: test
   image: ubuntu:18.04
   script:
-    - ci-build/test/tests-gcc
+    - ci-build/test/test-gcc
   dependencies:
     - build-gcc

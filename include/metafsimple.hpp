@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -901,7 +901,7 @@ std::optional<double> Speed::toUnit(Unit u) const {
 }
 
 std::optional<double> Distance::toUnit(Unit u) const {
-    static const auto metersPerMile = 1609.347;
+    static const auto metersPerMile = 1609.344;
     static const auto metersPerFoot = 0.3048;
     auto convertMeters = [](Unit uu, double m) {
         switch (uu) {
@@ -961,7 +961,7 @@ std::optional<double> Height::toUnit(Unit u) const {
 
 std::optional<double> Pressure::toUnit(Unit u) const {
     static const auto hpaPerInHg = 33.8639;
-    static const auto hpaPerMmHg = 1.3332;
+    static const auto hpaPerMmHg = 1.3332239;
     auto convertHpa = [](Unit uu, double hpa) {
         switch (uu) {
             case Unit::HPA:
@@ -981,7 +981,7 @@ std::optional<double> Pressure::toUnit(Unit u) const {
         case Unit::IN_HG:
             return convertHpa(u, *pressure * hpaPerInHg);
         case Unit::HUNDREDTHS_IN_HG:
-            return convertHpa(u, *pressure * hpaPerInHg * 100.0);
+            return convertHpa(u, *pressure * hpaPerInHg / 100.0);
         case Unit::MM_HG:
             return convertHpa(u, *pressure * hpaPerMmHg);
     }
@@ -1000,20 +1000,20 @@ std::optional<double> Precipitation::toUnit(Unit u) const {
         }
     };
     if (!amount.has_value()) return std::optional<double>();
-    switch (u) {
+    switch (unit) {
         case Unit::MM:
             return convertMm(u, *amount);
         case Unit::IN:
             return convertMm(u, *amount * mmPerInch);
         case Unit::HUNDREDTHS_IN:
-            return convertMm(u, *amount * mmPerInch * 100.0);
+            return convertMm(u, *amount * mmPerInch / 100.0);
     }
 }
 
 std::optional<double> WaveHeight::toUnit(Unit u) const {
     static const auto decimetersPerMeter = 10.0;
-    static const auto feetPerMeter = 0.3048;
-    static const auto yardsPerMeter = 0.9144;
+    static const auto feetPerMeter = 1.0 / 0.3048;
+    static const auto yardsPerMeter = 1.0 / 0.9144;
     auto convertDecimeters = [](Unit uu, double dm) {
         switch (uu) {
             case Unit::DECIMETERS:
@@ -1044,18 +1044,20 @@ std::optional<double> WaveHeight::toUnit(Unit u) const {
 }
 
 WaveHeight::StateOfSurface WaveHeight::stateOfSurface() const {
-    const auto h = toUnit(Unit::DECIMETERS);
-    if (!h.has_value()) return StateOfSurface::NOT_SPECIFIED;
+    const auto ht = toUnit(Unit::DECIMETERS);
+    if (!ht.has_value()) return StateOfSurface::NOT_SPECIFIED;
     // See Table 3700 in Manual on Codes (WMO No. 306)
-    if (!*h) return StateOfSurface::CALM_GLASSY;
-    if (*h <= 1) return StateOfSurface::CALM_RIPPLED;
-    if (*h <= 5) return StateOfSurface::SMOOTH;
-    if (*h <= 12) return StateOfSurface::SLIGHT;
-    if (*h <= 25) return StateOfSurface::MODERATE;
-    if (*h <= 40) return StateOfSurface::ROUGH;
-    if (*h <= 60) return StateOfSurface::VERY_ROUGH;
-    if (*h <= 90) return StateOfSurface::HIGH;
-    if (*h <= 140) return StateOfSurface::VERY_HIGH;
+    const auto h = static_cast<int>(std::round(*ht));
+    if (h < 0) return StateOfSurface::NOT_SPECIFIED;
+    if (!h) return StateOfSurface::CALM_GLASSY;
+    if (h == 1) return StateOfSurface::CALM_RIPPLED;
+    if (h <= 5) return StateOfSurface::SMOOTH;
+    if (h <= 12) return StateOfSurface::SLIGHT;
+    if (h <= 25) return StateOfSurface::MODERATE;
+    if (h <= 40) return StateOfSurface::ROUGH;
+    if (h <= 60) return StateOfSurface::VERY_ROUGH;
+    if (h <= 90) return StateOfSurface::HIGH;
+    if (h <= 140) return StateOfSurface::VERY_HIGH;
     return StateOfSurface::PHENOMENAL;
 }
 
