@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 1;
+    inline static const int patch = 2;
     inline static const char tag[] = "";
 };
 
@@ -490,6 +490,7 @@ struct Report {
         NO_ERROR,               // No error: report parsed with no issues
         NO_REPORT_PARSED,       // No report was parsed yet; no data present
         EMPTY_REPORT,           // Attempting to parse an empty report
+        UNKNOWN_REPORT_TYPE,    // Parsed report type is 'unknown report type'
         REPORT_TOO_LARGE,       // Attempting to parse too large report
         UNEXPECTED_REPORT_END,  // Report ended unexpectedly
         REPORT_HEADER_FORMAT,   // Syntax error in report header
@@ -500,7 +501,6 @@ struct Report {
     // data)
     struct Warning {
         enum class Message {
-            UNKNOWN_REPORT_TYPE,
             SPECI_IN_TAF,
             BOTH_NIL_AND_CNL,
             BOTH_AMD_AND_COR,
@@ -1082,6 +1082,7 @@ CardinalDirection directionToCardinal(std::optional<int> degrees) {
 Aerodrome::BrakingAction Aerodrome::RunwayData::brakingAction() const {
     if (surfaceFrictionUnreliable) return BrakingAction::UNRELIABLE;
     if (!coefficient.has_value()) return BrakingAction::UNKNOWN;
+    if (*coefficient < 0 || *coefficient > 100) return BrakingAction::UNKNOWN;
     if (*coefficient <= 25) return BrakingAction::POOR;
     if (*coefficient <= 29) return BrakingAction::MEDIUM_POOR;
     if (*coefficient <= 35) return BrakingAction::MEDIUM;
@@ -1911,7 +1912,7 @@ void MetadataAdapter::setReportType(metaf::ReportType t, bool speci) {
     switch (t) {
         case metaf::ReportType::UNKNOWN:
             report->type = Report::Type::ERROR;
-            log(Report::Warning::Message::UNKNOWN_REPORT_TYPE);
+            report->error = Report::Error::UNKNOWN_REPORT_TYPE;
             break;
         case metaf::ReportType::METAR:
             report->type = Report::Type::METAR;
@@ -1941,9 +1942,9 @@ void MetadataAdapter::setReportError(metaf::ReportError e) {
             case metaf::ReportError::UNEXPECTED_GROUP_AFTER_NIL:
             case metaf::ReportError::UNEXPECTED_GROUP_AFTER_CNL:
             case metaf::ReportError::UNEXPECTED_NIL_OR_CNL_IN_REPORT_BODY:
+            case metaf::ReportError::CNL_ALLOWED_IN_TAF_ONLY:
                 return Report::Error::NIL_OR_CNL_FORMAT;
             case metaf::ReportError::AMD_ALLOWED_IN_TAF_ONLY:
-            case metaf::ReportError::CNL_ALLOWED_IN_TAF_ONLY:
             case metaf::ReportError::MAINTENANCE_INDICATOR_ALLOWED_IN_METAR_ONLY:
                 return Report::Error::GROUP_NOT_ALLOWED;
             case metaf::ReportError::REPORT_TOO_LARGE:

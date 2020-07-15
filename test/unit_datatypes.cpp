@@ -379,7 +379,6 @@ TEST_F(DataTypes, distance_miles_int_miles_fraction) {
     EXPECT_EQ(d_33000ft.milesInt(), 6);
     EXPECT_EQ(d_33000ft.milesFraction(),
               metafsimple::Distance::Fraction::F_1_4);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -709,4 +708,61 @@ TEST_F(DataTypes, waveHeight_stateOfSurface) {
         metafsimple::WaveHeight::Unit::DECIMETERS};
     EXPECT_EQ(wh141.stateOfSurface(),
               metafsimple::WaveHeight::StateOfSurface::PHENOMENAL);
+}
+
+TEST_F(DataTypes, brakingAction) {
+    metafsimple::Aerodrome::RunwayData rd;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::UNKNOWN);
+
+    rd.coefficient = 0;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::POOR);
+    rd.coefficient = 25;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::POOR);
+
+    rd.coefficient = 26;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::MEDIUM_POOR);
+    rd.coefficient = 29;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::MEDIUM_POOR);
+
+    rd.coefficient = 30;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::MEDIUM);
+    rd.coefficient = 35;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::MEDIUM);
+
+    rd.coefficient = 36;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::MEDIUM_GOOD);
+    rd.coefficient = 40;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::MEDIUM_GOOD);
+
+    rd.coefficient = 41;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::GOOD);
+    rd.coefficient = 100;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::GOOD);
+
+    rd.coefficient = -1;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::UNKNOWN);
+    rd.coefficient = 101;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::UNKNOWN);
+
+    rd = metafsimple::Aerodrome::RunwayData();
+    rd.surfaceFrictionUnreliable = true;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::UNRELIABLE);
+
+    rd.coefficient = 40;
+    EXPECT_EQ(rd.brakingAction(),
+              metafsimple::Aerodrome::BrakingAction::UNRELIABLE);
 }

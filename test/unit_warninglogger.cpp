@@ -12,11 +12,11 @@
 TEST(WarningLogger, warningLogger) {
     static const std::string idStr12 = "test1";
     static const std::string idStr3 = "test2";
-    static const auto msg1 = 
+    static const auto msg1 =
         metafsimple::Report::Warning::Message::INCONSISTENT_DATA;
-    static const auto msg2 = 
+    static const auto msg2 =
         metafsimple::Report::Warning::Message::DUPLICATED_DATA;
-    static const auto msg3 = 
+    static const auto msg3 =
         metafsimple::Report::Warning::Message::INVALID_GROUP;
     metafsimple::Report r;
     metafsimple::detail::WarningLogger wl(r.warnings);
