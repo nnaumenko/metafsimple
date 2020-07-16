@@ -25,7 +25,8 @@ add_executable(test
 
 target_include_directories(test PRIVATE 
     googletest/googletest
-    googletest/googletest/include)
+    googletest/googletest/include
+    test/include)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(TEST_LINK_FLAGS "-lpthread -lm")

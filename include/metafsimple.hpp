@@ -1997,7 +1997,7 @@ void MetadataAdapter::setAttributes(bool nil,
         case Report::Type::TAF:
             break;
         case Report::Type::ERROR:
-            break;
+            return;
     }
     report->missing = nil;
     report->cancelled = cnl;
@@ -2021,23 +2021,12 @@ void MetadataAdapter::setAutoType(bool ao1, bool ao2, bool ao1a, bool ao2a) {
         station->autoType = Station::AutoType::NONE;
         return;
     }
-    if (ao1) {
-        station->autoType = Station::AutoType::AO1;
-        return;
-    }
-    if (ao2) {
-        station->autoType = Station::AutoType::AO2;
-        return;
-    }
-    if (ao1a) {
-        station->autoType = Station::AutoType::AO1A;
-        return;
-    }
-    if (ao2a) {
-        station->autoType = Station::AutoType::AO2A;
-        return;
-    }
+    // At this point it is guaranteed that maximum one autotype flag is set
     station->autoType = Station::AutoType::NONE;
+    if (ao1) station->autoType = Station::AutoType::AO1;
+    if (ao2) station->autoType = Station::AutoType::AO2;
+    if (ao1a) station->autoType = Station::AutoType::AO1A;
+    if (ao2a) station->autoType = Station::AutoType::AO2A;
 }
 
 void MetadataAdapter::setReportTime(std::optional<metaf::MetafTime> t) {
@@ -2051,10 +2040,8 @@ void MetadataAdapter::setReportTime(std::optional<metaf::MetafTime> t) {
 void MetadataAdapter::setApplicableTime(std::optional<metaf::MetafTime> from,
                                         std::optional<metaf::MetafTime> until) {
     if (report->type != Report::Type::TAF) {
-        if (from.has_value() && until.has_value()) {
+        if (from.has_value() || until.has_value())
             log(Report::Warning::Message::APPLICABLE_TIME_IN_METAR);
-            return;
-        }
         return;
     }
     if (!from.has_value() || !until.has_value()) {

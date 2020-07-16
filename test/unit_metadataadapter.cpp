@@ -5,186 +5,14 @@
 * This software may be modified and distributed under the terms
 * of the MIT license. See the LICENSE file for details.
 */
+
 #include <algorithm>
 #include <set>
 #include <vector>
 
+#include "comparisons.hpp"
 #include "gtest/gtest.h"
 #include "metafsimple.hpp"
-
-namespace metafsimple {
-
-static inline bool operator==(const metafsimple::Runway &lhs,
-                              const metafsimple::Runway &rhs) {
-    return lhs.number == rhs.number && lhs.designator == rhs.designator;
-}
-
-static inline bool operator==(const metafsimple::Time &lhs,
-                              const metafsimple::Time &rhs) {
-    return lhs.day == rhs.day &&
-           lhs.hour == rhs.hour &&
-           lhs.minute == rhs.minute;
-}
-
-static inline bool operator==(const metafsimple::Temperature &lhs,
-                              const metafsimple::Temperature &rhs) {
-    return lhs.temperature == rhs.temperature && lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::Speed &lhs,
-                              const metafsimple::Speed &rhs) {
-    return lhs.speed == rhs.speed && lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::Distance &lhs,
-                              const metafsimple::Distance &rhs) {
-    return lhs.details == rhs.details &&
-           lhs.distance == rhs.distance &&
-           lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::DistanceRange &lhs,
-                              const metafsimple::DistanceRange &rhs) {
-    return lhs.prevailing == rhs.prevailing &&
-           lhs.minimum == rhs.minimum &&
-           lhs.maximum == rhs.maximum;
-}
-
-static inline bool operator==(const metafsimple::Height &lhs,
-                              const metafsimple::Height &rhs) {
-    return lhs.height == rhs.height && lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::Ceiling &lhs,
-                              const metafsimple::Ceiling &rhs) {
-    return lhs.exact == rhs.exact &&
-           lhs.minimum == rhs.minimum &&
-           lhs.maximum == rhs.maximum;
-}
-
-static inline bool operator==(const metafsimple::Pressure &lhs,
-                              const metafsimple::Pressure &rhs) {
-    return lhs.pressure == rhs.pressure && lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::Precipitation &lhs,
-                              const metafsimple::Precipitation &rhs) {
-    return lhs.amount == rhs.amount && lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::WaveHeight &lhs,
-                              const metafsimple::WaveHeight &rhs) {
-    return lhs.waveHeight == rhs.waveHeight && lhs.unit == rhs.unit;
-}
-
-static inline bool operator==(const metafsimple::Weather &lhs,
-                              const metafsimple::Weather &rhs) {
-    return lhs.phenomena == rhs.phenomena &&
-           lhs.precipitation == rhs.precipitation;
-}
-
-bool operator==(const metafsimple::CloudLayer &lhs,
-                const metafsimple::CloudLayer &rhs) {
-    return lhs.amount == rhs.amount &&
-           lhs.height == rhs.height &&
-           lhs.details == rhs.details &&
-           lhs.okta == rhs.okta;
-}
-
-static inline bool operator==(const metafsimple::Vicinity &lhs,
-                              const metafsimple::Vicinity &rhs) {
-    return lhs.phenomena == rhs.phenomena &&
-           lhs.distance == rhs.distance &&
-           lhs.moving == rhs.moving &&
-           lhs.directions == rhs.directions;
-}
-
-static inline bool operator==(const metafsimple::LightningStrikes &lhs,
-                              const metafsimple::LightningStrikes &rhs) {
-    return lhs.frequency == rhs.frequency &&
-           lhs.type == rhs.type &&
-           lhs.directions == rhs.directions &&
-           lhs.distance == rhs.distance;
-}
-
-static inline bool operator==(const metafsimple::IcingForecast &lhs,
-                              const metafsimple::IcingForecast &rhs) {
-    return lhs.severity == rhs.severity &&
-           lhs.type == rhs.type &&
-           lhs.minHeight == rhs.minHeight &&
-           lhs.maxHeight == rhs.maxHeight;
-}
-
-static inline bool operator==(const metafsimple::TurbulenceForecast &lhs,
-                              const metafsimple::TurbulenceForecast &rhs) {
-    return lhs.frequency == rhs.frequency &&
-           lhs.location == rhs.location &&
-           lhs.severity == rhs.severity &&
-           lhs.minHeight == rhs.minHeight &&
-           lhs.maxHeight == rhs.maxHeight;
-}
-
-static inline bool operator==(const metafsimple::Essentials &lhs,
-                              const metafsimple::Essentials &rhs) {
-    return lhs.windDirectionDegrees == rhs.windDirectionDegrees &&
-           lhs.windDirectionVariable == rhs.windDirectionVariable &&
-           lhs.windDirectionVarFromDegrees == rhs.windDirectionVarFromDegrees &&
-           lhs.windDirectionVarToDegrees == rhs.windDirectionVarToDegrees &&
-           lhs.windSpeed == rhs.windSpeed &&
-           lhs.gustSpeed == rhs.gustSpeed &&
-           lhs.windCalm == rhs.windCalm &&
-           lhs.visibility == rhs.visibility &&
-           lhs.cavok == rhs.cavok &&
-           lhs.skyCondition == rhs.skyCondition &&
-           lhs.cloudLayers == rhs.cloudLayers &&
-           lhs.verticalVisibility == rhs.verticalVisibility &&
-           lhs.weather == rhs.weather;
-}
-
-static inline bool operator==(const metafsimple::Trend &lhs,
-                              const metafsimple::Trend &rhs) {
-    return lhs.type == rhs.type &&
-           lhs.probability == rhs.probability;  // &&
-    lhs.timeFrom == rhs.timeFrom &&lhs.timeUntil == rhs.timeUntil &&lhs.timeAt == rhs.timeAt &&lhs.forecast == rhs.forecast;
-}
-
-static inline bool operator==(const metafsimple::Report::Warning &lhs,
-                              const metafsimple::Report::Warning &rhs) {
-    return lhs.message == rhs.message && lhs.id == rhs.id;
-}
-
-static inline bool operator==(const metafsimple::Report &lhs,
-                              const metafsimple::Report &rhs) {
-    return lhs.type == rhs.type &&
-           lhs.missing == rhs.missing &&
-           lhs.cancelled == rhs.cancelled &&
-           lhs.correctional == rhs.correctional &&
-           lhs.amended == rhs.amended &&
-           lhs.automated == rhs.automated &&
-           lhs.correctionNumber == rhs.correctionNumber &&
-           lhs.reportTime == rhs.reportTime &&
-           lhs.applicableFrom == rhs.applicableFrom &&
-           lhs.applicableUntil == rhs.applicableUntil &&
-           lhs.error == rhs.error &&
-           lhs.warnings == rhs.warnings &&
-           lhs.plainText == rhs.plainText;
-}
-
-static inline bool operator==(const metafsimple::Station &lhs,
-                              const metafsimple::Station &rhs) {
-    return lhs.icaoCode == rhs.icaoCode &&
-           lhs.autoType == rhs.autoType &&
-           lhs.requiresMaintenance == rhs.requiresMaintenance &&
-           lhs.noSpeciReports == rhs.noSpeciReports &&
-           lhs.noVisDirectionalVariation == rhs.noVisDirectionalVariation &&
-           lhs.missingData == rhs.missingData &&
-           lhs.runwaysNoCeilingData == rhs.runwaysNoCeilingData &&
-           lhs.runwaysNoVisData == rhs.runwaysNoVisData &&
-           lhs.directionsNoCeilingData == rhs.directionsNoCeilingData &&
-           lhs.directionsNoVisData == rhs.directionsNoVisData;
-}
-
-}  // namespace metafsimple
 
 TEST(MetadataAdapter, setReportType_METAR) {
     metafsimple::Report refReport;
@@ -483,3 +311,867 @@ TEST(MetadataAdapter, setSetReportError_REPORT_TOO_LARGE) {
     EXPECT_EQ(report, refReport);
     EXPECT_EQ(station, metafsimple::Station());
 }
+
+TEST(MetadataAdapter, setLocation) {
+    static const std::string icaoCode = "UKLL";
+    metafsimple::Station refStation;
+    refStation.icaoCode = icaoCode;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setLocation(icaoCode);
+
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setLocationMismatch) {
+    static const std::string icaoCode1 = "UKLL";
+    static const std::string icaoCode2 = "NZSP";
+
+    metafsimple::Station refStation;
+    refStation.icaoCode = icaoCode1;
+
+    metafsimple::Report refReportWarning;
+    refReportWarning.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setLocation(icaoCode1);
+
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, refStation);
+
+    mda.setLocation(icaoCode2);
+
+    EXPECT_EQ(report, refReportWarning);
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAttributes_metar_nil) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.missing = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_taf_nil) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.missing = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setAttributes(true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_taf_cnl) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.cancelled = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setAttributes(false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_metar_cor) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.correctional = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_metar_corNum) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.correctional = true;
+    refReport.correctionNumber = 2;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      2);
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_taf_cor) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.correctional = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setAttributes(false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_taf_amd) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.amended = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_metar_auto) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.automated = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_nospeci) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+
+    metafsimple::Station refStation;
+    refStation.noSpeciReports = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAttributes_maintenance) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+
+    metafsimple::Station refStation;
+    refStation.requiresMaintenance = true;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      true,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAttributes_none) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_error) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::ERROR;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    report.type = metafsimple::Report::Type::ERROR;
+    mda.setAttributes(false,
+                      false,
+                      true,
+                      false,
+                      true,
+                      true,
+                      true,
+                      1);
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    mda.setAttributes(true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    mda.setAttributes(false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_nil_cnl) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.missing = true;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::BOTH_NIL_AND_CNL, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setAttributes(true,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_amd_cor) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.correctional = true;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::BOTH_AMD_AND_COR, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setAttributes(false,
+                      false,
+                      true,
+                      true,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_amd_metar) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::AMD_IN_NON_TAF, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_amd_speci) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::SPECI;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::AMD_IN_NON_TAF, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setReportType(metaf::ReportType::METAR, true);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_cnl_metar) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::CNL_IN_NON_TAF, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAttributes_cnl_speci) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::SPECI;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::CNL_IN_NON_TAF, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setReportType(metaf::ReportType::METAR, true);
+    mda.setAttributes(false,
+                      true,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      std::optional<unsigned int>());
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAutoType_AO1) {
+    metafsimple::Station refStation;
+    refStation.autoType = metafsimple::Station::AutoType::AO1;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setAutoType(true, false, false, false);
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAutoType_AO2) {
+    metafsimple::Station refStation;
+    refStation.autoType = metafsimple::Station::AutoType::AO2;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setAutoType(false, true, false, false);
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAutoType_AO1A) {
+    metafsimple::Station refStation;
+    refStation.autoType = metafsimple::Station::AutoType::AO1A;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setAutoType(false, false, true, false);
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAutoType_AO2A) {
+    metafsimple::Station refStation;
+    refStation.autoType = metafsimple::Station::AutoType::AO2A;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setAutoType(false, false, false, true);
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, refStation);
+}
+
+TEST(MetadataAdapter, setAutoType_none) {
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    report = metafsimple::Report();
+    mda.setAutoType(false, false, false, false);
+    EXPECT_EQ(report, metafsimple::Report());
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setAutoType_invalid) {
+    metafsimple::Report refReport;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::INVALID_AUTOTYPE, ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, true, false, false);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, false, true, false);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, false, false, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(false, true, true, false);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(false, true, false, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(false, false, true, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(false, true, true, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, false, true, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, true, false, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, true, true, false);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setAutoType(true, true, true, true);
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setReportTime) {
+    metafsimple::Report refReport;
+    refReport.reportTime = metafsimple::Time{16, 19, 30};
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    mda.setReportTime(metaf::MetafTime(16, 19, 30));
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setReportTime_metar_no_report_time) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::
+                NO_REPORT_TIME_IN_METAR,
+            ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setReportTime(std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setReportTime_speci_no_report_time) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::SPECI;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::
+                NO_REPORT_TIME_IN_METAR,
+            ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, true);
+    mda.setReportTime(std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setApplicableTime_taf) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.applicableFrom = metafsimple::Time{16, 14, 00};
+    refReport.applicableUntil = metafsimple::Time{17, 02, 00};
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setApplicableTime(metaf::MetafTime(16, 14, 00),
+                          metaf::MetafTime(17, 02, 00));
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setApplicableTime_taf_error) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::TAF;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::NO_APPLICABLE_TIME_IN_TAF,
+            ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setApplicableTime(metaf::MetafTime(16, 14, 00),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setApplicableTime(metaf::MetafTime(16, 14, 00),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          metaf::MetafTime(17, 02, 00));
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          metaf::MetafTime(17, 02, 00));
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::TAF, false);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setApplicableTime_metar) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+TEST(MetadataAdapter, setApplicableTime_speci) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::SPECI;
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, true);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
+
+
+TEST(MetadataAdapter, setApplicableTime_metar_error) {
+    metafsimple::Report refReportMetar;
+    refReportMetar.type = metafsimple::Report::Type::METAR;
+    refReportMetar.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::APPLICABLE_TIME_IN_METAR,
+            ""});
+
+    metafsimple::Report refReportSpeci;
+    refReportSpeci.type = metafsimple::Report::Type::SPECI;
+    refReportSpeci.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::APPLICABLE_TIME_IN_METAR,
+            ""});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setApplicableTime(metaf::MetafTime(16, 14, 00),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReportMetar);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::METAR, true);
+    mda.setApplicableTime(metaf::MetafTime(16, 14, 00),
+                          std::optional<metaf::MetafTime>());
+    EXPECT_EQ(report, refReportSpeci);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          metaf::MetafTime(17, 02, 00));
+    EXPECT_EQ(report, refReportMetar);
+    EXPECT_EQ(station, metafsimple::Station());
+
+    report = metafsimple::Report();
+    mda.setReportType(metaf::ReportType::METAR, true);
+    mda.setApplicableTime(std::optional<metaf::MetafTime>(),
+                          metaf::MetafTime(17, 02, 00));
+    EXPECT_EQ(report, refReportSpeci);
+    EXPECT_EQ(station, metafsimple::Station());
+}
+
