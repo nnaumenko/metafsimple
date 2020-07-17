@@ -19,7 +19,8 @@ add_executable(test
     test/unit_datatypes.cpp
     test/unit_warninglogger.cpp
     test/unit_metadataadapter.cpp
-    test/unit_essentialsdataadapter.cpp
+    test/unit_basicdataadapter.cpp
+    test/unit_essentialsadapter.cpp
     test/integration_parse_simplify_report.cpp
 )
 

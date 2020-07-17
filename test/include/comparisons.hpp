@@ -82,7 +82,7 @@ static inline bool operator==(const metafsimple::Weather &lhs,
            lhs.precipitation == rhs.precipitation;
 }
 
-bool operator==(const metafsimple::CloudLayer &lhs,
+static inline bool operator==(const metafsimple::CloudLayer &lhs,
                 const metafsimple::CloudLayer &rhs) {
     return lhs.amount == rhs.amount &&
            lhs.height == rhs.height &&

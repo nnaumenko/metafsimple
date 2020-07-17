@@ -1565,7 +1565,8 @@ std::optional<Distance> BasicDataAdapter::distance(const metaf::Distance &d) {
 std::optional<Weather::Phenomena>
 BasicDataAdapter::weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
                                    metaf::WeatherPhenomena::Descriptor d,
-                                   std::vector<metaf::WeatherPhenomena::Weather> v) {
+                                   std::vector<metaf::WeatherPhenomena::
+                                   Weather> v) {
     if (q == metaf::WeatherPhenomena::Qualifier::RECENT ||
         q == metaf::WeatherPhenomena::Qualifier::VICINITY)
         q = metaf::WeatherPhenomena::Qualifier::NONE;
