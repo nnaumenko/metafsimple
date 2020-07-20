@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 2;
+    inline static const int patch = 3;
     inline static const char tag[] = "";
 };
 
@@ -1567,6 +1567,12 @@ BasicDataAdapter::weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
                                    metaf::WeatherPhenomena::Descriptor d,
                                    std::vector<metaf::WeatherPhenomena::
                                    Weather> v) {
+    // VCSH is special case: SH cannot be used alone without VC
+    // The rest of phenomena used with VC qualifier may be used without VC too
+    if (q == metaf::WeatherPhenomena::Qualifier::VICINITY &&
+        d == metaf::WeatherPhenomena::Descriptor::SHOWERS &&
+        v.empty())
+        return Weather::Phenomena::PRECIPITATION;
     if (q == metaf::WeatherPhenomena::Qualifier::RECENT ||
         q == metaf::WeatherPhenomena::Qualifier::VICINITY)
         q = metaf::WeatherPhenomena::Qualifier::NONE;
@@ -1739,67 +1745,7 @@ BasicDataAdapter::weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
          metaf::WeatherPhenomena::Descriptor::NONE,
          {metaf::WeatherPhenomena::Weather::SANDSTORM,
           metaf::WeatherPhenomena::Weather::DUSTSTORM},
-         Weather::Phenomena::HEAVY_DUST_SAND_STORM},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::SHOWERS,
-         {},
-         Weather::Phenomena::PRECIPITATION},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::THUNDERSTORM,
-         {},
-         Weather::Phenomena::THUNDERSTORM},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::NONE,
-         {metaf::WeatherPhenomena::Weather::FOG},
-         Weather::Phenomena::FOG},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::NONE,
-         {metaf::WeatherPhenomena::Weather::DUST_WHIRLS},
-         Weather::Phenomena::DUST_WHIRLS},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::NONE,
-         {metaf::WeatherPhenomena::Weather::FUNNEL_CLOUD},
-         Weather::Phenomena::FUNNEL_CLOUD},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::NONE,
-         {metaf::WeatherPhenomena::Weather::VOLCANIC_ASH},
-         Weather::Phenomena::VOLCANIC_ASH},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::BLOWING,
-         {metaf::WeatherPhenomena::Weather::DUST},
-         Weather::Phenomena::BLOWING_DUST},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::BLOWING,
-         {metaf::WeatherPhenomena::Weather::SAND},
-         Weather::Phenomena::BLOWING_SAND},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::BLOWING,
-         {metaf::WeatherPhenomena::Weather::SNOW},
-         Weather::Phenomena::BLOWING_SNOW},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::BLOWING,
-         {metaf::WeatherPhenomena::Weather::SAND},
-         Weather::Phenomena::BLOWING_SAND},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::NONE,
-         {metaf::WeatherPhenomena::Weather::DUSTSTORM},
-         Weather::Phenomena::DUST_STORM},
-
-        {metaf::WeatherPhenomena::Qualifier::VICINITY,
-         metaf::WeatherPhenomena::Descriptor::NONE,
-         {metaf::WeatherPhenomena::Weather::SANDSTORM},
-         Weather::Phenomena::SAND_STORM},
+         Weather::Phenomena::HEAVY_DUST_SAND_STORM}
     };
     for (const auto &ph : knownPhenomena) {
         if (ph.qualifier == q && ph.descriptor == d && ph.weather == v)
@@ -1856,6 +1802,38 @@ BasicDataAdapter::precipitationPhenomena(metaf::WeatherPhenomena::Qualifier q,
         {metaf::WeatherPhenomena::Qualifier::LIGHT,
          metaf::WeatherPhenomena::Descriptor::SHOWERS,
          Weather::Phenomena::SHOWERY_PRECIPITATION_LIGHT},
+
+        {metaf::WeatherPhenomena::Qualifier::MODERATE,
+         metaf::WeatherPhenomena::Descriptor::NONE,
+         Weather::Phenomena::PRECIPITATION_MODERATE},
+
+        {metaf::WeatherPhenomena::Qualifier::MODERATE,
+         metaf::WeatherPhenomena::Descriptor::FREEZING,
+         Weather::Phenomena::FREEZING_PRECIPITATION_MODERATE},
+
+        {metaf::WeatherPhenomena::Qualifier::MODERATE,
+         metaf::WeatherPhenomena::Descriptor::THUNDERSTORM,
+         Weather::Phenomena::THUNDERSTORM_PRECIPITATION_MODERATE},
+
+        {metaf::WeatherPhenomena::Qualifier::MODERATE,
+         metaf::WeatherPhenomena::Descriptor::SHOWERS,
+         Weather::Phenomena::SHOWERY_PRECIPITATION_MODERATE},
+
+        {metaf::WeatherPhenomena::Qualifier::HEAVY,
+         metaf::WeatherPhenomena::Descriptor::NONE,
+         Weather::Phenomena::PRECIPITATION_HEAVY},
+
+        {metaf::WeatherPhenomena::Qualifier::HEAVY,
+         metaf::WeatherPhenomena::Descriptor::FREEZING,
+         Weather::Phenomena::FREEZING_PRECIPITATION_HEAVY},
+
+        {metaf::WeatherPhenomena::Qualifier::HEAVY,
+         metaf::WeatherPhenomena::Descriptor::THUNDERSTORM,
+         Weather::Phenomena::THUNDERSTORM_PRECIPITATION_HEAVY},
+
+        {metaf::WeatherPhenomena::Qualifier::HEAVY,
+         metaf::WeatherPhenomena::Descriptor::SHOWERS,
+         Weather::Phenomena::SHOWERY_PRECIPITATION_HEAVY},
     };
     for (const auto &ph : knownPhenomena) {
         if (ph.qualifier == q && ph.descriptor == d) return ph.phenomena;
