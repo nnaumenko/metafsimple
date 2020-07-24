@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 3;
+    inline static const int patch = 4;
     inline static const char tag[] = "";
 };
 
@@ -640,8 +640,8 @@ struct Aerodrome {
         UNKNOWN
     };
     // State of runway surface, including type of deposits on the runway, runway
-    // contamination extent by the deposits, depth of deposits, and surface friction
-    // coefficient
+    // contamination extent by the deposits, depth of deposits, and surface
+    // friction coefficient
     struct RunwayData {
         Runway runway;
         bool notOperational = false;
@@ -696,7 +696,7 @@ struct Current {
         CB_CAP,
         UNKNOWN
     };
-    // Descriptive middle cloud layer type according to International Cloud Atlas
+    // Descriptive mid cloud layer type according to International Cloud Atlas
     enum class MidCloudLayer {
         NO_CLOUDS,
         AS_TR,
@@ -1229,7 +1229,9 @@ class BasicDataAdapter : DataAdapter {
     inline static Precipitation precipitation(const metaf::Precipitation &p);
     inline static Height height(const metaf::Distance &d);
     inline static WaveHeight waveHeight(const metaf::WaveHeight &wh);
-    inline static CloudLayer::Details cloudLayerDetails(metaf::CloudType::Type t);
+
+    inline static CloudLayer::Details
+    cloudLayerDetails(metaf::CloudType::Type t);
 
     inline static CloudLayer::Amount
     cloudLayerAmount(metaf::CloudGroup::Amount a);
@@ -1566,7 +1568,8 @@ std::optional<Weather::Phenomena>
 BasicDataAdapter::weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
                                    metaf::WeatherPhenomena::Descriptor d,
                                    std::vector<metaf::WeatherPhenomena::
-                                   Weather> v) {
+                                                   Weather>
+                                       v) {
     // VCSH is special case: SH cannot be used alone without VC
     // The rest of phenomena used with VC qualifier may be used without VC too
     if (q == metaf::WeatherPhenomena::Qualifier::VICINITY &&
@@ -1745,8 +1748,7 @@ BasicDataAdapter::weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
          metaf::WeatherPhenomena::Descriptor::NONE,
          {metaf::WeatherPhenomena::Weather::SANDSTORM,
           metaf::WeatherPhenomena::Weather::DUSTSTORM},
-         Weather::Phenomena::HEAVY_DUST_SAND_STORM}
-    };
+         Weather::Phenomena::HEAVY_DUST_SAND_STORM}};
     for (const auto &ph : knownPhenomena) {
         if (ph.qualifier == q && ph.descriptor == d && ph.weather == v)
             return ph.phenomena;
@@ -1779,8 +1781,9 @@ BasicDataAdapter::weatherPrecipitation(metaf::WeatherPhenomena::Weather w) {
 }
 
 std::optional<Weather::Phenomena>
-BasicDataAdapter::precipitationPhenomena(metaf::WeatherPhenomena::Qualifier q,
-                                         metaf::WeatherPhenomena::Descriptor d) {
+BasicDataAdapter::precipitationPhenomena(
+    metaf::WeatherPhenomena::Qualifier q,
+    metaf::WeatherPhenomena::Descriptor d) {
     struct KnownPhenomena {
         metaf::WeatherPhenomena::Qualifier qualifier;
         metaf::WeatherPhenomena::Descriptor descriptor;
@@ -1924,7 +1927,8 @@ void MetadataAdapter::setReportError(metaf::ReportError e) {
             case metaf::ReportError::CNL_ALLOWED_IN_TAF_ONLY:
                 return Report::Error::NIL_OR_CNL_FORMAT;
             case metaf::ReportError::AMD_ALLOWED_IN_TAF_ONLY:
-            case metaf::ReportError::MAINTENANCE_INDICATOR_ALLOWED_IN_METAR_ONLY:
+            case metaf::ReportError::
+                MAINTENANCE_INDICATOR_ALLOWED_IN_METAR_ONLY:
                 return Report::Error::GROUP_NOT_ALLOWED;
             case metaf::ReportError::REPORT_TOO_LARGE:
                 return Report::Error::REPORT_TOO_LARGE;
@@ -3027,6 +3031,8 @@ class CurrentDataAdapter : DataAdapter {
                                std::optional<metaf::CloudType> cloudType);
     inline void setTemperatureDewPoint(metaf::Temperature t,
                                        metaf::Temperature dp);
+    inline void setRelativeHumidity(metaf::Temperature t,
+                                    metaf::Temperature dp);
     inline void setVisibility(const metaf::Distance &min,
                               const metaf::Distance &max);
     inline void setPressureQnh(metaf::Pressure p);
@@ -3098,6 +3104,14 @@ void CurrentDataAdapter::setTemperatureDewPoint(metaf::Temperature t,
                          BasicDataAdapter::temperature(t));
     setData<Temperature>(current->dewPoint,
                          BasicDataAdapter::temperature(dp));
+}
+
+void CurrentDataAdapter::setRelativeHumidity(metaf::Temperature t,
+                                             metaf::Temperature dp) {
+    assert(current);
+    const auto rh = metaf::Temperature::relativeHumidity(t, dp);
+    if (!rh.has_value()) return;
+    setData<std::optional<int>>(current->relativeHumidity, std::floor(*rh));
 }
 
 void CurrentDataAdapter::setVisibility(const metaf::Distance &min,
@@ -3180,7 +3194,8 @@ void CurrentDataAdapter::setClouds(metaf::LowMidHighCloudGroup::LowLayer l,
                 return Current::LowCloudLayer::ST_NEB_ST_FR;
             case metaf::LowMidHighCloudGroup::LowLayer::ST_FR_CU_FR_PANNUS:
                 return Current::LowCloudLayer::ST_FR_CU_FR_PANNUS;
-            case metaf::LowMidHighCloudGroup::LowLayer::CU_SC_NON_CUGEN_DIFFERENT_LEVELS:
+            case metaf::LowMidHighCloudGroup::LowLayer::
+                CU_SC_NON_CUGEN_DIFFERENT_LEVELS:
                 return Current::LowCloudLayer::CU_SC_NON_CUGEN_DIFFERENT_LEVELS;
             case metaf::LowMidHighCloudGroup::LowLayer::CB_CAP:
                 return Current::LowCloudLayer::CB_CAP;
@@ -3204,7 +3219,8 @@ void CurrentDataAdapter::setClouds(metaf::LowMidHighCloudGroup::LowLayer l,
                 return Current::MidCloudLayer::AC_TR_AC_OP_SPREADING;
             case metaf::LowMidHighCloudGroup::MidLayer::AC_CUGEN_AC_CBGEN:
                 return Current::MidCloudLayer::AC_CUGEN_AC_CBGEN;
-            case metaf::LowMidHighCloudGroup::MidLayer::AC_DU_AC_OP_AC_WITH_AS_OR_NS:
+            case metaf::LowMidHighCloudGroup::MidLayer::
+                AC_DU_AC_OP_AC_WITH_AS_OR_NS:
                 return Current::MidCloudLayer::AC_DU_AC_OP_AC_WITH_AS_OR_NS;
             case metaf::LowMidHighCloudGroup::MidLayer::AC_CAS_AC_FLO:
                 return Current::MidCloudLayer::AC_CAS_AC_FLO;
@@ -3839,18 +3855,11 @@ void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,
             currentData().addWindShear(group.height(),
                                        group.direction(),
                                        group.windSpeed());
-            // result.current.windShear.push_back(
-            //    Current::WindShear((group.height()), wd));
             break;
         case metaf::WindGroup::Type::WIND_SHEAR_IN_LOWER_LAYERS: {
             aerodromeData().setRunwayWindShearLowerLayers(group.runway());
             break;
         }
-            //            if (const auto r = group.runway(); r.has_value()) {
-            //                AerodromeAdapter aa(&result.aerodrome, &logger, rawString);
-            //                aa.setRunwayWindShear(*r);
-            //            } else {
-            //                logger.addMessage(Report::Warning::Message::NO_RUNWAY);
         case metaf::WindGroup::Type::WIND_SHIFT: {
             historicalData().setWindShift(false, group.eventTime());
             break;
@@ -3938,7 +3947,8 @@ void CollateVisitor::visitVisibilityGroup(const metaf::VisibilityGroup &group,
 
         case metaf::VisibilityGroup::Type::VARIABLE_SECTOR:
             for (const auto &d : group.sectorDirections()) {
-                aerodromeData().setVisibility(d, group.minVisibility(), group.maxVisibility());
+                aerodromeData().setVisibility(d, group.minVisibility(),
+                                              group.maxVisibility());
             }
             break;
 
@@ -4018,7 +4028,7 @@ void CollateVisitor::visitWeatherGroup(const metaf::WeatherGroup &group,
                     currentOrTrendBlock().addWeatherPhenomena(w);
                 }
                 // TODO: check vicinity qualifier and handle differently
-                // (store in Current rather than in Weather Block)
+                // (store in Current rather than in Essentials)
             }
             break;
         case metaf::WeatherGroup::Type::NSW:
@@ -4040,7 +4050,8 @@ void CollateVisitor::visitWeatherGroup(const metaf::WeatherGroup &group,
             stationData().addMissingData(Station::MissingData::WX_MISG);
             break;
         case metaf::WeatherGroup::Type::TS_LTNG_TEMPO_UNAVBL:
-            stationData().addMissingData(Station::MissingData::TS_LTNG_TEMPO_UNAVBL);
+            stationData().addMissingData(
+                Station::MissingData::TS_LTNG_TEMPO_UNAVBL);
             break;
     }
 }
@@ -4052,7 +4063,10 @@ void CollateVisitor::visitTemperatureGroup(const metaf::TemperatureGroup &group,
     (void)rawString;
     switch (group.type()) {
         case metaf::TemperatureGroup::Type::TEMPERATURE_AND_DEW_POINT:
-            currentData().setTemperatureDewPoint(group.airTemperature(), group.dewPoint());
+            currentData().setTemperatureDewPoint(group.airTemperature(),
+                                                 group.dewPoint());
+            currentData().setRelativeHumidity(group.airTemperature(),
+                                              group.dewPoint());
             break;
         case metaf::TemperatureGroup::Type::T_MISG:
             stationData().addMissingData(Station::MissingData::T_MISG);
@@ -4100,7 +4114,8 @@ void CollateVisitor::visitRunwayStateGroup(const metaf::RunwayStateGroup &group,
                                            group.surfaceFriction());
             break;
         case metaf::RunwayStateGroup::Type::RUNWAY_CLRD:
-            aerodromeData().setRunwayClrd(group.runway(), group.surfaceFriction());
+            aerodromeData().setRunwayClrd(group.runway(),
+                                          group.surfaceFriction());
             break;
         case metaf::RunwayStateGroup::Type::RUNWAY_NOT_OPERATIONAL:
             aerodromeData().setRunwayNonOp(group.runway());
