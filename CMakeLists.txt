@@ -21,7 +21,8 @@ add_executable(test
     test/unit_metadataadapter.cpp
     test/unit_basicdataadapter.cpp
     test/unit_essentialsadapter.cpp
-    test/integration_parse_simplify_report.cpp
+    test/integration_basic_reports.cpp
+    test/integration_wind_data.cpp
 )
 
 target_include_directories(test PRIVATE 

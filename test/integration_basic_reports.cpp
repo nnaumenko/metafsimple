@@ -12,8 +12,14 @@
 
 using namespace metafsimple;
 
+////////////////////////////////////////////////////////////////////////////////
 // Basic METAR: CAVOK, no trends, no remarks
-TEST(ParseSimplifyReport, basicMetar) {
+// Report type METAR, METAR release time, station ICAO code, wind data, CAVOK
+// visibility, lack of clouds in current weather essential info, current
+// temperature, dew point and humidity, current sea-level pressure
+////////////////////////////////////////////////////////////////////////////////
+
+TEST(IntegrationBasicReports, basicMetarFull) {
     static const auto rawReport =
         "METAR SCCH 061700Z 23007KT CAVOK 07/03 Q1016=";
 
@@ -95,8 +101,47 @@ TEST(ParseSimplifyReport, basicMetar) {
     EXPECT_EQ(result, refResult);
 }
 
+TEST(IntegrationBasicReports, basicMetarShort) {
+    static const auto rawReport =
+        "METAR SCCH 061700Z 23007KT CAVOK 07/03 Q1016=";
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time {6, 17, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "SCCH";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionDegrees = 230;
+    refCurrent.weatherData.windSpeed = Speed {7, Speed::Unit::KT};
+    refCurrent.weatherData.visibility =
+        Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refCurrent.weatherData.cavok = true;
+    refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.airTemperature = Temperature{7, Temperature::Unit::C};
+    refCurrent.dewPoint = Temperature{3, Temperature::Unit::C};
+    refCurrent.relativeHumidity = 75;
+    refCurrent.pressureSeaLevel = Pressure{1016, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Basic TAF: CAVOK, only one trend, no min/max temperature forecast, no remarks
-TEST(ParseSimplifyReport, basicTaf) {
+// Report type TAF, release and applicable time, station ICAO code, prevailing 
+// weather trend: wind data and CAVOK
+////////////////////////////////////////////////////////////////////////////////
+
+TEST(ParseSimplifyReport, basicTafFull) {
     static const auto rawReport =
         "TAF LICG 250500Z 2506/2515 24008KT CAVOK=";
 
@@ -167,3 +212,36 @@ TEST(ParseSimplifyReport, basicTaf) {
     };
     EXPECT_EQ(result, refResult);
 }
+
+TEST(IntegrationBasicReports, basicTafShort) {
+    static const auto rawReport =
+        "TAF LICG 250500Z 2506/2515 24008KT CAVOK=";
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::TAF;
+    refReport.reportTime = Time {25, 5, 0};
+    refReport.applicableFrom = Time {25, 6, 0};
+    refReport.applicableUntil = Time {25, 15, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "LICG";
+    EXPECT_EQ(result.station, refStation);
+
+    Forecast refForecast;
+    refForecast.prevailing.windDirectionDegrees = 240;
+    refForecast.prevailing.windSpeed = Speed {8, Speed::Unit::KT};
+    refForecast.prevailing.visibility =
+        Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refForecast.prevailing.cavok = true;
+    refForecast.prevailing.skyCondition = Essentials::SkyCondition::CAVOK;
+    EXPECT_EQ(result.forecast, refForecast);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.current, Current());
+}
+
