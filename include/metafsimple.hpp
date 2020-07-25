@@ -820,6 +820,7 @@ struct Historical {
 // Forecast data including weather trends (each trend has Essentials),
 // minimum and maximum temperature, pressure, icing and turbulence forecast, etc
 struct Forecast {
+    Essentials prevailing;
     std::vector<Trend> trends;
     bool noSignificantChanges = false;
     bool windShearConditions = false;
@@ -2125,6 +2126,7 @@ class EssentialsAdapter : DataAdapter {
    public:
     EssentialsAdapter(Essentials &e, WarningLogger *l) : DataAdapter(l),
                                                          essentials(&e) {}
+    static inline bool isEmpty(const Essentials &e);
     inline void setCavok();
     inline void setSurfaceWind(metaf::Direction dir,
                                metaf::Speed windSpeed,
@@ -2151,6 +2153,22 @@ class EssentialsAdapter : DataAdapter {
    private:
     Essentials *essentials;
 };
+
+bool EssentialsAdapter::isEmpty(const Essentials &e) {
+    return !e.windDirectionDegrees.has_value() &&
+           !e.windDirectionVariable &&
+           !e.windDirectionVarFromDegrees.has_value() &&
+           !e.windDirectionVarToDegrees.has_value() &&
+           !e.windSpeed.speed.has_value() &&
+           !e.gustSpeed.speed.has_value() &&
+           !e.windCalm &&
+           !e.visibility.distance.has_value() &&
+           !e.cavok &&
+           e.skyCondition == Essentials::SkyCondition::UNKNOWN &&
+           e.cloudLayers.empty() &&
+           !e.verticalVisibility.height.has_value() &&
+           e.weather.empty();
+}
 
 void EssentialsAdapter::setCavok() {
     assert(essentials);
@@ -3624,6 +3642,8 @@ class CollateVisitor : public metaf::Visitor<void> {
     inline void collateMetadata(const metaf::ReportMetadata &metadata);
     void setGroupString(const std::string &s) { logger.setIdString(s); }
     inline EssentialsAdapter currentOrTrendBlock();
+    void startPrevailingTrend() { isPrevailingTrend = true; }
+    void startOtherTrend() { isPrevailingTrend = false; }
     CurrentDataAdapter currentData() {
         return CurrentDataAdapter(result.current, &logger);
     }
@@ -3642,6 +3662,7 @@ class CollateVisitor : public metaf::Visitor<void> {
 
     Simple result;
     WarningLogger logger;
+    bool isPrevailingTrend = false;
 
     inline virtual void visitKeywordGroup(
         const metaf::KeywordGroup &group,
@@ -3768,6 +3789,8 @@ EssentialsAdapter CollateVisitor::currentOrTrendBlock() {
     if (result.forecast.trends.size())
         return EssentialsAdapter(result.forecast.trends.back().forecast,
                                  &logger);
+    if (isPrevailingTrend) return EssentialsAdapter(result.forecast.prevailing,
+                                                    &logger);
     return EssentialsAdapter(result.current.weatherData, &logger);
 }
 
@@ -3826,11 +3849,28 @@ void CollateVisitor::visitTrendGroup(const metaf::TrendGroup &group,
                                      const std::string &rawString) {
     (void)reportPart;
     (void)rawString;
-    forecastData().addTrend(group.type(),
-                            group.probability(),
-                            group.timeFrom(),
-                            group.timeUntil(),
-                            group.timeAt());
+    const auto from = BasicDataAdapter::time(group.timeFrom());
+    const auto until = BasicDataAdapter::time(group.timeUntil());
+    if (result.report.type == Report::Type::TAF &&
+        group.type() == metaf::TrendGroup::Type::TIME_SPAN &&
+        group.probability() == metaf::TrendGroup::Probability::NONE &&
+        !group.timeAt().has_value() &&
+        from.day == result.report.applicableFrom.day &&
+        from.hour == result.report.applicableFrom.hour &&
+        from.minute == result.report.applicableFrom.minute &&
+        until.day == result.report.applicableUntil.day &&
+        until.hour == result.report.applicableUntil.hour &&
+        until.minute == result.report.applicableUntil.minute &&
+        EssentialsAdapter::isEmpty(result.forecast.prevailing)) {
+        startPrevailingTrend();
+        return;
+        }
+        startOtherTrend();
+        forecastData().addTrend(group.type(),
+                                group.probability(),
+                                group.timeFrom(),
+                                group.timeUntil(),
+                                group.timeAt());
 }
 
 void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,

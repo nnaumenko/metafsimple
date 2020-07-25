@@ -326,6 +326,7 @@ static inline bool operator==(const Historical &lhs, const Historical &rhs) {
 }
 
 static inline bool operator==(const Forecast &lhs, const Forecast &rhs) {
+    if (!(lhs.prevailing == rhs.prevailing)) return false;
     if (!(lhs.trends == rhs.trends)) return false;
     if (lhs.noSignificantChanges != rhs.noSignificantChanges) return false;
     if (lhs.windShearConditions != rhs.windShearConditions) return false;

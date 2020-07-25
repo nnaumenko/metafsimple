@@ -134,33 +134,25 @@ TEST(ParseSimplifyReport, basicTaf) {
         Current(),     // no current weather data in report
         Historical(),  // no historical data in report
         Forecast{
-            {
-                Trend{
-                    Trend::Type::TIMED,
-                    std::optional<int>(),
-                    Time{25, 06, 00},
-                    Time{25, 15, 00},
-                    Time(),
-                    Essentials{
-                        240,                        // wind direction, degrees
-                        false,                      // wind direction variable
-                        std::optional<int>(),       // variable wind dir from
-                        std::optional<int>(),       // variable wind dir to
-                        Speed{8, Speed::Unit::KT},  // wind speed
-                        Speed(),                    // gust speed
-                        false,                      // no wind
-                        Distance{
-                            Distance::Details::MORE_THAN,
-                            10000,
-                            Distance::Unit::METERS},      // prevailing vis
-                        true,                             // CAVOK
-                        Essentials::SkyCondition::CAVOK,  // sky condition
-                        {},                               // cloud layers
-                        Height(),                         // vertical visibility
-                        {}                                // weather phenomena
-                    }                                     // Trend weather
-                }                                         // Prevailing trend
-            },
+            Essentials{
+                240,                        // wind direction, degrees
+                false,                      // wind direction variable
+                std::optional<int>(),       // variable wind dir from
+                std::optional<int>(),       // variable wind dir to
+                Speed{8, Speed::Unit::KT},  // wind speed
+                Speed(),                    // gust speed
+                false,                      // no wind
+                Distance{Distance::Details::MORE_THAN,
+                         10000,
+                         Distance::Unit::METERS},  // prevailing vis
+                true,                              // CAVOK
+                Essentials::SkyCondition::CAVOK,   // sky condition
+                {},                                // cloud layers
+                Height(),                          // vertical visibility
+                {}                                 // weather phenomena
+            },                                     // prevailing trend
+
+            {},             // trends
             false,          // no significant changes (NOSIG)
             false,          // wind shear conditions (WSCONDS)
             Temperature(),  // min temperature
