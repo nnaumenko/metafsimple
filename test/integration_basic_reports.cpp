@@ -103,7 +103,7 @@ TEST(IntegrationBasicReports, basicMetarFull) {
 
 TEST(IntegrationBasicReports, basicMetarShort) {
     static const auto rawReport =
-        "METAR SCCH 061700Z 23007KT CAVOK 07/03 Q1016=";
+        "METAR SCCH 061700Z 23007KT CAVOK 07/03 Q1016="; // 06 JUL 2020
 
     const auto result = metafsimple::simplify(rawReport);
 
@@ -143,7 +143,7 @@ TEST(IntegrationBasicReports, basicMetarShort) {
 
 TEST(ParseSimplifyReport, basicTafFull) {
     static const auto rawReport =
-        "TAF LICG 250500Z 2506/2515 24008KT CAVOK=";
+        "TAF LICG 250500Z 2506/2515 24008KT CAVOK="; // 25 JUL 2020
 
     const auto result = metafsimple::simplify(rawReport);
 
@@ -215,7 +215,7 @@ TEST(ParseSimplifyReport, basicTafFull) {
 
 TEST(IntegrationBasicReports, basicTafShort) {
     static const auto rawReport =
-        "TAF LICG 250500Z 2506/2515 24008KT CAVOK=";
+        "TAF LICG 250500Z 2506/2515 24008KT CAVOK="; // 25 JUL 2020
 
     const auto result = metafsimple::simplify(rawReport);
 
