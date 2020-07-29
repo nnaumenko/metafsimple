@@ -1,11 +1,12 @@
 # C++ library for processing and simplifying weather data obtained from METAR and TAF reports
 
 [![pipeline status](https://gitlab.com/nnaumenko/metafsimple/badges/master/pipeline.svg)](https://gitlab.com/nnaumenko/metafsimple/-/commits/master)
+[![codecov](https://codecov.io/gh/nnaumenko/metafsimple/branch/master/graph/badge.svg)](https://codecov.io/gh/nnaumenko/metafsimple)
 
 The purpose of this library is to collate and organise the data produced by
 parsing METAR or TAF report with Metaf library (available on [gitlab](https://gitlab.com/nnaumenko/metaf) or [github](https://github.com/nnaumenko/metaf).
 
-This project is work in progress.
+This project is a work in progress.
 
 The following example illustrates the principle.
 
