@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 4;
+    inline static const int patch = 5;
     inline static const char tag[] = "";
 };
 
@@ -3475,6 +3475,7 @@ class ForecastDataAdapter : DataAdapter {
     ForecastDataAdapter(Forecast &f, WarningLogger *l) : DataAdapter(l),
                                                          forecast(&f) {}
     inline void setWindShearConditions();
+    inline void setNosig();
     inline void addTrend(metaf::TrendGroup::Type t,
                          metaf::TrendGroup::Probability p,
                          std::optional<metaf::MetafTime> tfrom,
@@ -3502,6 +3503,11 @@ class ForecastDataAdapter : DataAdapter {
 void ForecastDataAdapter::setWindShearConditions() {
     assert(forecast);
     setData<bool>(forecast->windShearConditions, true);
+}
+
+void ForecastDataAdapter::setNosig() {
+    setData<bool>(forecast->noSignificantChanges, true);
+
 }
 
 void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
@@ -3545,14 +3551,7 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
         return;
     }
     const auto type = trendType(t);
-    if (!type.has_value()) {
-        // NOSIG trend
-        if (forecast->trends.size()) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return;
-        }
-        forecast->noSignificantChanges = true;
-    }
+    assert(type.has_value());
     forecast->trends.push_back(Trend{
         *type,
         trendProb(p),
@@ -3864,6 +3863,10 @@ void CollateVisitor::visitTrendGroup(const metaf::TrendGroup &group,
         EssentialsAdapter::isEmpty(result.forecast.prevailing)) {
         startPrevailingTrend();
         return;
+        }
+        if (group.type() == metaf::TrendGroup::Type::NOSIG) {
+            forecastData().setNosig();
+            return;
         }
         startOtherTrend();
         forecastData().addTrend(group.type(),

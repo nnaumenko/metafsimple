@@ -12,7 +12,7 @@ The following example illustrates the principle.
 <table>
 <tr align=center>
 <td colspan=2>
-Report: **METAR UKLI 071600Z 28003MPS 250V330 9999 -SHRA BKN019CB BKN028 13/12 Q1015 NOSIG=**
+Report: <b>METAR UKLI 071600Z 28003MPS 250V330 9999 -SHRA BKN019CB BKN028 13/12 Q1015 NOSIG=</b>
 </td>
 </tr>
 <tr align=center>
@@ -109,7 +109,6 @@ current:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;precipitation[0]: RAIN<br>
 <br>
 forecast:<br>
-&nbsp;&nbsp;trends[0]:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;type:NOSIG
+&nbsp;&nbsp;noSignificantChanges: true
 </td>
 </table>
