@@ -24,6 +24,8 @@ build-clang:
   - make
   - mkdir -p ci-build/test
   - mv bin/test ci-build/test/test-clang
+  - mkdir -p ci-build/coverage
+  - mv bin/testcoverage ci-build/coverage/coverage-clang
   artifacts:
     paths:
       - ci-build
@@ -68,3 +70,26 @@ tests-gcc:
     - ci-build/test/test-gcc
   dependencies:
     - build-gcc
+
+coverage:
+  stage: deploy
+  image: ubuntu:18.04
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+    - apt-get update
+    - apt-get -y --no-install-recommends install llvm-9 wget curl git ca-certificates
+    - ci-build/coverage/coverage-clang
+    - /usr/lib/llvm-9/bin/llvm-profdata merge -sparse default.profraw -o default.profdata
+    - /usr/lib/llvm-9/bin/llvm-profdata show -all-functions -counts -ic-targets default.profdata > profile.txt
+    - /usr/lib/llvm-9/bin/llvm-cov show ci-build/coverage/coverage-clang -instr-profile=default.profdata > coverage.txt
+    - mkdir ci-profile-coverage
+    - cp {default.*,profile.txt,coverage.txt} ci-profile-coverage
+    - wget -O codecov.sh https://codecov.io/bash
+    - chmod +x codecov.sh
+    - ./codecov.sh
+  artifacts:
+    paths:
+      - ci-profile-coverage
+  dependencies:
+    - build-clang
