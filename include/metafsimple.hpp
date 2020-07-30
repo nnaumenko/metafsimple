@@ -1749,7 +1749,12 @@ BasicDataAdapter::weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
          metaf::WeatherPhenomena::Descriptor::NONE,
          {metaf::WeatherPhenomena::Weather::SANDSTORM,
           metaf::WeatherPhenomena::Weather::DUSTSTORM},
-         Weather::Phenomena::HEAVY_DUST_SAND_STORM}};
+         Weather::Phenomena::HEAVY_DUST_SAND_STORM},
+
+        {metaf::WeatherPhenomena::Qualifier::NONE,
+         metaf::WeatherPhenomena::Descriptor::NONE,
+         {metaf::WeatherPhenomena::Weather::NOT_REPORTED},
+         Weather::Phenomena::UNKNOWN}};
     for (const auto &ph : knownPhenomena) {
         if (ph.qualifier == q && ph.descriptor == d && ph.weather == v)
             return ph.phenomena;
@@ -2245,7 +2250,9 @@ void EssentialsAdapter::setSkyCondition(metaf::CloudGroup::Amount a,
     switch (essentials->skyCondition) {
         case Essentials::SkyCondition::UNKNOWN:
             essentials->skyCondition = skyCondition(a);
-            break;
+            if (essentials->skyCondition != Essentials::SkyCondition::CLOUDS)
+                break;
+            [[fallthrough]];
         case Essentials::SkyCondition::CLOUDS:
             if (skyCondition(a) == essentials->skyCondition) {
                 // TODO: check for duplicate cloud layer height?
@@ -2301,9 +2308,9 @@ bool EssentialsAdapter::hasNsw() const {
     assert(essentials);
     for (const auto &w : essentials->weather) {
         if (w.phenomena == Weather::Phenomena::NO_SIGNIFICANT_WEATHER)
-            return false;
+            return true;
     }
-    return true;
+    return false;
 }
 
 Essentials::SkyCondition
