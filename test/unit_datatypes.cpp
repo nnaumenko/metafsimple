@@ -111,6 +111,8 @@ TEST_F(DataTypes, directionToCardinal) {
               metafsimple::CardinalDirection::W);
     EXPECT_EQ(metafsimple::directionToCardinal(315),
               metafsimple::CardinalDirection::NW);
+    EXPECT_EQ(metafsimple::directionToCardinal(350),
+              metafsimple::CardinalDirection::N);
     EXPECT_EQ(metafsimple::directionToCardinal(360),
               metafsimple::CardinalDirection::N);
     EXPECT_EQ(metafsimple::directionToCardinal(360 + 45),
