@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 5;
+    inline static const int patch = 6;
     inline static const char tag[] = "";
 };
 
@@ -1339,9 +1339,9 @@ Pressure BasicDataAdapter::pressure(const metaf::Pressure &p) {
         }
     };
     if (!p.pressure().has_value()) return Pressure();
-    Pressure result{std::floor(*p.pressure()), convertUnit(p.unit())};
+    Pressure result{std::round(*p.pressure()), convertUnit(p.unit())};
     if (result.unit == Pressure::Unit::HUNDREDTHS_IN_HG)
-        result.pressure = std::floor(*p.pressure() * 100.0);
+        result.pressure = std::round(*p.pressure() * 100.0);
     return result;
 }
 
@@ -3124,9 +3124,19 @@ void CurrentDataAdapter::setObscuration(metaf::CloudGroup::Amount amount,
 
 void CurrentDataAdapter::setTemperatureDewPoint(metaf::Temperature t,
                                                 metaf::Temperature dp) {
+    auto isPrecise = [](const Temperature &t) {
+        return t.unit != Temperature::Unit::TENTH_C;
+    };
     assert(current);
+    // TODO: check 'standard precision' and 'high precision' temperature value
+    // consistency
+    if (t.isPrecise() && isPrecise(current->airTemperature))
+        current->airTemperature.temperature = std::optional<int>();
     setData<Temperature>(current->airTemperature,
                          BasicDataAdapter::temperature(t));
+
+    if (dp.isPrecise() && isPrecise(current->dewPoint))
+        current->dewPoint.temperature = std::optional<int>();
     setData<Temperature>(current->dewPoint,
                          BasicDataAdapter::temperature(dp));
 }
@@ -3136,7 +3146,7 @@ void CurrentDataAdapter::setRelativeHumidity(metaf::Temperature t,
     assert(current);
     const auto rh = metaf::Temperature::relativeHumidity(t, dp);
     if (!rh.has_value()) return;
-    setData<std::optional<int>>(current->relativeHumidity, std::floor(*rh));
+    current->relativeHumidity = std::floor(*rh);
 }
 
 void CurrentDataAdapter::setVisibility(const metaf::Distance &min,
@@ -3514,7 +3524,6 @@ void ForecastDataAdapter::setWindShearConditions() {
 
 void ForecastDataAdapter::setNosig() {
     setData<bool>(forecast->noSignificantChanges, true);
-
 }
 
 void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
@@ -3786,6 +3795,7 @@ void CollateVisitor::collateMetadata(const metaf::ReportMetadata &md) {
                       md.isNospeci,
                       md.maintenanceIndicator,
                       md.correctionNumber);
+    mda.setAutoType(md.isAo1, md.isAo2, md.isAo1a, md.isAo2a);
     mda.setLocation(md.icaoLocation);
     mda.setReportTime(md.reportTime);
     mda.setApplicableTime(md.timeSpanFrom, md.timeSpanUntil);
@@ -3870,17 +3880,17 @@ void CollateVisitor::visitTrendGroup(const metaf::TrendGroup &group,
         EssentialsAdapter::isEmpty(result.forecast.prevailing)) {
         startPrevailingTrend();
         return;
-        }
-        if (group.type() == metaf::TrendGroup::Type::NOSIG) {
-            forecastData().setNosig();
-            return;
-        }
-        startOtherTrend();
-        forecastData().addTrend(group.type(),
-                                group.probability(),
-                                group.timeFrom(),
-                                group.timeUntil(),
-                                group.timeAt());
+    }
+    if (group.type() == metaf::TrendGroup::Type::NOSIG) {
+        forecastData().setNosig();
+        return;
+    }
+    startOtherTrend();
+    forecastData().addTrend(group.type(),
+                            group.probability(),
+                            group.timeFrom(),
+                            group.timeUntil(),
+                            group.timeAt());
 }
 
 void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,

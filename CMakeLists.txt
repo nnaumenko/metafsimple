@@ -46,7 +46,10 @@ set(SOURCES ${SOURCES}
     test/unit_basicdataadapter.cpp
     test/unit_essentialsadapter.cpp
     test/integration_basic_reports.cpp
-    test/integration_wind_data.cpp
+    test/integration_report_data.cpp
+    test/integration_wind_main.cpp
+    test/integration_visibility_main.cpp
+    test/integration_sky_condition_main.cpp
     test/integration_current_weather.cpp
 )
 

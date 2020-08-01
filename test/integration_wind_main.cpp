@@ -18,7 +18,7 @@ using namespace metafsimple;
 // wind with gusts
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST(ParseSimplifyReportWind, calmWind) {
+TEST(IntegrationWind, calmWind) {
     static const auto rawReport =
         "METAR EPZG 252000Z 00000KT CAVOK 18/18 Q1013="; // 25 JUL 2020
 
@@ -51,7 +51,7 @@ TEST(ParseSimplifyReportWind, calmWind) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, variableWindSector) {
+TEST(IntegrationWind, variableWindSector) {
     static const auto rawReport =
         "METAR EPRZ 251500Z 01006KT 330V050 CAVOK 26/14 Q1012="; // 25 JUL 2020
 
@@ -87,7 +87,7 @@ TEST(ParseSimplifyReportWind, variableWindSector) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, variableWindDirection) {
+TEST(IntegrationWind, variableWindDirection) {
     static const auto rawReport =
         "METAR EPRZ 251600Z VRB03KT CAVOK 26/14 Q1012="; // 25 JUL 2020
 
@@ -121,7 +121,7 @@ TEST(ParseSimplifyReportWind, variableWindDirection) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, windGusts) {
+TEST(IntegrationWind, windGusts) {
     static const auto rawReport =
         "METAR EPGD 211330Z 29019G29KT CAVOK 19/08 Q1017="; // 21 JUL 2020
 
@@ -156,7 +156,7 @@ TEST(ParseSimplifyReportWind, windGusts) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, windGustsVariableSector) {
+TEST(IntegrationWind, windGustsVariableSector) {
     static const auto rawReport =
         "METAR EPZG 241400Z 25007G18KT 180V300 CAVOK 28/08 Q1008="; 
         // 24 JUL 2020
@@ -194,7 +194,7 @@ TEST(ParseSimplifyReportWind, windGustsVariableSector) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, windInMps) {
+TEST(IntegrationWind, windInMps) {
     static const auto rawReport =
         "METAR UKLI 230600Z 19001MPS CAVOK 16/14 Q1017 NOSIG="; // 23 JUL 2020
 
@@ -231,7 +231,7 @@ TEST(ParseSimplifyReportWind, windInMps) {
     EXPECT_EQ(result.forecast, refForecast);
 }
 
-TEST(ParseSimplifyReportWind, windNotReported) {
+TEST(IntegrationWind, windNotReported) {
     static const auto rawReport =
         "LIPF 280555Z /////KT CAVOK 21/19 Q1016="; // 28 JUL 2020
 
@@ -263,7 +263,7 @@ TEST(ParseSimplifyReportWind, windNotReported) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, windDirectionNotReported) {
+TEST(IntegrationWind, windDirectionNotReported) {
     static const auto rawReport =
         "LIBY 271755Z ///15KT CAVOK 29/14 Q1014"
         " RMK SKC QUK 3 QUL 1 N VIS MAR 20 KM VIS MIN 9999="; // 27 JUL 2020
@@ -299,7 +299,7 @@ TEST(ParseSimplifyReportWind, windDirectionNotReported) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, variableWindSectorOnly) {
+TEST(IntegrationWind, variableWindSectorOnly) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 330V050 CAVOK 30/30 Q1015="; 
         // fake report created for this test
@@ -334,7 +334,7 @@ TEST(ParseSimplifyReportWind, variableWindSectorOnly) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, duplicateWindGroup) {
+TEST(IntegrationWind, duplicateWindGroup) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 27008KT 27008KT CAVOK 30/30 Q1015="; 
         // fake report created for this test
@@ -371,7 +371,7 @@ TEST(ParseSimplifyReportWind, duplicateWindGroup) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, twoWindGroups) {
+TEST(IntegrationWind, twoWindGroups) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 27008KT 31010KT CAVOK 30/30 Q1015="; 
         // fake report created for this test
@@ -408,7 +408,7 @@ TEST(ParseSimplifyReportWind, twoWindGroups) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, duplicateVariableWindSector) {
+TEST(IntegrationWind, duplicateVariableWindSector) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 27008KT 250V300 250V300 CAVOK 30/30 Q1015="; 
         // fake report created for this test
@@ -447,7 +447,7 @@ TEST(ParseSimplifyReportWind, duplicateVariableWindSector) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(ParseSimplifyReportWind, twoVariableWindSectorGroups) {
+TEST(IntegrationWind, twoVariableWindSectorGroups) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 27008KT 250V300 210V360 CAVOK 30/30 Q1015="; 
         // fake report created for this test
