@@ -13,7 +13,7 @@
 TEST(EssentialsAdapter, skyCondition) {
     EXPECT_EQ(metafsimple::detail::EssentialsAdapter::skyCondition(
         metaf::CloudGroup::Amount::NOT_REPORTED),
-    metafsimple::Essentials::SkyCondition::UNKNOWN);
+    metafsimple::Essentials::SkyCondition::CLOUDS);
 
     EXPECT_EQ(metafsimple::detail::EssentialsAdapter::skyCondition(
         metaf::CloudGroup::Amount::NONE_CLR),

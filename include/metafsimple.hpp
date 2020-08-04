@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 2;
-    inline static const int patch = 6;
+    inline static const int patch = 7;
     inline static const char tag[] = "";
 };
 
@@ -2316,8 +2316,6 @@ bool EssentialsAdapter::hasNsw() const {
 Essentials::SkyCondition
 EssentialsAdapter::skyCondition(metaf::CloudGroup::Amount a) {
     switch (a) {
-        case metaf::CloudGroup::Amount::NOT_REPORTED:
-            return Essentials::SkyCondition::UNKNOWN;
         case metaf::CloudGroup::Amount::NSC:
             return Essentials::SkyCondition::NO_SIGNIFICANT_CLOUD;
         case metaf::CloudGroup::Amount::NCD:
@@ -2326,6 +2324,7 @@ EssentialsAdapter::skyCondition(metaf::CloudGroup::Amount a) {
             return Essentials::SkyCondition::CLEAR_CLR;
         case metaf::CloudGroup::Amount::NONE_SKC:
             return Essentials::SkyCondition::CLEAR_SKC;
+        case metaf::CloudGroup::Amount::NOT_REPORTED:
         case metaf::CloudGroup::Amount::FEW:
         case metaf::CloudGroup::Amount::SCATTERED:
         case metaf::CloudGroup::Amount::BROKEN:
