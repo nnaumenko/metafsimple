@@ -103,13 +103,13 @@ TEST(IntegrationBasicReports, basicMetarFull) {
 
 TEST(IntegrationBasicReports, basicMetarShort) {
     static const auto rawReport =
-        "METAR SCCH 061700Z 23007KT CAVOK 07/03 Q1016="; // 06 JUL 2020
+        "METAR SCCH 061700Z 23007KT CAVOK 07/03 Q1016=";  // 06 JUL 2020
 
     const auto result = metafsimple::simplify(rawReport);
 
     Report refReport;
     refReport.type = Report::Type::METAR;
-    refReport.reportTime = Time {6, 17, 0};
+    refReport.reportTime = Time{6, 17, 0};
     refReport.error = Report::Error::NO_ERROR;
     EXPECT_EQ(result.report, refReport);
 
@@ -119,9 +119,9 @@ TEST(IntegrationBasicReports, basicMetarShort) {
 
     Current refCurrent;
     refCurrent.weatherData.windDirectionDegrees = 230;
-    refCurrent.weatherData.windSpeed = Speed {7, Speed::Unit::KT};
+    refCurrent.weatherData.windSpeed = Speed{7, Speed::Unit::KT};
     refCurrent.weatherData.visibility =
-        Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
     refCurrent.airTemperature = Temperature{7, Temperature::Unit::C};
@@ -137,13 +137,13 @@ TEST(IntegrationBasicReports, basicMetarShort) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Basic TAF: CAVOK, only one trend, no min/max temperature forecast, no remarks
-// Report type TAF, release and applicable time, station ICAO code, prevailing 
+// Report type TAF, release and applicable time, station ICAO code, prevailing
 // weather trend: wind data and CAVOK
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(ParseSimplifyReport, basicTafFull) {
     static const auto rawReport =
-        "TAF LICG 250500Z 2506/2515 24008KT CAVOK="; // 25 JUL 2020
+        "TAF LICG 250500Z 2506/2515 24008KT CAVOK=";  // 25 JUL 2020
 
     const auto result = metafsimple::simplify(rawReport);
 
@@ -197,33 +197,30 @@ TEST(ParseSimplifyReport, basicTafFull) {
                 {}                                 // weather phenomena
             },                                     // prevailing trend
 
-            {},             // trends
-            false,          // no significant changes (NOSIG)
-            false,          // wind shear conditions (WSCONDS)
-            Temperature(),  // min temperature
-            Time(),         // min tempeprature expected at
-            Temperature(),  // max temperature
-            Time(),         // max tempeprature expected at
-            {},             // icing forecast
-            {},             // turbulence forecast
-            Pressure()      // lowest forecast sea-level pressure
+            {},          // icing forecast for prevailing trend
+            {},          // turbulence forecast for prevailing trend
+            Pressure(),  // lowest forecast QNH for prevailing trend
+            {},          // trends
+            false,       // no significant changes (NOSIG)
+            false,       // wind shear conditions (WSCONDS)
+            {},          // min temperature
+            {},          // max temperature
         }
-
-    };
-    EXPECT_EQ(result, refResult);
+};
+EXPECT_EQ(result, refResult);
 }
 
 TEST(IntegrationBasicReports, basicTafShort) {
     static const auto rawReport =
-        "TAF LICG 250500Z 2506/2515 24008KT CAVOK="; // 25 JUL 2020
+        "TAF LICG 250500Z 2506/2515 24008KT CAVOK=";  // 25 JUL 2020
 
     const auto result = metafsimple::simplify(rawReport);
 
     Report refReport;
     refReport.type = Report::Type::TAF;
-    refReport.reportTime = Time {25, 5, 0};
-    refReport.applicableFrom = Time {25, 6, 0};
-    refReport.applicableUntil = Time {25, 15, 0};
+    refReport.reportTime = Time{25, 5, 0};
+    refReport.applicableFrom = Time{25, 6, 0};
+    refReport.applicableUntil = Time{25, 15, 0};
     refReport.error = Report::Error::NO_ERROR;
     EXPECT_EQ(result.report, refReport);
 
@@ -233,9 +230,9 @@ TEST(IntegrationBasicReports, basicTafShort) {
 
     Forecast refForecast;
     refForecast.prevailing.windDirectionDegrees = 240;
-    refForecast.prevailing.windSpeed = Speed {8, Speed::Unit::KT};
+    refForecast.prevailing.windSpeed = Speed{8, Speed::Unit::KT};
     refForecast.prevailing.visibility =
-        Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refForecast.prevailing.cavok = true;
     refForecast.prevailing.skyCondition = Essentials::SkyCondition::CAVOK;
     EXPECT_EQ(result.forecast, refForecast);
@@ -244,4 +241,3 @@ TEST(IntegrationBasicReports, basicTafShort) {
     EXPECT_EQ(result.historical, Historical());
     EXPECT_EQ(result.current, Current());
 }
-

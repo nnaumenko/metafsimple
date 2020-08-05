@@ -161,6 +161,16 @@ static inline bool operator==(const Trend &lhs, const Trend &rhs) {
     if (!(lhs.timeUntil == rhs.timeUntil)) return false;
     if (!(lhs.timeAt == rhs.timeAt)) return false;
     if (!(lhs.forecast == rhs.forecast)) return false;
+    if (lhs.icing != rhs.icing) return false;
+    if (lhs.turbulence != rhs.turbulence) return false;
+    if (!(lhs.lowestQnh == rhs.lowestQnh)) return false;
+    return true;
+}
+
+static inline bool operator==(const TemperatureForecast &lhs, 
+const TemperatureForecast &rhs) {
+    if (!(lhs.temperature == rhs.temperature)) return false;
+    if (!(lhs.time == rhs.time)) return false;
     return true;
 }
 
@@ -327,16 +337,14 @@ static inline bool operator==(const Historical &lhs, const Historical &rhs) {
 
 static inline bool operator==(const Forecast &lhs, const Forecast &rhs) {
     if (!(lhs.prevailing == rhs.prevailing)) return false;
+    if (!(lhs.prevailingIcing == rhs.prevailingIcing)) return false;
+    if (!(lhs.prevailingTurbulence == rhs.prevailingTurbulence)) return false;
+    if (!(lhs.prevailingLowestQnh == rhs.prevailingLowestQnh)) return false;
     if (!(lhs.trends == rhs.trends)) return false;
     if (lhs.noSignificantChanges != rhs.noSignificantChanges) return false;
     if (lhs.windShearConditions != rhs.windShearConditions) return false;
     if (!(lhs.minTemperature == rhs.minTemperature)) return false;
-    if (!(lhs.minTemperatureTime == rhs.minTemperatureTime)) return false;
     if (!(lhs.maxTemperature == rhs.maxTemperature)) return false;
-    if (!(lhs.maxTemperatureTime == rhs.maxTemperatureTime)) return false;
-    if (lhs.icing != rhs.icing) return false;
-    if (lhs.turbulence != rhs.turbulence) return false;
-    if (!(lhs.lowestQnh == rhs.lowestQnh)) return false;
     return true;
 }
 

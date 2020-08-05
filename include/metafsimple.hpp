@@ -21,8 +21,8 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 2;
-    inline static const int patch = 7;
+    inline static const int minor = 3;
+    inline static const int patch = 0;
     inline static const char tag[] = "";
 };
 
@@ -456,6 +456,12 @@ struct TurbulenceForecast {
     Height maxHeight;
 };
 
+// Temperature forecast, used with minimum/maximum temperature forecasts
+struct TemperatureForecast {
+    Temperature temperature;
+    Time time;
+};
+
 // Weather trend
 struct Trend {
     enum class Type {
@@ -471,6 +477,9 @@ struct Trend {
     Time timeUntil;
     Time timeAt;
     Essentials forecast;
+    std::vector<IcingForecast> icing;
+    std::vector<TurbulenceForecast> turbulence;
+    Pressure lowestQnh;
 };
 
 // METAR, SPECI or TAF report information, including type of report, report
@@ -818,19 +827,17 @@ struct Historical {
 };
 
 // Forecast data including weather trends (each trend has Essentials),
-// minimum and maximum temperature, pressure, icing and turbulence forecast, etc
+// minimum and maximum temperature, pressure, etc
 struct Forecast {
     Essentials prevailing;
+    std::vector<IcingForecast> prevailingIcing;
+    std::vector<TurbulenceForecast> prevailingTurbulence;
+    Pressure prevailingLowestQnh;
     std::vector<Trend> trends;
     bool noSignificantChanges = false;
     bool windShearConditions = false;
-    Temperature minTemperature;
-    Time minTemperatureTime;
-    Temperature maxTemperature;
-    Time maxTemperatureTime;
-    std::vector<IcingForecast> icing;
-    std::vector<TurbulenceForecast> turbulence;
-    Pressure lowestQnh;
+    std::vector<TemperatureForecast> minTemperature;
+    std::vector<TemperatureForecast> maxTemperature;
 };
 
 // Structure generated after processing METAR, SPECI or TAF reports, contains
@@ -3498,7 +3505,7 @@ class ForecastDataAdapter : DataAdapter {
                          std::optional<metaf::MetafTime> tuntil,
                          std::optional<metaf::MetafTime> tat);
     inline void setLowestPressure(metaf::Pressure p);
-    inline void setMinMaxTemperature(metaf::Temperature min,
+    inline void addMinMaxTemperature(metaf::Temperature min,
                                      std::optional<metaf::MetafTime> tmin,
                                      metaf::Temperature max,
                                      std::optional<metaf::MetafTime> tmax);
@@ -3573,40 +3580,37 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
         BasicDataAdapter::time(tfrom),
         BasicDataAdapter::time(tuntil),
         BasicDataAdapter::time(tat),
-        Essentials()});
+        Essentials(),
+        {},
+        {},
+        Pressure()});
 }
 
 void ForecastDataAdapter::setLowestPressure(metaf::Pressure p) {
-    if (!p.isReported()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
     assert(forecast);
-    setData<Pressure>(forecast->lowestQnh, BasicDataAdapter::pressure(p));
+    assert(forecast->trends.size());
+    setData<Pressure>(forecast->trends.back().lowestQnh,
+                      BasicDataAdapter::pressure(p));
 }
 
-void ForecastDataAdapter::setMinMaxTemperature(metaf::Temperature min,
+void ForecastDataAdapter::addMinMaxTemperature(metaf::Temperature min,
                                                std::optional<metaf::MetafTime>
                                                    tmin,
                                                metaf::Temperature max,
                                                std::optional<metaf::MetafTime>
                                                    tmax) {
-    if (!tmin.has_value() ||
-        !tmax.has_value() ||
-        !min.isReported() ||
-        !max.isReported()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
     assert(forecast);
-    setData<Temperature>(forecast->minTemperature,
-                         BasicDataAdapter::temperature(min));
-    setData<Temperature>(forecast->maxTemperature,
-                         BasicDataAdapter::temperature(max));
-    setData<Time>(forecast->minTemperatureTime,
-                  BasicDataAdapter::time(tmin));
-    setData<Time>(forecast->maxTemperatureTime,
-                  BasicDataAdapter::time(tmax));
+    // TODO: check for duplicate points?
+    if (min.isReported() && tmin.has_value())
+        forecast->minTemperature.push_back(
+            TemperatureForecast{
+                BasicDataAdapter::temperature(min),
+                BasicDataAdapter::time(tmin)});
+    if (max.isReported() && tmax.has_value())
+        forecast->maxTemperature.push_back(
+            TemperatureForecast{
+                BasicDataAdapter::temperature(max),
+                BasicDataAdapter::time(tmax)});
 }
 
 void ForecastDataAdapter::addIcing(IcingForecast::Severity s,
@@ -3614,16 +3618,14 @@ void ForecastDataAdapter::addIcing(IcingForecast::Severity s,
                                    metaf::Distance baseHeight,
                                    metaf::Distance topHeight) {
     // TODO: check for duplicate layer information?
-    if (!baseHeight.isReported() || !baseHeight.isReported()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
     assert(forecast);
-    forecast->icing.push_back(IcingForecast{
-        s,
-        t,
-        BasicDataAdapter::height(baseHeight),
-        BasicDataAdapter::height(topHeight)});
+    assert(forecast->trends.size());
+    forecast->trends.back().icing.push_back(
+        IcingForecast{
+            s,
+            t,
+            BasicDataAdapter::height(baseHeight),
+            BasicDataAdapter::height(topHeight)});
 }
 
 void ForecastDataAdapter::addTurbulence(TurbulenceForecast::Severity s,
@@ -3631,17 +3633,17 @@ void ForecastDataAdapter::addTurbulence(TurbulenceForecast::Severity s,
                                         TurbulenceForecast::Location l,
                                         metaf::Distance baseHeight,
                                         metaf::Distance topHeight) {
-    if (!baseHeight.isReported() || !baseHeight.isReported()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
     assert(forecast);
-    forecast->turbulence.push_back(TurbulenceForecast{
-        s,
-        l,
-        f,
-        BasicDataAdapter::height(baseHeight),
-        BasicDataAdapter::height(topHeight)});
+    assert(forecast->trends.size());
+    assert(forecast);
+    assert(forecast->trends.size());
+    forecast->trends.back().turbulence.push_back(
+        TurbulenceForecast{
+            s,
+            l,
+            f,
+            BasicDataAdapter::height(baseHeight),
+            BasicDataAdapter::height(topHeight)});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4212,7 +4214,7 @@ void CollateVisitor::visitMinMaxTemperatureGroup(
                                                   group.maximum());
             break;
         case metaf::MinMaxTemperatureGroup::Type::FORECAST:
-            forecastData().setMinMaxTemperature(group.minimum(),
+            forecastData().addMinMaxTemperature(group.minimum(),
                                                 group.minimumTime(),
                                                 group.maximum(),
                                                 group.maximumTime());
