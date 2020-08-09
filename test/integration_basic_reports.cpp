@@ -66,12 +66,13 @@ TEST(IntegrationBasicReports, basicMetarFull) {
                 Distance{
                     Distance::Details::MORE_THAN,
                     10000,
-                    Distance::Unit::METERS},      // prevailing visibility
-                true,                             // CAVOK
-                Essentials::SkyCondition::CAVOK,  // sky condition
-                {},                               // cloud layers
-                Height(),                         // vertical visibility
-                {}                                // weather phenomena
+                    Distance::Unit::METERS},          // prevailing visibility
+                true,                                 // CAVOK
+                Essentials::SkyCondition::CAVOK,      // sky condition
+                {},                                   // cloud layers
+                Height(),                             // vertical visibility
+                {},                                   // weather phenomena
+                Pressure{1016, Pressure::Unit::HPA},  // sea-level pressure
             },
             DistanceRange(),                       // variable visibility
             {},                                    // obscurations
@@ -81,7 +82,6 @@ TEST(IntegrationBasicReports, basicMetarFull) {
             Temperature{7, Temperature::Unit::C},  // ambient air temperature
             Temperature{3, Temperature::Unit::C},  // dew point
             75,                                    // relative humidity
-            Pressure{1016, Pressure::Unit::HPA},   // sea-level pressure
             Pressure(),                            // actual pressure
             Temperature(),                         // sea surface temperature
             WaveHeight(),                          // wave height
@@ -124,10 +124,11 @@ TEST(IntegrationBasicReports, basicMetarShort) {
         Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1016, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{7, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{3, Temperature::Unit::C};
     refCurrent.relativeHumidity = 75;
-    refCurrent.pressureSeaLevel = Pressure{1016, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -194,20 +195,20 @@ TEST(ParseSimplifyReport, basicTafFull) {
                 Essentials::SkyCondition::CAVOK,   // sky condition
                 {},                                // cloud layers
                 Height(),                          // vertical visibility
-                {}                                 // weather phenomena
+                {},                                // weather phenomena
+                Pressure()                         // lowest forecast SLP
             },                                     // prevailing trend
 
-            {},          // icing forecast for prevailing trend
-            {},          // turbulence forecast for prevailing trend
-            Pressure(),  // lowest forecast QNH for prevailing trend
-            {},          // trends
-            false,       // no significant changes (NOSIG)
-            false,       // wind shear conditions (WSCONDS)
-            {},          // min temperature
-            {},          // max temperature
-        }
-};
-EXPECT_EQ(result, refResult);
+            {},     // icing forecast for prevailing trend
+            {},     // turbulence forecast for prevailing trend
+            {},     // phenomena in vicinity
+            {},     // trends
+            false,  // no significant changes (NOSIG)
+            false,  // wind shear conditions (WSCONDS)
+            {},     // min temperature
+            {},     // max temperature
+        }};
+    EXPECT_EQ(result, refResult);
 }
 
 TEST(IntegrationBasicReports, basicTafShort) {

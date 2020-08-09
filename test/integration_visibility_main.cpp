@@ -43,10 +43,11 @@ TEST(IntegrationVisibility, visibility10km) {
     refCurrent.weatherData.visibility =
         Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CLEAR_SKC;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1011, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{27, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{17, Temperature::Unit::C};
     refCurrent.relativeHumidity = 54;
-    refCurrent.pressureSeaLevel = Pressure{1011, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -78,10 +79,11 @@ TEST(IntegrationVisibility, visibility8km) {
         Distance{Distance::Details::EXACTLY, 8000, Distance::Unit::METERS};
     refCurrent.weatherData.skyCondition =
         Essentials::SkyCondition::NO_SIGNIFICANT_CLOUD;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1011, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{14, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{13, Temperature::Unit::C};
     refCurrent.relativeHumidity = 93;
-    refCurrent.pressureSeaLevel = Pressure{1011, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -115,10 +117,11 @@ TEST(IntegrationVisibility, visibility700m) {
         Essentials::SkyCondition::NO_SIGNIFICANT_CLOUD;
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::FOG, {}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1018, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{15, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{15, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1018, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -156,10 +159,11 @@ TEST(IntegrationVisibility, visibility50m) {
         Essentials::SkyCondition::CLEAR_NCD;
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::FOG, {}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1030, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{8, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{7, Temperature::Unit::C};
     refCurrent.relativeHumidity = 93;
-    refCurrent.pressureSeaLevel = Pressure{1030, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -187,10 +191,11 @@ TEST(IntegrationVisibility, visibilityNotReportedMeters) {
     Current refCurrent;
     refCurrent.weatherData.windDirectionVariable = true;
     refCurrent.weatherData.windSpeed = Speed{4, Speed::Unit::KT};
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1013, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{28, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{18, Temperature::Unit::C};
     refCurrent.relativeHumidity = 54;
-    refCurrent.pressureSeaLevel = Pressure{1013, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -231,11 +236,11 @@ TEST(IntegrationVisibility, visibility20sm) {
                    Height{12000, Height::Unit::FEET},
                    CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
                    std::optional<int>()});
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{3016, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{27, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{10, Temperature::Unit::C};
     refCurrent.relativeHumidity = 34;
-    refCurrent.pressureSeaLevel =
-        Pressure{3016, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -273,11 +278,11 @@ TEST(IntegrationVisibility, visibility10sm) {
                    Height{4500, Height::Unit::FEET},
                    CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
                    std::optional<int>()});
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{2986, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{22, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{20, Temperature::Unit::C};
     refCurrent.relativeHumidity = 88;
-    refCurrent.pressureSeaLevel =
-        Pressure{2986, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -315,11 +320,11 @@ TEST(IntegrationVisibility, visibility7sm) {
                    Height{12000, Height::Unit::FEET},
                    CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
                    std::optional<int>()});
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{2994, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{26, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{24, Temperature::Unit::C};
     refCurrent.relativeHumidity = 88;
-    refCurrent.pressureSeaLevel =
-        Pressure{2994, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -356,7 +361,7 @@ TEST(IntegrationVisibility, visibility3sm) {
                    Height{100, Height::Unit::FEET},
                    CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
                    std::optional<int>()});
-    refCurrent.pressureSeaLevel =
+    refCurrent.weatherData.seaLevelPressure =
         Pressure{2996, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
@@ -399,11 +404,11 @@ TEST(IntegrationVisibility, visibility2_1_2sm) {
                    std::optional<int>()});
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::MIST, {}});
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{2991, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{22, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{21, Temperature::Unit::C};
     refCurrent.relativeHumidity = 94;
-    refCurrent.pressureSeaLevel =
-        Pressure{2991, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -441,11 +446,11 @@ TEST(IntegrationVisibility, visibility_3_4_sm) {
                    std::optional<int>()});
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::MIST, {}});
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{2995, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{22, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{22, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel =
-        Pressure{2995, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -481,11 +486,11 @@ TEST(IntegrationVisibility, visibilityM1_4sm) {
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::FOG, {}});
     refCurrent.weatherData.verticalVisibility = Height{0, Height::Unit::FEET};
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{3024, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{11, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{11, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel =
-        Pressure{3024, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -562,11 +567,11 @@ TEST(IntegrationVisibility, visibilityNotReportedMiles) {
     refCurrent.weatherData.windDirectionVarFromDegrees = 230;
     refCurrent.weatherData.windDirectionVarToDegrees = 290;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CLEAR_NCD;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{2974, Pressure::Unit::HUNDREDTHS_IN_HG};
     refCurrent.airTemperature = Temperature{19, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{4, Temperature::Unit::C};
     refCurrent.relativeHumidity = 37;
-    refCurrent.pressureSeaLevel =
-        Pressure{2974, Pressure::Unit::HUNDREDTHS_IN_HG};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());

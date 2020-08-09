@@ -151,6 +151,7 @@ static inline bool operator==(const Essentials &lhs, const Essentials &rhs) {
     if (lhs.cloudLayers != rhs.cloudLayers) return false;
     if (!(lhs.verticalVisibility == rhs.verticalVisibility)) return false;
     if (lhs.weather != rhs.weather) return false;
+    if (!(lhs.seaLevelPressure == rhs.seaLevelPressure)) return false;
     return true;
 }
 
@@ -163,7 +164,7 @@ static inline bool operator==(const Trend &lhs, const Trend &rhs) {
     if (!(lhs.forecast == rhs.forecast)) return false;
     if (lhs.icing != rhs.icing) return false;
     if (lhs.turbulence != rhs.turbulence) return false;
-    if (!(lhs.lowestQnh == rhs.lowestQnh)) return false;
+    if (!(lhs.vicinity == rhs.vicinity)) return false;
     return true;
 }
 
@@ -272,7 +273,6 @@ static inline bool operator==(const Current &lhs, const Current &rhs) {
     if (!(lhs.airTemperature == rhs.airTemperature)) return false;
     if (!(lhs.dewPoint == rhs.dewPoint)) return false;
     if (lhs.relativeHumidity != rhs.relativeHumidity) return false;
-    if (!(lhs.pressureSeaLevel == rhs.pressureSeaLevel)) return false;
     if (!(lhs.pressureGroundLevel == rhs.pressureGroundLevel)) return false;
     if (!(lhs.seaSurfaceTemperature == rhs.seaSurfaceTemperature)) return false;
     if (!(lhs.waveHeight == rhs.waveHeight)) return false;
@@ -339,7 +339,7 @@ static inline bool operator==(const Forecast &lhs, const Forecast &rhs) {
     if (!(lhs.prevailing == rhs.prevailing)) return false;
     if (!(lhs.prevailingIcing == rhs.prevailingIcing)) return false;
     if (!(lhs.prevailingTurbulence == rhs.prevailingTurbulence)) return false;
-    if (!(lhs.prevailingLowestQnh == rhs.prevailingLowestQnh)) return false;
+    if (!(lhs.prevailingVicinity == rhs.prevailingVicinity)) return false;
     if (!(lhs.trends == rhs.trends)) return false;
     if (lhs.noSignificantChanges != rhs.noSignificantChanges) return false;
     if (lhs.windShearConditions != rhs.windShearConditions) return false;

@@ -21,7 +21,7 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 3;
+    inline static const int minor = 4;
     inline static const int patch = 0;
     inline static const char tag[] = "";
 };
@@ -326,36 +326,38 @@ struct CloudLayer {
     std::optional<int> okta;
 };
 
+// Type of phenomena observed in vicinity of the station
+enum class ObservedPhenomena {
+    THUNDERSTORM,
+    CUMULONIMBUS,
+    CUMULONIMBUS_MAMMATUS,
+    TOWERING_CUMULUS,
+    ALTOCUMULUS_CASTELLANUS,
+    STRATOCUMULUS_STANDING_LENTICULAR,
+    ALTOCUMULUS_STANDING_LENTICULAR,
+    CIRROCUMULUS_STANDING_LENTICULAR,
+    ROTOR_CLOUD,
+    VIRGA,
+    PRECIPITATION,
+    FOG,
+    FOG_SHALLOW,
+    FOG_PATCHES,
+    HAZE,
+    SMOKE,
+    BLOWING_SNOW,
+    BLOWING_SAND,
+    BLOWING_DUST,
+    DUST_WHIRLS,
+    SAND_STORM,
+    DUST_STORM,
+    VOLCANIC_ASH,
+    FUNNEL_CLOUD
+};
+
 // Phenomena observed in vicinity, including phenomena type, directions where
 // it is observed, optional distance, and optional moving direction
 struct Vicinity {
-    enum class Phenomena {
-        THUNDERSTORM,
-        CUMULONIMBUS,
-        CUMULONIMBUS_MAMMATUS,
-        TOWERING_CUMULUS,
-        ALTOCUMULUS_CASTELLANUS,
-        STRATOCUMULUS_STANDING_LENTICULAR,
-        ALTOCUMULUS_STANDING_LENTICULAR,
-        CIRROCUMULUS_STANDING_LENTICULAR,
-        ROTOR_CLOUD,
-        VIRGA,
-        PRECIPITATION,
-        FOG,
-        FOG_SHALLOW,
-        FOG_PATCHES,
-        HAZE,
-        SMOKE,
-        BLOWING_SNOW,
-        BLOWING_SAND,
-        BLOWING_DUST,
-        DUST_WHIRLS,
-        SAND_STORM,
-        DUST_STORM,
-        VOLCANIC_ASH,
-        FUNNEL_CLOUD
-    };
-    Phenomena phenomena;
+    ObservedPhenomena phenomena;
     DistanceRange distance;
     CardinalDirection moving;
     std::set<CardinalDirection> directions;
@@ -407,6 +409,7 @@ struct Essentials {
     std::vector<CloudLayer> cloudLayers;
     Height verticalVisibility;
     std::vector<Weather> weather;
+    Pressure seaLevelPressure;
 };
 
 // Icing forecast including severity, type and height range where icing occurs
@@ -479,7 +482,7 @@ struct Trend {
     Essentials forecast;
     std::vector<IcingForecast> icing;
     std::vector<TurbulenceForecast> turbulence;
-    Pressure lowestQnh;
+    std::set<ObservedPhenomena> vicinity;
 };
 
 // METAR, SPECI or TAF report information, including type of report, report
@@ -742,7 +745,6 @@ struct Current {
     Temperature airTemperature;
     Temperature dewPoint;
     std::optional<int> relativeHumidity;
-    Pressure pressureSeaLevel;
     Pressure pressureGroundLevel;
     Temperature seaSurfaceTemperature;
     WaveHeight waveHeight;
@@ -832,7 +834,7 @@ struct Forecast {
     Essentials prevailing;
     std::vector<IcingForecast> prevailingIcing;
     std::vector<TurbulenceForecast> prevailingTurbulence;
-    Pressure prevailingLowestQnh;
+    std::set<ObservedPhenomena> prevailingVicinity;
     std::vector<Trend> trends;
     bool noSignificantChanges = false;
     bool windShearConditions = false;
@@ -1280,7 +1282,10 @@ class BasicDataAdapter : DataAdapter {
     precipitationPhenomena(metaf::WeatherPhenomena::Qualifier q,
                            metaf::WeatherPhenomena::Descriptor d);
 
-    inline static const int metersPerNauticalMile = 1852;
+    inline static std::optional<ObservedPhenomena>
+    vicinityPhenomena(const Weather &w);
+
+        inline static const int metersPerNauticalMile = 1852;
 };
 
 Runway BasicDataAdapter::runway(const metaf::Runway &r) {
@@ -1872,6 +1877,47 @@ BasicDataAdapter::weather(const metaf::WeatherPhenomena &wp) {
         result.precipitation.insert(*pr);
     }
     return result;
+}
+
+std::optional<ObservedPhenomena>
+BasicDataAdapter::vicinityPhenomena(const Weather &w) {
+    switch (w.phenomena) {
+        case Weather::Phenomena::THUNDERSTORM:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::THUNDERSTORM);
+        case Weather::Phenomena::FOG:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::FOG);
+        case Weather::Phenomena::PRECIPITATION:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::PRECIPITATION);
+        case Weather::Phenomena::DUST_WHIRLS:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::DUST_WHIRLS);
+        case Weather::Phenomena::FUNNEL_CLOUD:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::FUNNEL_CLOUD);
+        case Weather::Phenomena::BLOWING_DUST:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::BLOWING_DUST);
+        case Weather::Phenomena::BLOWING_SAND:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::BLOWING_SAND);
+        case Weather::Phenomena::BLOWING_SNOW:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::BLOWING_SNOW);
+        case Weather::Phenomena::DUST_STORM:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::DUST_STORM);
+        case Weather::Phenomena::SAND_STORM:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::SAND_STORM);
+        case Weather::Phenomena::VOLCANIC_ASH:
+            return std::optional<ObservedPhenomena>(
+                ObservedPhenomena::VOLCANIC_ASH);
+        default:
+            return std::optional<ObservedPhenomena>();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3084,11 +3130,11 @@ class CurrentDataAdapter : DataAdapter {
                              bool cloudAir,
                              bool unknownType,
                              std::vector<metaf::Direction> dir);
-    inline void setPhenomenaInVicinity(metaf::VicinityGroup::Type t,
+    inline void addPhenomenaInVicinity(metaf::VicinityGroup::Type t,
                                        metaf::Distance d,
                                        std::vector<metaf::Direction> dir,
                                        metaf::Direction movDir);
-    inline void setPhenomenaInVicinity(const metaf::WeatherPhenomena &w);
+    inline void addPhenomenaInVicinity(const metaf::WeatherPhenomena &w);
     inline void setHailstoneSize(std::optional<float> s);
     inline void setDensityAltitude(std::optional<float> da);
     inline void setFrostOnInstrument();
@@ -3175,7 +3221,8 @@ void CurrentDataAdapter::setVisibility(const metaf::Distance &min,
 
 void CurrentDataAdapter::setPressureQnh(metaf::Pressure p) {
     assert(current);
-    setData<Pressure>(current->pressureSeaLevel, BasicDataAdapter::pressure(p));
+    setData<Pressure>(current->weatherData.seaLevelPressure,
+                      BasicDataAdapter::pressure(p));
 }
 
 void CurrentDataAdapter::setPressureQfe(metaf::Pressure p) {
@@ -3349,7 +3396,7 @@ void CurrentDataAdapter::setLightning(metaf::LightningGroup::Frequency f,
     current->lightningStrikes.push_back(result);
 }
 
-void CurrentDataAdapter::setPhenomenaInVicinity(metaf::VicinityGroup::Type t,
+void CurrentDataAdapter::addPhenomenaInVicinity(metaf::VicinityGroup::Type t,
                                                 metaf::Distance d,
                                                 std::vector<metaf::Direction>
                                                     dir,
@@ -3357,43 +3404,43 @@ void CurrentDataAdapter::setPhenomenaInVicinity(metaf::VicinityGroup::Type t,
     auto convert = [](metaf::VicinityGroup::Type t) {
         switch (t) {
             case metaf::VicinityGroup::Type::THUNDERSTORM:
-                return Vicinity::Phenomena::THUNDERSTORM;
+                return ObservedPhenomena::THUNDERSTORM;
             case metaf::VicinityGroup::Type::CUMULONIMBUS:
-                return Vicinity::Phenomena::CUMULONIMBUS;
+                return ObservedPhenomena::CUMULONIMBUS;
             case metaf::VicinityGroup::Type::CUMULONIMBUS_MAMMATUS:
-                return Vicinity::Phenomena::CUMULONIMBUS_MAMMATUS;
+                return ObservedPhenomena::CUMULONIMBUS_MAMMATUS;
             case metaf::VicinityGroup::Type::TOWERING_CUMULUS:
-                return Vicinity::Phenomena::TOWERING_CUMULUS;
+                return ObservedPhenomena::TOWERING_CUMULUS;
             case metaf::VicinityGroup::Type::ALTOCUMULUS_CASTELLANUS:
-                return Vicinity::Phenomena::ALTOCUMULUS_CASTELLANUS;
+                return ObservedPhenomena::ALTOCUMULUS_CASTELLANUS;
             case metaf::VicinityGroup::Type::STRATOCUMULUS_STANDING_LENTICULAR:
-                return Vicinity::Phenomena::STRATOCUMULUS_STANDING_LENTICULAR;
+                return ObservedPhenomena::STRATOCUMULUS_STANDING_LENTICULAR;
             case metaf::VicinityGroup::Type::ALTOCUMULUS_STANDING_LENTICULAR:
-                return Vicinity::Phenomena::ALTOCUMULUS_STANDING_LENTICULAR;
+                return ObservedPhenomena::ALTOCUMULUS_STANDING_LENTICULAR;
             case metaf::VicinityGroup::Type::CIRROCUMULUS_STANDING_LENTICULAR:
-                return Vicinity::Phenomena::CIRROCUMULUS_STANDING_LENTICULAR;
+                return ObservedPhenomena::CIRROCUMULUS_STANDING_LENTICULAR;
             case metaf::VicinityGroup::Type::ROTOR_CLOUD:
-                return Vicinity::Phenomena::ROTOR_CLOUD;
+                return ObservedPhenomena::ROTOR_CLOUD;
             case metaf::VicinityGroup::Type::VIRGA:
-                return Vicinity::Phenomena::VIRGA;
+                return ObservedPhenomena::VIRGA;
             case metaf::VicinityGroup::Type::PRECIPITATION_IN_VICINITY:
-                return Vicinity::Phenomena::PRECIPITATION;
+                return ObservedPhenomena::PRECIPITATION;
             case metaf::VicinityGroup::Type::FOG:
-                return Vicinity::Phenomena::FOG;
+                return ObservedPhenomena::FOG;
             case metaf::VicinityGroup::Type::FOG_SHALLOW:
-                return Vicinity::Phenomena::FOG_SHALLOW;
+                return ObservedPhenomena::FOG_SHALLOW;
             case metaf::VicinityGroup::Type::FOG_PATCHES:
-                return Vicinity::Phenomena::FOG_PATCHES;
+                return ObservedPhenomena::FOG_PATCHES;
             case metaf::VicinityGroup::Type::HAZE:
-                return Vicinity::Phenomena::HAZE;
+                return ObservedPhenomena::HAZE;
             case metaf::VicinityGroup::Type::SMOKE:
-                return Vicinity::Phenomena::SMOKE;
+                return ObservedPhenomena::SMOKE;
             case metaf::VicinityGroup::Type::BLOWING_SNOW:
-                return Vicinity::Phenomena::BLOWING_SNOW;
+                return ObservedPhenomena::BLOWING_SNOW;
             case metaf::VicinityGroup::Type::BLOWING_SAND:
-                return Vicinity::Phenomena::BLOWING_SAND;
+                return ObservedPhenomena::BLOWING_SAND;
             case metaf::VicinityGroup::Type::BLOWING_DUST:
-                return Vicinity::Phenomena::BLOWING_DUST;
+                return ObservedPhenomena::BLOWING_DUST;
         }
     };
     Vicinity v;
@@ -3407,53 +3454,14 @@ void CurrentDataAdapter::setPhenomenaInVicinity(metaf::VicinityGroup::Type t,
     current->phenomenaInVicinity.push_back(v);
 }
 
-void CurrentDataAdapter::setPhenomenaInVicinity(
+void CurrentDataAdapter::addPhenomenaInVicinity(
     const metaf::WeatherPhenomena &w) {
-    auto convertVicinity = [](Weather w) {
-        switch (w.phenomena) {
-            case Weather::Phenomena::THUNDERSTORM:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::THUNDERSTORM);
-            case Weather::Phenomena::FOG:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::FOG);
-            case Weather::Phenomena::PRECIPITATION:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::PRECIPITATION);
-            case Weather::Phenomena::DUST_WHIRLS:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::DUST_WHIRLS);
-            case Weather::Phenomena::FUNNEL_CLOUD:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::FUNNEL_CLOUD);
-            case Weather::Phenomena::BLOWING_DUST:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::BLOWING_DUST);
-            case Weather::Phenomena::BLOWING_SAND:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::BLOWING_SAND);
-            case Weather::Phenomena::BLOWING_SNOW:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::BLOWING_SNOW);
-            case Weather::Phenomena::DUST_STORM:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::DUST_STORM);
-            case Weather::Phenomena::SAND_STORM:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::SAND_STORM);
-            case Weather::Phenomena::VOLCANIC_ASH:
-                return std::optional<Vicinity::Phenomena>(
-                    Vicinity::Phenomena::VOLCANIC_ASH);
-            default:
-                return std::optional<Vicinity::Phenomena>();
-        }
-    };
     const auto weather = BasicDataAdapter::weather(w);
     if (!weather.has_value()) {
         log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
         return;
     }
-    const auto ph = convertVicinity(*weather);
+    const auto ph = BasicDataAdapter::vicinityPhenomena(*weather);
     if (!ph.has_value()) {
         log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
         return;
@@ -3504,6 +3512,10 @@ class ForecastDataAdapter : DataAdapter {
                          std::optional<metaf::MetafTime> tfrom,
                          std::optional<metaf::MetafTime> tuntil,
                          std::optional<metaf::MetafTime> tat);
+    bool isTrend() const {
+        assert(forecast);
+        return !forecast->trends.empty();
+    }
     inline void setLowestPressure(metaf::Pressure p);
     inline void addMinMaxTemperature(metaf::Temperature min,
                                      std::optional<metaf::MetafTime> tmin,
@@ -3518,6 +3530,10 @@ class ForecastDataAdapter : DataAdapter {
                               TurbulenceForecast::Location l,
                               metaf::Distance baseHeight,
                               metaf::Distance topHeight);
+    inline void
+    addPhenomenaInVicinityPrevailing(const metaf::WeatherPhenomena &w);
+    inline void
+    addPhenomenaInVicinityTrend(const metaf::WeatherPhenomena &w);
 
    private:
     Forecast *forecast;
@@ -3583,13 +3599,13 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
         Essentials(),
         {},
         {},
-        Pressure()});
+        {}});
 }
 
 void ForecastDataAdapter::setLowestPressure(metaf::Pressure p) {
     assert(forecast);
     assert(forecast->trends.size());
-    setData<Pressure>(forecast->trends.back().lowestQnh,
+    setData<Pressure>(forecast->trends.back().forecast.seaLevelPressure,
                       BasicDataAdapter::pressure(p));
 }
 
@@ -3644,6 +3660,41 @@ void ForecastDataAdapter::addTurbulence(TurbulenceForecast::Severity s,
             f,
             BasicDataAdapter::height(baseHeight),
             BasicDataAdapter::height(topHeight)});
+}
+
+void ForecastDataAdapter::addPhenomenaInVicinityPrevailing(
+    const metaf::WeatherPhenomena &w) {
+
+    const auto weather = BasicDataAdapter::weather(w);
+    if (!weather.has_value()) {
+        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
+        return;
+    }
+    const auto ph = BasicDataAdapter::vicinityPhenomena(*weather);
+    if (!ph.has_value()) {
+        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
+        return;
+    }
+    assert(forecast);
+    forecast->prevailingVicinity.insert(*ph);
+}
+
+void ForecastDataAdapter::addPhenomenaInVicinityTrend(
+    const metaf::WeatherPhenomena &w) {
+
+    const auto weather = BasicDataAdapter::weather(w);
+    if (!weather.has_value()) {
+        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
+        return;
+    }
+    const auto ph = BasicDataAdapter::vicinityPhenomena(*weather);
+    if (!ph.has_value()) {
+        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
+        return;
+    }
+    assert(forecast);
+    assert(forecast->trends.size());
+    forecast->trends.back().vicinity.insert(*ph);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4077,19 +4128,35 @@ void CollateVisitor::visitCloudGroup(const metaf::CloudGroup &group,
 void CollateVisitor::visitWeatherGroup(const metaf::WeatherGroup &group,
                                        metaf::ReportPart reportPart,
                                        const std::string &rawString) {
+    auto setCurrentWeatherPhenomena = [](const metaf::WeatherPhenomena &w,
+                                         metaf::ReportPart rp,
+                                         ForecastDataAdapter fd,
+                                         CurrentDataAdapter cd,
+                                         EssentialsAdapter ed) {
+        if (w.qualifier() == metaf::WeatherPhenomena::Qualifier::VICINITY) {
+            if (rp == metaf::ReportPart::METAR && !fd.isTrend()) {
+                cd.addPhenomenaInVicinity(w);
+                return;
+            }
+            if (rp == metaf::ReportPart::TAF && !fd.isTrend()) {
+                fd.addPhenomenaInVicinityPrevailing(w);
+                return;
+            }
+            fd.addPhenomenaInVicinityTrend(w);
+            return;
+        }
+        ed.addWeatherPhenomena(w);
+    };
     (void)reportPart;
     (void)rawString;
     switch (group.type()) {
         case metaf::WeatherGroup::Type::CURRENT:
             for (const auto &w : group.weatherPhenomena()) {
-                if (w.qualifier() ==
-                    metaf::WeatherPhenomena::Qualifier::VICINITY) {
-                    currentData().setPhenomenaInVicinity(w);
-                } else {
-                    currentOrTrendBlock().addWeatherPhenomena(w);
-                }
-                // TODO: check vicinity qualifier and handle differently
-                // (store in Current rather than in Essentials)
+                setCurrentWeatherPhenomena(w,
+                                           reportPart,
+                                           forecastData(),
+                                           currentData(),
+                                           currentOrTrendBlock());
             }
             break;
         case metaf::WeatherGroup::Type::NSW:
@@ -4117,9 +4184,7 @@ void CollateVisitor::visitWeatherGroup(const metaf::WeatherGroup &group,
     }
 }
 
-void CollateVisitor::visitTemperatureGroup(const metaf::TemperatureGroup &group,
-                                           metaf::ReportPart reportPart,
-                                           const std::string &rawString) {
+void CollateVisitor::visitTemperatureGroup(const metaf::TemperatureGroup &group, metaf::ReportPart reportPart, const std::string &rawString) {
     (void)reportPart;
     (void)rawString;
     switch (group.type()) {
@@ -4501,7 +4566,7 @@ void CollateVisitor::visitVicinityGroup(const metaf::VicinityGroup &group,
                                         const std::string &rawString) {
     (void)reportPart;
     (void)rawString;
-    currentData().setPhenomenaInVicinity(group.type(),
+    currentData().addPhenomenaInVicinity(group.type(),
                                          group.distance(),
                                          group.directions(),
                                          group.movingDirection());

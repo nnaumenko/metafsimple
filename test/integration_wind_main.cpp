@@ -40,10 +40,10 @@ TEST(IntegrationWind, calmWind) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = Pressure{1013, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{18, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{18, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1013, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -76,10 +76,11 @@ TEST(IntegrationWind, variableWindSector) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1012, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{26, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{14, Temperature::Unit::C};
     refCurrent.relativeHumidity = 47;
-    refCurrent.pressureSeaLevel = Pressure{1012, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -110,10 +111,11 @@ TEST(IntegrationWind, variableWindDirection) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1012, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{26, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{14, Temperature::Unit::C};
     refCurrent.relativeHumidity = 47;
-    refCurrent.pressureSeaLevel = Pressure{1012, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -145,10 +147,11 @@ TEST(IntegrationWind, windGusts) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1017, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{19, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{8, Temperature::Unit::C};
     refCurrent.relativeHumidity = 48;
-    refCurrent.pressureSeaLevel = Pressure{1017, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -183,10 +186,11 @@ TEST(IntegrationWind, windGustsVariableSector) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1008, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{28, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{8, Temperature::Unit::C};
     refCurrent.relativeHumidity = 28;
-    refCurrent.pressureSeaLevel = Pressure{1008, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -217,10 +221,11 @@ TEST(IntegrationWind, windInMps) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1017, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{16, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{14, Temperature::Unit::C};
     refCurrent.relativeHumidity = 87;
-    refCurrent.pressureSeaLevel = Pressure{1017, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -252,10 +257,11 @@ TEST(IntegrationWind, windNotReported) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1016, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{21, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{19, Temperature::Unit::C};
     refCurrent.relativeHumidity = 88;
-    refCurrent.pressureSeaLevel = Pressure{1016, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -288,10 +294,11 @@ TEST(IntegrationWind, windDirectionNotReported) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1014, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{29, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{14, Temperature::Unit::C};
     refCurrent.relativeHumidity = 39;
-    refCurrent.pressureSeaLevel = Pressure{1014, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -323,10 +330,11 @@ TEST(IntegrationWind, variableWindSectorOnly) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1015, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{30, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{30, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1015, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -360,10 +368,11 @@ TEST(IntegrationWind, duplicateWindGroup) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1015, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{30, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{30, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1015, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -397,10 +406,11 @@ TEST(IntegrationWind, twoWindGroups) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1015, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{30, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{30, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1015, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -436,10 +446,11 @@ TEST(IntegrationWind, duplicateVariableWindSector) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1015, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{30, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{30, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1015, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -475,10 +486,11 @@ TEST(IntegrationWind, twoVariableWindSectorGroups) {
         Distance{ Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
     refCurrent.weatherData.cavok = true;
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1015, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{30, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{30, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1015, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());

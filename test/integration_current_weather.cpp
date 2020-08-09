@@ -46,10 +46,10 @@ TEST(IntegrationCurrentWeather, haze) {
         Essentials::SkyCondition::NO_SIGNIFICANT_CLOUD;
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::HAZE, {}});
+    refCurrent.weatherData.seaLevelPressure = Pressure{1013, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{32, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{12, Temperature::Unit::C};
     refCurrent.relativeHumidity = 29;
-    refCurrent.pressureSeaLevel = Pressure{1013, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -82,10 +82,11 @@ TEST(IntegrationCurrentWeather, lowDriftingSand) {
         Essentials::SkyCondition::NO_SIGNIFICANT_CLOUD;
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::DRIFTING_SAND, {}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1010, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{32, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{12, Temperature::Unit::C};
     refCurrent.relativeHumidity = 29;
-    refCurrent.pressureSeaLevel = Pressure{1010, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -128,10 +129,11 @@ TEST(IntegrationCurrentWeather, thunderstorm) {
                    std::optional<int>()});
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::THUNDERSTORM, {}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1007, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{32, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{26, Temperature::Unit::C};
     refCurrent.relativeHumidity = 70;
-    refCurrent.pressureSeaLevel = Pressure{1007, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -181,10 +183,11 @@ TEST(IntegrationCurrentWeather, lightShoweryPrecipitation) {
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::SHOWERY_PRECIPITATION_LIGHT,
                 {Weather::Precipitation::RAIN}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1014, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{30, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{27, Temperature::Unit::C};
     refCurrent.relativeHumidity = 84;
-    refCurrent.pressureSeaLevel = Pressure{1014, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -231,10 +234,11 @@ TEST(IntegrationCurrentWeather, heavyPrecipitation) {
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::PRECIPITATION_HEAVY,
                 {Weather::Precipitation::RAIN}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1007, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{25, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{24, Temperature::Unit::C};
     refCurrent.relativeHumidity = 94;
-    refCurrent.pressureSeaLevel = Pressure{1007, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -284,10 +288,11 @@ TEST(IntegrationCurrentWeather, mixedPrecipitation) {
         Weather{Weather::Phenomena::PRECIPITATION_LIGHT,
                 {Weather::Precipitation::RAIN,
                  Weather::Precipitation::DRIZZLE}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1012, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{7, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{6, Temperature::Unit::C};
     refCurrent.relativeHumidity = 93;
-    refCurrent.pressureSeaLevel = Pressure{1012, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -331,10 +336,11 @@ TEST(IntegrationCurrentWeather, multipleWeatherPhenomena) {
                 {Weather::Precipitation::DRIZZLE}});
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::MIST, {}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1011, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{14, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{14, Temperature::Unit::C};
     refCurrent.relativeHumidity = 100;
-    refCurrent.pressureSeaLevel = Pressure{1011, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -367,10 +373,11 @@ TEST(IntegrationCurrentWeather, weatherNotReported) {
     refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CLEAR_NCD;
     refCurrent.weatherData.weather.push_back(
         Weather{Weather::Phenomena::UNKNOWN, {}});
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1012, Pressure::Unit::HPA};
     refCurrent.airTemperature = Temperature{21, Temperature::Unit::C};
     refCurrent.dewPoint = Temperature{11, Temperature::Unit::C};
     refCurrent.relativeHumidity = 52;
-    refCurrent.pressureSeaLevel = Pressure{1012, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
