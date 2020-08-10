@@ -127,9 +127,9 @@ static inline bool operator==(const IcingForecast &lhs,
 
 static inline bool operator==(const TurbulenceForecast &lhs,
                               const TurbulenceForecast &rhs) {
-    if (lhs.frequency == rhs.frequency) return false;
-    if (lhs.location == rhs.location) return false;
-    if (lhs.severity == rhs.severity) return false;
+    if (lhs.frequency != rhs.frequency) return false;
+    if (lhs.location != rhs.location) return false;
+    if (lhs.severity != rhs.severity) return false;
     if (!(lhs.minHeight == rhs.minHeight)) return false;
     if (!(lhs.maxHeight == rhs.maxHeight)) return false;
     return true;

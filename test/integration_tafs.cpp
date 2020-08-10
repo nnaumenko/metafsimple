@@ -13,7 +13,15 @@
 using namespace metafsimple;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TAF reports with multiple trends: FMxxxxxx, TEMPO, BECMG, INTER, PROB, etc;
+// This file provides tests for various TAF features: trends, wind shear
+// conditions, temperature, phenomena in vicinity, icing, turbulence, and
+// pressure forecasts
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// TAF reports with multiple trends: FMxxxxxx, TEMPO xxxx/xxxx, BECMG xxxx/xxxx,
+// INTER xxxx/xxxx, PROBxx TEMPO xxxx/xxxx, PROBxx INTER xxxx/xxxx,
+// PROBxx xxxx/xxxx, and invalid trend PROBxx without accompanying trend type.
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(IntegrationTafTrends, trendBecmgFmTempoInterProbInter) {
@@ -671,6 +679,7 @@ TEST(IntegrationTafTrends, probOnly) {
     static const auto rawReport =
         "TAF ZZZZ 091750Z 0918/1018 27014KT CAVOK"
         " PROB30 VRB05KT=";  // Fake report created for this test
+
     const auto result = metafsimple::simplify(rawReport);
 
     Report refReport;
@@ -687,7 +696,7 @@ TEST(IntegrationTafTrends, probOnly) {
 
     Forecast refForecast;
     // 0918/1018 27014KT CAVOK
-    refForecast.prevailing.windDirectionDegrees = 240;
+    refForecast.prevailing.windDirectionDegrees = 270;
     refForecast.prevailing.windSpeed = Speed{14, Speed::Unit::KT};
     refForecast.prevailing.visibility =
         Distance{Distance::Details::MORE_THAN,
@@ -695,6 +704,7 @@ TEST(IntegrationTafTrends, probOnly) {
                  Distance::Unit::METERS};
     refForecast.prevailing.skyCondition =
         Essentials::SkyCondition::CAVOK;
+    refForecast.prevailing.cavok = true;
 
     // PROB30 VRB05KT
     refForecast.trends.push_back(
@@ -711,4 +721,224 @@ TEST(IntegrationTafTrends, probOnly) {
         });
     refForecast.trends.back().forecast.windDirectionVariable = true;
     refForecast.trends.back().forecast.windSpeed = Speed{5, Speed::Unit::KT};
+    EXPECT_EQ(result.forecast, refForecast);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.current, Current());
+}
+
+TEST(IntegrationTafTrends, turbulenceForecast) {
+    static const auto rawReport =
+        "TAF EGYP 081931Z 0821/0915 35015G25KT 9999 BKN010 520003"
+        " BECMG 0821/0824 31015KT 50////"
+        " PROB30 TEMPO 0821/0824 VRB08KT 560003"
+        " PROB30 TEMPO 0821/0909 2000 +RADZ SCT004"
+        " BECMG 0903/0906 19025G35KT"
+        " BECMG 0908/0911 BKN016"
+        " PROB40 TEMPO 0909/0915 4000 SHRASN SCT012"
+        " BECMG 0912/0915 20013KT SCT025";  //8 AUG 2020
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::TAF;
+    refReport.reportTime = Time{8, 19, 31};
+    refReport.applicableFrom = Time{8, 21, 0};
+    refReport.applicableUntil = Time{9, 15, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "EGYP";
+    EXPECT_EQ(result.station, refStation);
+
+    Forecast refForecast;
+    // 0821/0915 35015G25KT 9999 BKN010 520003
+    refForecast.prevailing.windDirectionDegrees = 350;
+    refForecast.prevailing.windSpeed = Speed{15, Speed::Unit::KT};
+    refForecast.prevailing.gustSpeed = Speed{25, Speed::Unit::KT};
+    refForecast.prevailing.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refForecast.prevailing.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.prevailing.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::BROKEN,
+                   Height{1000, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+    refForecast.prevailingTurbulence.push_back(
+        TurbulenceForecast{
+            TurbulenceForecast::Severity::MODERATE,
+            TurbulenceForecast::Location::IN_CLEAR_AIR,
+            TurbulenceForecast::Frequency::OCCASIONAL,
+            Height{0, Height::Unit::FEET},
+            Height{3000, Height::Unit::FEET},
+        });
+    // BECMG 0821/0824 31015KT 50///
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{8, 21, 0},
+            Time{8, 24, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.windDirectionDegrees = 310;
+    refForecast.trends.back().forecast.windSpeed = Speed{15, Speed::Unit::KT};
+    refForecast.trends.back().turbulence.push_back(
+        TurbulenceForecast{
+            TurbulenceForecast::Severity::NONE,
+            TurbulenceForecast::Location::NONE,
+            TurbulenceForecast::Frequency::NONE,
+            Height(),
+            Height(),
+        });
+
+    // PROB30 TEMPO 0821/0824 VRB08KT 560003
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::TEMPO,
+            30,
+            Time{8, 21, 0},
+            Time{8, 24, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.windDirectionVariable = true;
+    refForecast.trends.back().forecast.windSpeed = Speed{8, Speed::Unit::KT};
+    refForecast.trends.back().turbulence.push_back(
+        TurbulenceForecast{
+            TurbulenceForecast::Severity::SEVERE,
+            TurbulenceForecast::Location::IN_CLEAR_AIR,
+            TurbulenceForecast::Frequency::OCCASIONAL,
+            Height{0, Height::Unit::FEET},
+            Height{3000, Height::Unit::FEET},
+        });
+
+    // PROB30 TEMPO 0821/0909 2000 +RADZ SCT004"
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::TEMPO,
+            30,
+            Time{8, 21, 0},
+            Time{9, 9, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.visibility =
+        Distance{Distance::Details::EXACTLY, 2000, Distance::Unit::METERS};
+    refForecast.trends.back().forecast.weather.push_back(
+        Weather{Weather::Phenomena::PRECIPITATION_HEAVY,
+                {Weather::Precipitation::RAIN,
+                 Weather::Precipitation::DRIZZLE}});
+    refForecast.trends.back().forecast.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::SCATTERED,
+                   Height{400, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+
+    // BECMG 0903/0906 19025G35KT
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{9, 3, 0},
+            Time{9, 6, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.windDirectionDegrees = 190;
+    refForecast.trends.back().forecast.windSpeed = Speed {25, Speed::Unit::KT};
+    refForecast.trends.back().forecast.gustSpeed = Speed {35, Speed::Unit::KT};
+
+    // BECMG 0908/0911 BKN016
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{9, 8, 0},
+            Time{9, 11, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::BROKEN,
+                   Height{1600, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+
+    // PROB40 TEMPO 0909/0915 4000 SHRASN SCT012
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::TEMPO,
+            40,
+            Time{9, 9, 0},
+            Time{9, 15, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.visibility =
+        Distance{Distance::Details::EXACTLY, 4000, Distance::Unit::METERS};
+    refForecast.trends.back().forecast.weather.push_back(
+        Weather{Weather::Phenomena::SHOWERY_PRECIPITATION_MODERATE,
+                {Weather::Precipitation::RAIN, Weather::Precipitation::SNOW}});
+    refForecast.trends.back().forecast.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::SCATTERED,
+                   Height{1200, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+
+    // BECMG 0912/0915 20013KT SCT025
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{9, 12, 0},
+            Time{9, 15, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.windDirectionDegrees = 200;
+    refForecast.trends.back().forecast.windSpeed = Speed {13, Speed::Unit::KT};
+    refForecast.trends.back().forecast.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::SCATTERED,
+                   Height{2500, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+    EXPECT_EQ(result.forecast, refForecast);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.current, Current());
 }

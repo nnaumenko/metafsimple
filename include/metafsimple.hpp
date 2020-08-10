@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 4;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -1285,7 +1285,7 @@ class BasicDataAdapter : DataAdapter {
     inline static std::optional<ObservedPhenomena>
     vicinityPhenomena(const Weather &w);
 
-        inline static const int metersPerNauticalMile = 1852;
+    inline static const int metersPerNauticalMile = 1852;
 };
 
 Runway BasicDataAdapter::runway(const metaf::Runway &r) {
@@ -3635,13 +3635,16 @@ void ForecastDataAdapter::addIcing(IcingForecast::Severity s,
                                    metaf::Distance topHeight) {
     // TODO: check for duplicate layer information?
     assert(forecast);
-    assert(forecast->trends.size());
-    forecast->trends.back().icing.push_back(
-        IcingForecast{
-            s,
-            t,
-            BasicDataAdapter::height(baseHeight),
-            BasicDataAdapter::height(topHeight)});
+    const auto icf = IcingForecast{
+        s,
+        t,
+        BasicDataAdapter::height(baseHeight),
+        BasicDataAdapter::height(topHeight)};
+    if (forecast->trends.empty()) {
+        forecast->prevailingIcing.push_back(icf);
+    } else {
+        forecast->trends.back().icing.push_back(icf);
+    }
 }
 
 void ForecastDataAdapter::addTurbulence(TurbulenceForecast::Severity s,
@@ -3650,21 +3653,21 @@ void ForecastDataAdapter::addTurbulence(TurbulenceForecast::Severity s,
                                         metaf::Distance baseHeight,
                                         metaf::Distance topHeight) {
     assert(forecast);
-    assert(forecast->trends.size());
-    assert(forecast);
-    assert(forecast->trends.size());
-    forecast->trends.back().turbulence.push_back(
-        TurbulenceForecast{
-            s,
-            l,
-            f,
-            BasicDataAdapter::height(baseHeight),
-            BasicDataAdapter::height(topHeight)});
+    const auto tf = TurbulenceForecast{
+        s,
+        l,
+        f,
+        BasicDataAdapter::height(baseHeight),
+        BasicDataAdapter::height(topHeight)};
+    if (forecast->trends.empty()) {
+        forecast->prevailingTurbulence.push_back(tf);
+    } else {
+        forecast->trends.back().turbulence.push_back(tf);
+    }
 }
 
 void ForecastDataAdapter::addPhenomenaInVicinityPrevailing(
     const metaf::WeatherPhenomena &w) {
-
     const auto weather = BasicDataAdapter::weather(w);
     if (!weather.has_value()) {
         log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
@@ -3681,7 +3684,6 @@ void ForecastDataAdapter::addPhenomenaInVicinityPrevailing(
 
 void ForecastDataAdapter::addPhenomenaInVicinityTrend(
     const metaf::WeatherPhenomena &w) {
-
     const auto weather = BasicDataAdapter::weather(w);
     if (!weather.has_value()) {
         log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
