@@ -152,6 +152,7 @@ static inline bool operator==(const Essentials &lhs, const Essentials &rhs) {
     if (!(lhs.verticalVisibility == rhs.verticalVisibility)) return false;
     if (lhs.weather != rhs.weather) return false;
     if (!(lhs.seaLevelPressure == rhs.seaLevelPressure)) return false;
+    if (lhs.windShear != rhs.windShear) return false;
     return true;
 }
 
@@ -165,6 +166,7 @@ static inline bool operator==(const Trend &lhs, const Trend &rhs) {
     if (lhs.icing != rhs.icing) return false;
     if (lhs.turbulence != rhs.turbulence) return false;
     if (!(lhs.vicinity == rhs.vicinity)) return false;
+    if (lhs.windShearConditions != rhs.windShearConditions) return false;
     return true;
 }
 
@@ -255,8 +257,8 @@ static inline bool operator==(const Aerodrome &lhs, const Aerodrome &rhs) {
     return true;
 }
 
-static inline bool operator==(const Current::WindShear &lhs,
-                              const Current::WindShear &rhs) {
+static inline bool operator==(const WindShear &lhs,
+                              const WindShear &rhs) {
     if (!(lhs.height == rhs.height)) return false;
     if (lhs.directionDegrees != rhs.directionDegrees) return false;
     if (!(lhs.windSpeed == rhs.windSpeed)) return false;
@@ -279,7 +281,6 @@ static inline bool operator==(const Current &lhs, const Current &rhs) {
     if (!(lhs.snowWaterEquivalent == rhs.snowWaterEquivalent)) return false;
     if (!(lhs.snowDepthOnGround == rhs.snowDepthOnGround)) return false;
     if (lhs.snowIncreasingRapidly != rhs.snowIncreasingRapidly) return false;
-    if (lhs.windShear != rhs.windShear) return false;
     if (lhs.phenomenaInVicinity != rhs.phenomenaInVicinity) return false;
     if (lhs.lightningStrikes != rhs.lightningStrikes) return false;
     if (!(lhs.densityAltitude == rhs.densityAltitude)) return false;
@@ -340,9 +341,9 @@ static inline bool operator==(const Forecast &lhs, const Forecast &rhs) {
     if (!(lhs.prevailingIcing == rhs.prevailingIcing)) return false;
     if (!(lhs.prevailingTurbulence == rhs.prevailingTurbulence)) return false;
     if (!(lhs.prevailingVicinity == rhs.prevailingVicinity)) return false;
+    if (lhs.prevailingWsConds != rhs.prevailingWsConds) return false;
     if (!(lhs.trends == rhs.trends)) return false;
     if (lhs.noSignificantChanges != rhs.noSignificantChanges) return false;
-    if (lhs.windShearConditions != rhs.windShearConditions) return false;
     if (!(lhs.minTemperature == rhs.minTemperature)) return false;
     if (!(lhs.maxTemperature == rhs.maxTemperature)) return false;
     return true;

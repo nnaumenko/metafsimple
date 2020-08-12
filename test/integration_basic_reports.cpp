@@ -73,6 +73,7 @@ TEST(IntegrationBasicReports, basicMetarFull) {
                 Height(),                             // vertical visibility
                 {},                                   // weather phenomena
                 Pressure{1016, Pressure::Unit::HPA},  // sea-level pressure
+                {},                                   // wind shear
             },
             DistanceRange(),                       // variable visibility
             {},                                    // obscurations
@@ -196,15 +197,16 @@ TEST(ParseSimplifyReport, basicTafFull) {
                 {},                                // cloud layers
                 Height(),                          // vertical visibility
                 {},                                // weather phenomena
-                Pressure()                         // lowest forecast SLP
-            },                                     // prevailing trend
+                Pressure(),                        // lowest forecast SLP
+                {},                                // wind shear
 
+            },      // prevailing trend
             {},     // icing forecast for prevailing trend
             {},     // turbulence forecast for prevailing trend
-            {},     // phenomena in vicinity
+            {},     // phenomena in vicinity for prevailing trend
+            false,  // wind shear conditions (WSCONDS) for prevailing trend
             {},     // trends
             false,  // no significant changes (NOSIG)
-            false,  // wind shear conditions (WSCONDS)
             {},     // min temperature
             {},     // max temperature
         }};

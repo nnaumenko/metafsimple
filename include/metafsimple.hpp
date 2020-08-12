@@ -21,8 +21,8 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 4;
-    inline static const int patch = 1;
+    inline static const int minor = 5;
+    inline static const int patch = 0;
     inline static const char tag[] = "";
 };
 
@@ -384,6 +384,13 @@ struct LightningStrikes {
     std::set<CardinalDirection> directions;
 };
 
+// Wind shear
+struct WindShear {
+    Height height;
+    int directionDegrees;
+    Speed windSpeed;
+};
+
 // Essential weather data, specified in current weather and in forecast trends
 struct Essentials {
     enum class SkyCondition {
@@ -410,6 +417,7 @@ struct Essentials {
     Height verticalVisibility;
     std::vector<Weather> weather;
     Pressure seaLevelPressure;
+    std::vector<WindShear> windShear;
 };
 
 // Icing forecast including severity, type and height range where icing occurs
@@ -483,6 +491,7 @@ struct Trend {
     std::vector<IcingForecast> icing;
     std::vector<TurbulenceForecast> turbulence;
     std::set<ObservedPhenomena> vicinity;
+    bool windShearConditions = false;
 };
 
 // METAR, SPECI or TAF report information, including type of report, report
@@ -689,11 +698,6 @@ struct Aerodrome {
 // Current weather data; includes essential weather data plus all non-trend
 // and non-historical data specified in METAR
 struct Current {
-    struct WindShear {
-        Height height;
-        int directionDegrees;
-        Speed windSpeed;
-    };
     // Descriptive low cloud layer type according to International Cloud Atlas
     enum class LowCloudLayer {
         NO_CLOUDS,
@@ -835,9 +839,9 @@ struct Forecast {
     std::vector<IcingForecast> prevailingIcing;
     std::vector<TurbulenceForecast> prevailingTurbulence;
     std::set<ObservedPhenomena> prevailingVicinity;
+    bool prevailingWsConds = false;
     std::vector<Trend> trends;
     bool noSignificantChanges = false;
-    bool windShearConditions = false;
     std::vector<TemperatureForecast> minTemperature;
     std::vector<TemperatureForecast> maxTemperature;
 };
@@ -2207,6 +2211,9 @@ class EssentialsAdapter : DataAdapter {
     skyCondition(metaf::CloudGroup::Amount a);
     inline static CloudLayer::Details
     cloudLayerDetail(metaf::CloudGroup::ConvectiveType ct);
+    inline void addWindShear(metaf::Distance height,
+                             metaf::Direction direction,
+                             metaf::Speed windSpeed);
 
    private:
     Essentials *essentials;
@@ -2403,6 +2410,22 @@ EssentialsAdapter::cloudLayerDetail(metaf::CloudGroup::ConvectiveType ct) {
         case metaf::CloudGroup::ConvectiveType::NOT_REPORTED:
             return CloudLayer::Details::UNKNOWN;
     }
+}
+
+void EssentialsAdapter::addWindShear(metaf::Distance height,
+                                     metaf::Direction direction,
+                                     metaf::Speed windSpeed) {
+    const auto dir = direction.degrees();
+    const auto h = BasicDataAdapter::height(height);
+    const auto s = BasicDataAdapter::speed(windSpeed);
+    if (!dir.has_value() || !h.height.has_value() || !s.speed.has_value()) {
+        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
+        return;
+    }
+    const auto d = static_cast<int>(*dir);
+    assert(essentials);
+    //TODO: check for duplicate groups?
+    essentials->windShear.push_back(WindShear{h, d, s});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3100,9 +3123,6 @@ class CurrentDataAdapter : DataAdapter {
    public:
     CurrentDataAdapter(Current &c, WarningLogger *l) : DataAdapter(l),
                                                        current(&c) {}
-    inline void addWindShear(metaf::Distance height,
-                             metaf::Direction direction,
-                             metaf::Speed windSpeed);
     inline void setObscuration(metaf::CloudGroup::Amount amount,
                                const metaf::Distance height,
                                std::optional<metaf::CloudType> cloudType);
@@ -3142,22 +3162,6 @@ class CurrentDataAdapter : DataAdapter {
    private:
     Current *current;
 };
-
-void CurrentDataAdapter::addWindShear(metaf::Distance height,
-                                      metaf::Direction direction,
-                                      metaf::Speed windSpeed) {
-    const auto dir = direction.degrees();
-    const auto h = BasicDataAdapter::height(height);
-    const auto s = BasicDataAdapter::speed(windSpeed);
-    if (!dir.has_value() || !h.height.has_value() || !s.speed.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
-    const auto d = static_cast<int>(*dir);
-    assert(current);
-    //TODO: check for duplicate groups?
-    current->windShear.push_back(Current::WindShear{h, d, s});
-}
 
 void CurrentDataAdapter::setObscuration(metaf::CloudGroup::Amount amount,
                                         const metaf::Distance height,
@@ -3541,7 +3545,11 @@ class ForecastDataAdapter : DataAdapter {
 
 void ForecastDataAdapter::setWindShearConditions() {
     assert(forecast);
-    setData<bool>(forecast->windShearConditions, true);
+    if (forecast->trends.empty()) {
+        setData<bool>(forecast->prevailingWsConds, true);
+    } else {
+        setData<bool>(forecast->trends.back().windShearConditions, true);
+    }
 }
 
 void ForecastDataAdapter::setNosig() {
@@ -3966,9 +3974,9 @@ void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,
                                                  group.varSectorEnd());
         } break;
         case metaf::WindGroup::Type::WIND_SHEAR:
-            currentData().addWindShear(group.height(),
-                                       group.direction(),
-                                       group.windSpeed());
+            currentOrTrendBlock().addWindShear(group.height(),
+                                               group.direction(),
+                                               group.windSpeed());
             break;
         case metaf::WindGroup::Type::WIND_SHEAR_IN_LOWER_LAYERS: {
             aerodromeData().setRunwayWindShearLowerLayers(group.runway());
@@ -4654,7 +4662,6 @@ void CollateVisitor::visitUnknownGroup(const metaf::UnknownGroup &group,
 }  // namespace metafsimple::detail
 
 namespace metafsimple {
-
 inline Simple simplify(const metaf::ParseResult &parseResult) {
     metafsimple::detail::CollateVisitor v(parseResult);
     return v.data();
