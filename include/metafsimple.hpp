@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -3612,9 +3612,14 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
 
 void ForecastDataAdapter::setLowestPressure(metaf::Pressure p) {
     assert(forecast);
-    assert(forecast->trends.size());
-    setData<Pressure>(forecast->trends.back().forecast.seaLevelPressure,
-                      BasicDataAdapter::pressure(p));
+    if (forecast->trends.empty()) {
+        setData<Pressure>(forecast->prevailing.seaLevelPressure,
+                        BasicDataAdapter::pressure(p));
+
+    } else {
+        setData<Pressure>(forecast->trends.back().forecast.seaLevelPressure,
+                        BasicDataAdapter::pressure(p));
+    }
 }
 
 void ForecastDataAdapter::addMinMaxTemperature(metaf::Temperature min,
