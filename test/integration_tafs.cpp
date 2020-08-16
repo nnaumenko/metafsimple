@@ -1429,3 +1429,181 @@ TEST(IntegrationTafTrends, icingPressureTempForecastVicinityInTrend) {
     EXPECT_EQ(result.historical, Historical());
     EXPECT_EQ(result.current, Current());
 }
+
+TEST(IntegrationTafs, tempForecastMultipleTx) {
+    static const auto rawReport =
+        "TAF RKNY 122300Z 1300/1406 26006KT CAVOK"
+        " TX33/1306Z TN28/1319Z TX32/1406Z"
+        " BECMG 1303/1304 9999 FEW030 BKN100"
+        " BECMG 1305/1306 17007KT"
+        " BECMG 1322/1323 25009KT=";  //12 AUG 2020
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::TAF;
+    refReport.reportTime = Time{12, 23, 0};
+    refReport.applicableFrom = Time{13, 0, 0};
+    refReport.applicableUntil = Time{14, 6, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "RKNY";
+    EXPECT_EQ(result.station, refStation);
+
+    Forecast refForecast;
+    // 1300/1406 26006KT CAVOK
+    refForecast.prevailing.windDirectionDegrees = 260;
+    refForecast.prevailing.windSpeed = Speed{6, Speed::Unit::KT};
+    refForecast.prevailing.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refForecast.prevailing.skyCondition =
+        Essentials::SkyCondition::CAVOK;
+    refForecast.prevailing.cavok = true;
+
+    // BECMG 1303/1304 9999 FEW030 BKN100
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{13, 3, 0},
+            Time{13, 4, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refForecast.trends.back().forecast.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::FEW,
+                   Height{3000, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::BROKEN,
+                   Height{10000, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+
+    // BECMG 1305/1306 17007KT
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{13, 5, 0},
+            Time{13, 6, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.windDirectionDegrees = 170;
+    refForecast.trends.back().forecast.windSpeed = Speed{7, Speed::Unit::KT};
+
+    // BECMG 1322/1323 25009KT
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::BECMG,
+            std::optional<int>(),
+            Time{13, 22, 0},
+            Time{13, 23, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.windDirectionDegrees = 250;
+    refForecast.trends.back().forecast.windSpeed = Speed{9, Speed::Unit::KT};
+
+    // TX33/1306Z TN28/1319Z TX32/1406Z
+    refForecast.maxTemperature.push_back(TemperatureForecast{
+        Temperature{33, Temperature::Unit::C},
+        Time{13, 6, 0}});
+    refForecast.maxTemperature.push_back(TemperatureForecast{
+        Temperature{32, Temperature::Unit::C},
+        Time{14, 6, 0}});
+    refForecast.minTemperature.push_back(TemperatureForecast{
+        Temperature{28, Temperature::Unit::C},
+        Time{13, 19, 0}});
+    EXPECT_EQ(result.forecast, refForecast);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.current, Current());
+}
+
+TEST(IntegrationTafs, tempForecastMultipleTn) {
+    static const auto rawReport =
+        "TAF LSZH 100225Z 1003/1109 VRB02KT CAVOK"
+        " TX31/1015Z TN14/1005Z TN16/1105Z"
+        " PROB30 TEMPO 1014/1020 9999 FEW080CB="; // 10 AUG 2020
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::TAF;
+    refReport.reportTime = Time{10, 2, 25};
+    refReport.applicableFrom = Time{10, 3, 0};
+    refReport.applicableUntil = Time{11, 9, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "LSZH";
+    EXPECT_EQ(result.station, refStation);
+
+    Forecast refForecast;
+    // 1003/1109 VRB02KT CAVOK
+    refForecast.prevailing.windDirectionVariable = true;
+    refForecast.prevailing.windSpeed = Speed{2, Speed::Unit::KT};
+    refForecast.prevailing.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refForecast.prevailing.skyCondition =
+        Essentials::SkyCondition::CAVOK;
+    refForecast.prevailing.cavok = true;
+
+    // PROB30 TEMPO 1014/1020 9999 FEW080CB
+    refForecast.trends.push_back(
+        Trend{
+            Trend::Type::TEMPO,
+            30,
+            Time{10, 14, 0},
+            Time{10, 20, 0},
+            Time(),
+            Essentials(),
+            {},
+            {},
+            {},
+        });
+    refForecast.trends.back().forecast.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refForecast.trends.back().forecast.skyCondition =
+        Essentials::SkyCondition::CLOUDS;
+    refForecast.trends.back().forecast.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::FEW,
+                   Height{8000, Height::Unit::FEET},
+                   CloudLayer::Details::CUMULONIMBUS,
+                   std::optional<int>()});
+
+    // TX31/1015Z TN14/1005Z TN16/1105Z
+    refForecast.maxTemperature.push_back(TemperatureForecast{
+        Temperature{31, Temperature::Unit::C},
+        Time{10, 15, 0}});
+    refForecast.minTemperature.push_back(TemperatureForecast{
+        Temperature{14, Temperature::Unit::C},
+        Time{10, 5, 0}});
+    refForecast.minTemperature.push_back(TemperatureForecast{
+        Temperature{16, Temperature::Unit::C},
+        Time{11, 5, 0}});
+    EXPECT_EQ(result.forecast, refForecast);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.current, Current());
+}
