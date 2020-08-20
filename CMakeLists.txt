@@ -52,6 +52,7 @@ set(SOURCES ${SOURCES}
     test/integration_sky_condition_main.cpp
     test/integration_current_weather.cpp
     test/integration_tafs.cpp
+    test/integration_metar_trends.cpp
 )
 
 # Tests
