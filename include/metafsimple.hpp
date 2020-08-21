@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 1;
+    inline static const int patch = 2;
     inline static const char tag[] = "";
 };
 
@@ -1424,7 +1424,7 @@ Height BasicDataAdapter::height(const metaf::Distance &d) {
 WaveHeight BasicDataAdapter::waveHeight(const metaf::WaveHeight &wh) {
     const auto whm = wh.toUnit(metaf::WaveHeight::Unit::METERS);
     if (!whm.has_value()) return WaveHeight();
-    return WaveHeight{std::floor(*whm / 10.0), WaveHeight::Unit::DECIMETERS};
+    return WaveHeight{std::round(*whm * 10.0), WaveHeight::Unit::DECIMETERS};
 }
 
 CloudLayer::Amount
