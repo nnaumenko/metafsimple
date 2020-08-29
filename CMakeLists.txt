@@ -55,6 +55,7 @@ set(SOURCES ${SOURCES}
     test/integration_metar_trends.cpp
     test/integration_temp_pres_main.cpp
     test/integration_sea_surface.cpp
+    test/integration_temp_pres_rmk.cpp
 )
 
 # Tests

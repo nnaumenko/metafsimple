@@ -99,6 +99,47 @@ TEST(IntegrationMetarTemperature, temperatureDewPointNotReported) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
+TEST(IntegrationMetarTemperature, temperatureM00) {
+    static const auto rawReport =
+        "METAR EGYP 250250Z 22017KT 9999 BKN035 M00/M03 Q1017="; // 25 AUG 2020
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{25, 2, 50};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "EGYP";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionDegrees = 220;
+    refCurrent.weatherData.windSpeed = Speed{17, Speed::Unit::KT};
+    refCurrent.weatherData.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CLOUDS;
+    refCurrent.weatherData.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::BROKEN,
+                   Height{3500, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+    refCurrent.airTemperature = Temperature{-2, Temperature::Unit::TENTH_C};
+    refCurrent.dewPoint = Temperature{-3, Temperature::Unit::C};
+    refCurrent.relativeHumidity = 80;
+    refCurrent.weatherData.seaLevelPressure = 
+        Pressure{1017, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 TEST(IntegrationMetarTemperature, pressureInhg) {
     static const auto rawReport =
         "METAR KSUN 182258Z 20009G16KT 10SM SKC 33/07 A3022="; // 18 AUG 2020

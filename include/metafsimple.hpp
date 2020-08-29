@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 2;
+    inline static const int patch = 3;
     inline static const char tag[] = "";
 };
 
@@ -1290,6 +1290,7 @@ class BasicDataAdapter : DataAdapter {
     vicinityPhenomena(const Weather &w);
 
     inline static const int metersPerNauticalMile = 1852;
+    inline static const int temperatureM00 = -2;
 };
 
 Runway BasicDataAdapter::runway(const metaf::Runway &r) {
@@ -1318,12 +1319,12 @@ Temperature BasicDataAdapter::temperature(const metaf::Temperature &t) {
     if (t.isPrecise()) {
         const auto tval = t.toUnit(metaf::Temperature::Unit::C);
         assert(tval.has_value());
-        return Temperature{std::floor(*tval * 10), Temperature::Unit::TENTH_C};
+        return Temperature{std::round(*tval * 10), Temperature::Unit::TENTH_C};
     }
     const auto temp = t.temperature();
     assert(temp.has_value());
     if (!(*temp) && t.isFreezing())  // For value coded as M00 return -0.2 C
-        return Temperature{-2, Temperature::Unit::TENTH_C};
+        return Temperature{temperatureM00, Temperature::Unit::TENTH_C};
     return Temperature{temp, Temperature::Unit::C};
 }
 
@@ -3158,6 +3159,7 @@ class CurrentDataAdapter : DataAdapter {
     inline void setHailstoneSize(std::optional<float> s);
     inline void setDensityAltitude(std::optional<float> da);
     inline void setFrostOnInstrument();
+    inline bool hasPressure();
 
    private:
     Current *current;
@@ -3181,17 +3183,24 @@ void CurrentDataAdapter::setObscuration(metaf::CloudGroup::Amount amount,
 void CurrentDataAdapter::setTemperatureDewPoint(metaf::Temperature t,
                                                 metaf::Temperature dp) {
     auto isPrecise = [](const Temperature &t) {
-        return t.unit != Temperature::Unit::TENTH_C;
+        if (t.unit != Temperature::Unit::TENTH_C) return false;
+        if (!t.temperature.has_value()) return false;
+        // This will prevent duplicate data warning if there is a precise 
+        // temperature group Txxxxxxxx in remarks and in the main temperature
+        // group xx/xx the temperature or dew point is coded M00 
+        // TODO: implement better duplicated data check
+        if (t.temperature == BasicDataAdapter::temperatureM00) return false;
+        return true;
     };
     assert(current);
     // TODO: check 'standard precision' and 'high precision' temperature value
     // consistency
-    if (t.isPrecise() && isPrecise(current->airTemperature))
+    if (t.isPrecise() && !isPrecise(current->airTemperature))
         current->airTemperature.temperature = std::optional<int>();
     setData<Temperature>(current->airTemperature,
                          BasicDataAdapter::temperature(t));
 
-    if (dp.isPrecise() && isPrecise(current->dewPoint))
+    if (dp.isPrecise() && !isPrecise(current->dewPoint))
         current->dewPoint.temperature = std::optional<int>();
     setData<Temperature>(current->dewPoint,
                          BasicDataAdapter::temperature(dp));
@@ -3503,6 +3512,11 @@ void CurrentDataAdapter::setFrostOnInstrument() {
     setData<bool>(current->frostOnInstrument, true);
 }
 
+bool CurrentDataAdapter::hasPressure() {
+    assert(current);
+    return (current->weatherData.seaLevelPressure.pressure.has_value());
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class ForecastDataAdapter : DataAdapter {
@@ -3614,11 +3628,11 @@ void ForecastDataAdapter::setLowestPressure(metaf::Pressure p) {
     assert(forecast);
     if (forecast->trends.empty()) {
         setData<Pressure>(forecast->prevailing.seaLevelPressure,
-                        BasicDataAdapter::pressure(p));
+                          BasicDataAdapter::pressure(p));
 
     } else {
         setData<Pressure>(forecast->trends.back().forecast.seaLevelPressure,
-                        BasicDataAdapter::pressure(p));
+                          BasicDataAdapter::pressure(p));
     }
 }
 
@@ -4199,7 +4213,9 @@ void CollateVisitor::visitWeatherGroup(const metaf::WeatherGroup &group,
     }
 }
 
-void CollateVisitor::visitTemperatureGroup(const metaf::TemperatureGroup &group, metaf::ReportPart reportPart, const std::string &rawString) {
+void CollateVisitor::visitTemperatureGroup(
+    const metaf::TemperatureGroup &group,
+    metaf::ReportPart reportPart, const std::string &rawString) {
     (void)reportPart;
     (void)rawString;
     switch (group.type()) {
@@ -4223,7 +4239,8 @@ void CollateVisitor::visitPressureGroup(const metaf::PressureGroup &group,
     (void)rawString;
     switch (group.type()) {
         case metaf::PressureGroup::Type::OBSERVED_QNH:
-            if (reportPart == metaf::ReportPart::RMK) return;
+            if (reportPart == metaf::ReportPart::RMK && 
+                currentData().hasPressure()) return;
             // TODO: check this SLPxxx group agains previously set pressure
             currentData().setPressureQnh(group.atmosphericPressure());
             break;
