@@ -56,6 +56,7 @@ set(SOURCES ${SOURCES}
     test/integration_temp_pres_main.cpp
     test/integration_sea_surface.cpp
     test/integration_temp_pres_rmk.cpp
+    test/integration_wind_historical.cpp
 )
 
 # Tests
