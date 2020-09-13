@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 3;
+    inline static const int patch = 4;
     inline static const char tag[] = "";
 };
 
@@ -2476,9 +2476,8 @@ class AerodromeDataAdapter : DataAdapter {
 
    private:
     Aerodrome *aerodrome;
-    inline Aerodrome::RunwayData &getOrCreateRunway(const Runway &r);
-    inline Aerodrome::DirectionData &
-    getOrCreateDirection(const CardinalDirection &d);
+    inline size_t getOrCreateRunway(const Runway &r);
+    inline size_t getOrCreateDirection(const CardinalDirection &d);
     inline Ceiling *getCeiling(std::optional<metaf::Runway> rw,
                                std::optional<metaf::Direction> dir);
     inline void setVisibility(Distance &d, const metaf::Distance &md);
@@ -2526,8 +2525,8 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
         return;
     }
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    setVisibility(rd.visibility, vis);
+    const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
+    setVisibility(aerodrome->runways[ridx].visibility, vis);
 }
 
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> d,
@@ -2537,8 +2536,8 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> d,
         return;
     }
     assert(aerodrome);
-    auto dd = getOrCreateDirection(BasicDataAdapter::cardinalDirection(*d));
-    setVisibility(dd.visibility, vis);
+    auto i = getOrCreateDirection(BasicDataAdapter::cardinalDirection(*d));
+    setVisibility(aerodrome->directions[i].visibility, vis);
 }
 
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
@@ -2549,8 +2548,8 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
         return;
     }
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    setVisibility(rd.visibility, minVis, maxVis);
+    const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
+    setVisibility(aerodrome->runways[ridx].visibility, minVis, maxVis);
 }
 
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> dir,
@@ -2561,8 +2560,8 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> dir,
         return;
     }
     assert(aerodrome);
-    auto dd = getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
-    setVisibility(dd.visibility, minVis, maxVis);
+    const auto didx = getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
+    setVisibility(aerodrome->directions[didx].visibility, minVis, maxVis);
 }
 
 void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
@@ -2573,13 +2572,14 @@ void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
         return;
     }
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    if (rd.visualRangeTrend != Aerodrome::RvrTrend::UNKNOWN) {
+    const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
+    if (aerodrome->runways[ridx].visualRangeTrend != 
+        Aerodrome::RvrTrend::UNKNOWN) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    setVisibility(rd.visualRange, rvr);
-    rd.visualRangeTrend = rvrTrend(trend);
+    setVisibility(aerodrome->runways[ridx].visualRange, rvr);
+    aerodrome->runways[ridx].visualRangeTrend = rvrTrend(trend);
 }
 
 void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
@@ -2591,13 +2591,14 @@ void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
         return;
     }
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    if (rd.visualRangeTrend != Aerodrome::RvrTrend::UNKNOWN) {
+    const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
+    if (aerodrome->runways[ridx].visualRangeTrend != 
+        Aerodrome::RvrTrend::UNKNOWN) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    setVisibility(rd.visibility, minRvr, maxRvr);
-    rd.visualRangeTrend = rvrTrend(trend);
+    setVisibility(aerodrome->runways[ridx].visibility, minRvr, maxRvr);
+    aerodrome->runways[ridx].visualRangeTrend = rvrTrend(trend);
 }
 
 void AerodromeDataAdapter::setCeiling(std::optional<metaf::Runway> rw,
@@ -2677,47 +2678,47 @@ void AerodromeDataAdapter::setRunwayState(metaf::Runway rw,
         }
     };
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(rw));
-    if (hasRunwayState(rd)) {
+    const auto i = getOrCreateRunway(BasicDataAdapter::runway(rw));
+    if (hasRunwayState(aerodrome->runways[i])) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    rd.deposits = convertDeposits(d);
-    rd.contaminationExtent = convertExtent(x);
-    rd.depositDepth = BasicDataAdapter::precipitation(depth);
-    setSurfaceFriction(rd, sf);
+    aerodrome->runways[i].deposits = convertDeposits(d);
+    aerodrome->runways[i].contaminationExtent = convertExtent(x);
+    aerodrome->runways[i].depositDepth = BasicDataAdapter::precipitation(depth);
+    setSurfaceFriction(aerodrome->runways[i], sf);
 }
 
 void AerodromeDataAdapter::setRunwayClrd(metaf::Runway rw,
                                          metaf::SurfaceFriction sf) {
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(rw));
-    if (hasRunwayState(rd)) {
+    const auto i = getOrCreateRunway(BasicDataAdapter::runway(rw));
+    if (hasRunwayState(aerodrome->runways[i])) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    rd.clrd = true;
-    setSurfaceFriction(rd, sf);
+    aerodrome->runways[i].clrd = true;
+    setSurfaceFriction(aerodrome->runways[i], sf);
 }
 
 void AerodromeDataAdapter::setRunwaySnoclo(metaf::Runway rw) {
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(rw));
-    if (hasRunwayState(rd)) {
+    const auto i = getOrCreateRunway(BasicDataAdapter::runway(rw));
+    if (hasRunwayState(aerodrome->runways[i])) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    rd.snoclo = true;
+    aerodrome->runways[i].snoclo = true;
 }
 
 void AerodromeDataAdapter::setRunwayNonOp(metaf::Runway rw) {
     assert(aerodrome);
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(rw));
-    if (hasRunwayState(rd)) {
+    const auto i = getOrCreateRunway(BasicDataAdapter::runway(rw));
+    if (hasRunwayState(aerodrome->runways[i])) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    rd.notOperational = true;
+    aerodrome->runways[i].notOperational = true;
 }
 
 void AerodromeDataAdapter::setRunwayWindShearLowerLayers(
@@ -2727,8 +2728,8 @@ void AerodromeDataAdapter::setRunwayWindShearLowerLayers(
         log(Report::Warning::Message::REQUIRED_DATA_MISSING);
         return;
     }
-    auto rd = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    setData<bool>(rd.windShearLowerLayers, true);
+    const auto i = getOrCreateRunway(BasicDataAdapter::runway(*rw));
+    setData<bool>(aerodrome->runways[i].windShearLowerLayers, true);
 }
 
 void AerodromeDataAdapter::setAerodromeSnoclo() {
@@ -2736,30 +2737,28 @@ void AerodromeDataAdapter::setAerodromeSnoclo() {
     setData<bool>(aerodrome->snoclo, true);
 }
 
-Aerodrome::RunwayData &
-AerodromeDataAdapter::getOrCreateRunway(const Runway &r) {
+size_t AerodromeDataAdapter::getOrCreateRunway(const Runway &r) {
+    assert(aerodrome);
     for (auto i = 0u; i < aerodrome->runways.size(); i++) {
         if (aerodrome->runways[i].runway.number == r.number &&
             aerodrome->runways[i].runway.designator == r.designator) {
-            return aerodrome->runways[i];
+            return i;
         }
     }
-    Aerodrome::RunwayData rd;
-    rd.runway = r;
-    aerodrome->runways.push_back(rd);
-    return aerodrome->runways.back();
+    aerodrome->runways.push_back(Aerodrome::RunwayData());
+    aerodrome->runways.back().runway = r;
+    return aerodrome->runways.size() - 1;
 }
 
-Aerodrome::DirectionData &
-AerodromeDataAdapter::getOrCreateDirection(const CardinalDirection &d) {
+size_t AerodromeDataAdapter::getOrCreateDirection(const CardinalDirection &d) {
     for (auto i = 0u; i < aerodrome->directions.size(); i++) {
         if (aerodrome->directions[i].cardinalDirection == d)
-            return aerodrome->directions[i];
+            return i;
     }
     Aerodrome::DirectionData dd;
     dd.cardinalDirection = d;
     aerodrome->directions.push_back(dd);
-    return aerodrome->directions.back();
+    return aerodrome->directions.size() - 1;
 }
 
 void AerodromeDataAdapter::setVisibility(Distance &d,
@@ -2805,11 +2804,15 @@ Ceiling *AerodromeDataAdapter::getCeiling(std::optional<metaf::Runway> rw,
         return nullptr;
     }
     assert(aerodrome);
-    if (rw.has_value())
-        return &getOrCreateRunway(BasicDataAdapter::runway(*rw)).ceiling;
-    if (dir.has_value())
-        return &getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir))
-                    .ceiling;
+    if (rw.has_value()) {
+        const auto i = getOrCreateRunway(BasicDataAdapter::runway(*rw));
+        return &aerodrome->runways[i].ceiling;
+    }
+    if (dir.has_value()) {
+        const auto i = 
+            getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
+        return &aerodrome->directions[i].ceiling;
+    }
     return nullptr;
 }
 
@@ -2819,7 +2822,7 @@ void AerodromeDataAdapter::setSurfaceFriction(Aerodrome::RunwayData &rd,
         rd.surfaceFrictionUnreliable = true;
     }
     if (const auto c = s.coefficient(); c.has_value()) {
-        rd.coefficient = std::floor(*c * 100.0);
+        rd.coefficient = std::round(*c * 100.0);
     }
 }
 
