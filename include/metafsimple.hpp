@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 4;
+    inline static const int patch = 5;
     inline static const char tag[] = "";
 };
 
@@ -1398,7 +1398,7 @@ BasicDataAdapter::cardinalDirection(const metaf::Direction &d) {
             return CardinalDirection::W;
         case metaf::Direction::Cardinal::E:
         case metaf::Direction::Cardinal::TRUE_E:
-            return CardinalDirection::W;
+            return CardinalDirection::E;
         case metaf::Direction::Cardinal::NW:
             return CardinalDirection::NW;
         case metaf::Direction::Cardinal::NE:
@@ -2160,7 +2160,7 @@ void StationDataAdapter::setChinoVisno(std::set<Runway> &runways,
                                        std::optional<metaf::Direction> d) {
     if (rw.has_value()) {
         const auto r = BasicDataAdapter::runway(*rw);
-        if (!runways.count(r)) {
+        if (runways.count(r)) {
             log(Report::Warning::Message::DUPLICATED_DATA);
         } else {
             runways.insert(r);
@@ -2168,7 +2168,7 @@ void StationDataAdapter::setChinoVisno(std::set<Runway> &runways,
     }
     if (d.has_value()) {
         const auto dir = BasicDataAdapter::cardinalDirection(*d);
-        if (!directions.count(dir)) {
+        if (directions.count(dir)) {
             log(Report::Warning::Message::DUPLICATED_DATA);
         } else {
             directions.insert(dir);

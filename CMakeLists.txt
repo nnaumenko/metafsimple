@@ -58,6 +58,7 @@ set(SOURCES ${SOURCES}
     test/integration_temp_pres_rmk.cpp
     test/integration_runway_state.cpp
     test/integration_wind_historical.cpp
+    test/integration_chino_visno.cpp
 )
 
 # Tests
