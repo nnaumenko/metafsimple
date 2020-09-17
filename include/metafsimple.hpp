@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 5;
+    inline static const int patch = 6;
     inline static const char tag[] = "";
 };
 
@@ -434,8 +434,8 @@ struct IcingForecast {
         CLEAR_IN_PRECIPITATION,
         MIXED
     };
-    Severity severity;
-    Type type;
+    Severity severity = Severity::NONE_OR_TRACE;
+    Type type = Type::NONE;
     Height minHeight;
     Height maxHeight;
 };
@@ -460,9 +460,9 @@ struct TurbulenceForecast {
         FREQUENT,
         OCCASIONAL
     };
-    Severity severity;
-    Location location;
-    Frequency frequency;
+    Severity severity = Severity::NONE;
+    Location location = Location::NONE;
+    Frequency frequency = Frequency::NONE;
     Height minHeight;
     Height maxHeight;
 };
@@ -797,7 +797,7 @@ struct Historical {
     };
     // Weather event
     struct WeatherEvent {
-        Event event;
+        Event event = Event::BEGAN;
         Weather weather;
         Time time;
     };

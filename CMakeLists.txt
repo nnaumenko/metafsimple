@@ -45,12 +45,13 @@ set(SOURCES ${SOURCES}
     test/unit_metadataadapter.cpp
     test/unit_basicdataadapter.cpp
     test/unit_essentialsadapter.cpp
+    test/unit_validate_comparisons.cpp
     test/integration_basic_reports.cpp
     test/integration_report_data.cpp
     test/integration_wind_main.cpp
     test/integration_visibility_main.cpp
     test/integration_sky_condition_main.cpp
-    test/integration_current_weather.cpp
+    test/integration_weather_current.cpp
     test/integration_tafs.cpp
     test/integration_metar_trends.cpp
     test/integration_temp_pres_main.cpp
