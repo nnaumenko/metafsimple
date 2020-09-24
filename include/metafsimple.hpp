@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 5;
-    inline static const int patch = 6;
+    inline static const int patch = 7;
     inline static const char tag[] = "";
 };
 
@@ -1372,12 +1372,14 @@ Precipitation BasicDataAdapter::precipitation(const metaf::Precipitation &p) {
         }
     };
     if (!p.amount().has_value()) return Precipitation();
-    Precipitation pr{std::floor(*p.amount()), convertUnit(p.unit())};
-    if (pr.unit == Precipitation::Unit::HUNDREDTHS_IN && !(*pr.amount % 100)) {
-        pr.amount = *pr.amount / 100;
-        pr.unit = Precipitation::Unit::IN;
+    auto u = convertUnit(p.unit());
+    const auto factor = (u == Precipitation::Unit::HUNDREDTHS_IN) ? 100.0 : 1.0;
+    int a = std::floor(*p.amount() * factor); 
+    if (u == Precipitation::Unit::HUNDREDTHS_IN && !(a % 100)) {
+        a /= 100;
+        u = Precipitation::Unit::IN;
     }
-    return pr;
+    return Precipitation {a, u};
 }
 
 CardinalDirection
