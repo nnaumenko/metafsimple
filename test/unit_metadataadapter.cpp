@@ -64,7 +64,8 @@ TEST(MetadataAdapter, setReportType_TAF_SPECI) {
     refReport.type = metafsimple::Report::Type::TAF;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::SPECI_IN_TAF, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / SPECI in TAF report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -690,7 +691,8 @@ TEST(MetadataAdapter, setAttributes_nil_cnl) {
     refReport.missing = true;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::BOTH_NIL_AND_CNL, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / both NIL and CNL in report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -716,7 +718,8 @@ TEST(MetadataAdapter, setAttributes_amd_cor) {
     refReport.correctional = true;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::BOTH_AMD_AND_COR, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / both AMD and COR in report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -742,7 +745,8 @@ TEST(MetadataAdapter, setAttributes_amd_metar) {
     refReport.type = metafsimple::Report::Type::METAR;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::AMD_IN_NON_TAF, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / AMD in non-TAF report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -768,7 +772,8 @@ TEST(MetadataAdapter, setAttributes_amd_speci) {
     refReport.type = metafsimple::Report::Type::SPECI;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::AMD_IN_NON_TAF, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / AMD in non-TAF report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -794,7 +799,8 @@ TEST(MetadataAdapter, setAttributes_cnl_metar) {
     refReport.type = metafsimple::Report::Type::METAR;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::CNL_IN_NON_TAF, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / CNL in non-TAF report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -820,7 +826,8 @@ TEST(MetadataAdapter, setAttributes_cnl_speci) {
     refReport.type = metafsimple::Report::Type::SPECI;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::CNL_IN_NON_TAF, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / CNL in non-TAF report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -913,7 +920,8 @@ TEST(MetadataAdapter, setAutoType_invalid) {
     metafsimple::Report refReport;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::INVALID_AUTOTYPE, ""});
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / invalid autotype"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -995,9 +1003,8 @@ TEST(MetadataAdapter, setReportTime_metar_no_report_time) {
     refReport.type = metafsimple::Report::Type::METAR;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::
-                NO_REPORT_TIME_IN_METAR,
-            ""});
+            metafsimple::Report::Warning::Message::INVALID_TIME,
+            "metadata / missing report time in METAR report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -1014,9 +1021,8 @@ TEST(MetadataAdapter, setReportTime_speci_no_report_time) {
     refReport.type = metafsimple::Report::Type::SPECI;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::
-                NO_REPORT_TIME_IN_METAR,
-            ""});
+            metafsimple::Report::Warning::Message::INVALID_TIME,
+            "metadata / missing report time in METAR report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -1050,8 +1056,8 @@ TEST(MetadataAdapter, setApplicableTime_taf_error) {
     refReport.type = metafsimple::Report::Type::TAF;
     refReport.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::NO_APPLICABLE_TIME_IN_TAF,
-            ""});
+            metafsimple::Report::Warning::Message::INVALID_TIME,
+            "metadata / missing applicable time in TAF"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -1124,22 +1130,20 @@ TEST(MetadataAdapter, setApplicableTime_speci) {
     EXPECT_EQ(station, metafsimple::Station());
 }
 
-
-
 TEST(MetadataAdapter, setApplicableTime_metar_error) {
     metafsimple::Report refReportMetar;
     refReportMetar.type = metafsimple::Report::Type::METAR;
     refReportMetar.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::APPLICABLE_TIME_IN_METAR,
-            ""});
+            metafsimple::Report::Warning::Message::INVALID_TIME,
+            "metadata / applicable time present in non-TAF report"});
 
     metafsimple::Report refReportSpeci;
     refReportSpeci.type = metafsimple::Report::Type::SPECI;
     refReportSpeci.warnings.push_back(
         metafsimple::Report::Warning{
-            metafsimple::Report::Warning::Message::APPLICABLE_TIME_IN_METAR,
-            ""});
+            metafsimple::Report::Warning::Message::INVALID_TIME,
+            "metadata / applicable time present in non-TAF report"});
 
     metafsimple::Report report;
     metafsimple::Station station;
@@ -1174,4 +1178,3 @@ TEST(MetadataAdapter, setApplicableTime_metar_error) {
     EXPECT_EQ(report, refReportSpeci);
     EXPECT_EQ(station, metafsimple::Station());
 }
-

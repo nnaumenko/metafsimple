@@ -21,8 +21,8 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 5;
-    inline static const int patch = 7;
+    inline static const int minor = 6;
+    inline static const int patch = 0;
     inline static const char tag[] = "";
 };
 
@@ -367,6 +367,7 @@ struct Vicinity {
 // directions where lightning strikes are observed
 struct LightningStrikes {
     enum class Type {
+        UNKNOWN,
         IN_CLOUD,
         CLOUD_CLOUD,
         CLOUD_GROUND,
@@ -522,25 +523,10 @@ struct Report {
     // data)
     struct Warning {
         enum class Message {
-            SPECI_IN_TAF,
-            BOTH_NIL_AND_CNL,
-            BOTH_AMD_AND_COR,
-            CNL_IN_NON_TAF,
-            AMD_IN_NON_TAF,
-            NO_REPORT_TIME_IN_METAR,
-            APPLICABLE_TIME_IN_METAR,
-            NO_APPLICABLE_TIME_IN_TAF,
-            INCONSISTENT_CORRECTION_NUMBER,
             INCONSISTENT_DATA,
             DUPLICATED_DATA,
-            REQUIRED_DATA_MISSING,
             INVALID_GROUP,
-            INVALID_AUTOTYPE,
-            INVALID_DIRECTION_SECTOR,
-            INVALID_DISTANCE_RANGE,
-            INVALID_3H_6H_REPORT_TIME,
-            INVALID_WEATHER_PHENOMENA,
-            INVALID_LIGHTNING_TYPE
+            INVALID_TIME
         };
         Message message;
         std::string id;
@@ -1134,6 +1120,9 @@ class DataAdapter {
     DataAdapter() = delete;
     DataAdapter(WarningLogger *l) : logger(l) { assert(logger); }
     void log(Report::Warning::Message msg) { logger->add(msg); }
+    void log(std::string id, Report::Warning::Message msg) {
+        logger->add(msg, id);
+    }
     WarningLogger *getLogger() { return logger; }
 
     template <typename T>
@@ -1374,12 +1363,12 @@ Precipitation BasicDataAdapter::precipitation(const metaf::Precipitation &p) {
     if (!p.amount().has_value()) return Precipitation();
     auto u = convertUnit(p.unit());
     const auto factor = (u == Precipitation::Unit::HUNDREDTHS_IN) ? 100.0 : 1.0;
-    int a = std::floor(*p.amount() * factor); 
+    int a = std::floor(*p.amount() * factor);
     if (u == Precipitation::Unit::HUNDREDTHS_IN && !(a % 100)) {
         a /= 100;
         u = Precipitation::Unit::IN;
     }
-    return Precipitation {a, u};
+    return Precipitation{a, u};
 }
 
 CardinalDirection
@@ -1968,7 +1957,8 @@ void MetadataAdapter::setReportType(metaf::ReportType t, bool speci) {
             break;
         case metaf::ReportType::TAF:
             report->type = Report::Type::TAF;
-            if (speci) log(Report::Warning::Message::SPECI_IN_TAF);
+            if (speci) log("metadata / SPECI in TAF report",
+                           Report::Warning::Message::INCONSISTENT_DATA);
             break;
     }
 }
@@ -2020,26 +2010,31 @@ void MetadataAdapter::setAttributes(bool nil,
                                     bool maintenance,
                                     std::optional<unsigned int> corNum) {
     if (nil && cnl) {
-        log(Report::Warning::Message::BOTH_NIL_AND_CNL);
+        log("metadata / both NIL and CNL in report",
+            Report::Warning::Message::INCONSISTENT_DATA);
         cnl = false;
     }
     if (amd && cor) {
-        log(Report::Warning::Message::BOTH_AMD_AND_COR);
+        log("metadata / both AMD and COR in report",
+            Report::Warning::Message::INCONSISTENT_DATA);
         amd = false;
     }
-    if (!cor && corNum.has_value() && *corNum) {
-        log(Report::Warning::Message::INCONSISTENT_CORRECTION_NUMBER);
+    if (!cor && corNum.value_or(0)) {
+        log("metadata / report correction number in non-correctional report",
+            Report::Warning::Message::INCONSISTENT_DATA);
         corNum = std::optional<unsigned int>();
     }
     switch (report->type) {
         case Report::Type::METAR:
         case Report::Type::SPECI:
             if (amd) {
-                log(Report::Warning::Message::AMD_IN_NON_TAF);
+                log("metadata / AMD in non-TAF report",
+                    Report::Warning::Message::INCONSISTENT_DATA);
                 amd = false;
             }
             if (cnl) {
-                log(Report::Warning::Message::CNL_IN_NON_TAF);
+                log("metadata / CNL in non-TAF report",
+                    Report::Warning::Message::INCONSISTENT_DATA);
                 cnl = false;
             }
             break;
@@ -2066,7 +2061,8 @@ void MetadataAdapter::setAutoType(bool ao1, bool ao2, bool ao1a, bool ao2a) {
         return true;
     };
     if (!autoTypeValid(ao1, ao2, ao1a, ao2a)) {
-        log(Report::Warning::Message::INVALID_AUTOTYPE);
+        log("metadata / invalid autotype",
+            Report::Warning::Message::INCONSISTENT_DATA);
         station->autoType = Station::AutoType::NONE;
         return;
     }
@@ -2082,7 +2078,8 @@ void MetadataAdapter::setReportTime(std::optional<metaf::MetafTime> t) {
     const bool isMetar = report->type == Report::Type::SPECI ||
                          report->type == Report::Type::METAR;
     if (isMetar && !t.has_value())
-        log(Report::Warning::Message::NO_REPORT_TIME_IN_METAR);
+        log("metadata / missing report time in METAR report",
+            Report::Warning::Message::INVALID_TIME);
     report->reportTime = BasicDataAdapter::time(t);
 }
 
@@ -2090,11 +2087,13 @@ void MetadataAdapter::setApplicableTime(std::optional<metaf::MetafTime> from,
                                         std::optional<metaf::MetafTime> until) {
     if (report->type != Report::Type::TAF) {
         if (from.has_value() || until.has_value())
-            log(Report::Warning::Message::APPLICABLE_TIME_IN_METAR);
+            log("metadata / applicable time present in non-TAF report",
+                Report::Warning::Message::INVALID_TIME);
         return;
     }
     if (!from.has_value() || !until.has_value()) {
-        log(Report::Warning::Message::NO_APPLICABLE_TIME_IN_TAF);
+        log("metadata / missing applicable time in TAF",
+            Report::Warning::Message::INVALID_TIME);
         return;
     }
     report->applicableFrom = BasicDataAdapter::time(from);
@@ -2267,12 +2266,10 @@ void EssentialsAdapter::setSurfaceWind(metaf::Direction dir,
     essentials->windDirectionDegrees = dir.degrees();
     if (dir.type() == metaf::Direction::Type::VARIABLE)
         essentials->windDirectionVariable = true;
-    if (varSecBegin.degrees().has_value() ^ varSecEnd.degrees().has_value()) {
-        log(Report::Warning::Message::INVALID_DIRECTION_SECTOR);
-    } else {
-        essentials->windDirectionVarFromDegrees = varSecBegin.degrees();
-        essentials->windDirectionVarToDegrees = varSecEnd.degrees();
-    }
+    assert(
+        varSecBegin.degrees().has_value() == varSecEnd.degrees().has_value());
+    essentials->windDirectionVarFromDegrees = varSecBegin.degrees();
+    essentials->windDirectionVarToDegrees = varSecEnd.degrees();
     essentials->windSpeed = BasicDataAdapter::speed(windSpeed);
     essentials->gustSpeed = BasicDataAdapter::speed(gustSpeed);
 }
@@ -2298,10 +2295,7 @@ bool EssentialsAdapter::hasSurfaceWind() const {
 
 void EssentialsAdapter::setVisibility(metaf::Distance vis) {
     const auto v = BasicDataAdapter::distance(vis);
-    if (!v.has_value()) {
-        log(Report::Warning::Message::INVALID_DISTANCE_RANGE);
-        return;
-    }
+    assert(v.has_value());
     assert(essentials);
     setData<Distance>(essentials->visibility, *v);
 }
@@ -2419,12 +2413,11 @@ void EssentialsAdapter::addWindShear(metaf::Distance height,
                                      metaf::Direction direction,
                                      metaf::Speed windSpeed) {
     const auto dir = direction.degrees();
+    assert(dir.has_value());
     const auto h = BasicDataAdapter::height(height);
+    assert(h.height.has_value());
     const auto s = BasicDataAdapter::speed(windSpeed);
-    if (!dir.has_value() || !h.height.has_value() || !s.speed.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(s.speed.has_value());
     const auto d = static_cast<int>(*dir);
     assert(essentials);
     //TODO: check for duplicate groups?
@@ -2496,10 +2489,7 @@ class AerodromeDataAdapter : DataAdapter {
 
 void AerodromeDataAdapter::setColourCode(Aerodrome::ColourCode code,
                                          bool codeBlack) {
-    if (code == Aerodrome::ColourCode::NOT_SPECIFIED) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(code != Aerodrome::ColourCode::NOT_SPECIFIED);
     assert(aerodrome);
     if (aerodrome->colourCode != Aerodrome::ColourCode::NOT_SPECIFIED ||
         aerodrome->colourCodeBlack) {
@@ -2522,10 +2512,7 @@ void AerodromeDataAdapter::setTowerVisibility(metaf::Distance twrVis) {
 
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
                                          metaf::Distance vis) {
-    if (!rw.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(rw.has_value());
     assert(aerodrome);
     const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
     setVisibility(aerodrome->runways[ridx].visibility, vis);
@@ -2533,10 +2520,7 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
 
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> d,
                                          metaf::Distance vis) {
-    if (!d.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(d.has_value());
     assert(aerodrome);
     auto i = getOrCreateDirection(BasicDataAdapter::cardinalDirection(*d));
     setVisibility(aerodrome->directions[i].visibility, vis);
@@ -2545,10 +2529,7 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> d,
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
                                          metaf::Distance minVis,
                                          metaf::Distance maxVis) {
-    if (!rw.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(rw.has_value());
     assert(aerodrome);
     const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
     setVisibility(aerodrome->runways[ridx].visibility, minVis, maxVis);
@@ -2557,25 +2538,20 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Runway> rw,
 void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> dir,
                                          metaf::Distance minVis,
                                          metaf::Distance maxVis) {
-    if (!dir.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(dir.has_value());
     assert(aerodrome);
-    const auto didx = getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
+    const auto didx =
+        getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
     setVisibility(aerodrome->directions[didx].visibility, minVis, maxVis);
 }
 
 void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
                                   metaf::Distance rvr,
                                   metaf::VisibilityGroup::Trend trend) {
-    if (!rw.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(rw.has_value());
     assert(aerodrome);
     const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    if (aerodrome->runways[ridx].visualRangeTrend != 
+    if (aerodrome->runways[ridx].visualRangeTrend !=
         Aerodrome::RvrTrend::UNKNOWN) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
@@ -2588,13 +2564,10 @@ void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
                                   metaf::Distance minRvr,
                                   metaf::Distance maxRvr,
                                   metaf::VisibilityGroup::Trend trend) {
-    if (!rw.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(rw.has_value());
     assert(aerodrome);
     const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    if (aerodrome->runways[ridx].visualRangeTrend != 
+    if (aerodrome->runways[ridx].visualRangeTrend !=
         Aerodrome::RvrTrend::UNKNOWN) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
@@ -2726,10 +2699,7 @@ void AerodromeDataAdapter::setRunwayNonOp(metaf::Runway rw) {
 void AerodromeDataAdapter::setRunwayWindShearLowerLayers(
     std::optional<metaf::Runway> rw) {
     assert(aerodrome);
-    if (!rw.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(rw.has_value());
     const auto i = getOrCreateRunway(BasicDataAdapter::runway(*rw));
     setData<bool>(aerodrome->runways[i].windShearLowerLayers, true);
 }
@@ -2766,10 +2736,7 @@ size_t AerodromeDataAdapter::getOrCreateDirection(const CardinalDirection &d) {
 void AerodromeDataAdapter::setVisibility(Distance &d,
                                          const metaf::Distance &md) {
     const auto vis = BasicDataAdapter::distance(md);
-    if (!vis.has_value()) {
-        log(Report::Warning::Message::INVALID_DISTANCE_RANGE);
-        return;
-    }
+    assert(vis.has_value());
     setData<Distance>(d, *vis);
 }
 
@@ -2787,31 +2754,23 @@ void AerodromeDataAdapter::setVisibility(DistanceRange &d,
     }
     const auto visMin = BasicDataAdapter::distance(min);
     const auto visMax = BasicDataAdapter::distance(max);
-    if (!visMax.has_value() || visMin.has_value()) {
-        log(Report::Warning::Message::INVALID_DISTANCE_RANGE);
-        return;
-    }
+    assert(visMax.has_value() && visMin.has_value());
     d.minimum = *visMin;
     d.maximum = *visMax;
 }
 
 Ceiling *AerodromeDataAdapter::getCeiling(std::optional<metaf::Runway> rw,
                                           std::optional<metaf::Direction> dir) {
-    if (!rw.has_value() && !dir.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return nullptr;
-    }
-    if (rw.has_value() && dir.has_value()) {
-        log(Report::Warning::Message::INCONSISTENT_DATA);
-        return nullptr;
-    }
+    assert(rw.has_value());
+    assert(dir.has_value());
+    assert(!(rw.has_value() && dir.has_value()));
     assert(aerodrome);
     if (rw.has_value()) {
         const auto i = getOrCreateRunway(BasicDataAdapter::runway(*rw));
         return &aerodrome->runways[i].ceiling;
     }
     if (dir.has_value()) {
-        const auto i = 
+        const auto i =
             getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
         return &aerodrome->directions[i].ceiling;
     }
@@ -2934,10 +2893,7 @@ void HistoricalDataAdapter::setWindShift(bool fropa,
 void HistoricalDataAdapter::addRecentWeather(
     const metaf::WeatherPhenomena &wp) {
     const auto w = weatherEvent(wp);
-    if (!w.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(w.has_value());
     historical->recentWeather.push_back(*w);
 }
 
@@ -2946,10 +2902,8 @@ void HistoricalDataAdapter::setMinMaxTemperature(bool last24h,
                                                  metaf::Temperature max) {
     const auto tmin = BasicDataAdapter::temperature(min);
     const auto tmax = BasicDataAdapter::temperature(max);
-    if (!tmin.temperature.has_value() || !tmax.temperature.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(tmin.temperature.has_value());
+    assert(tmax.temperature.has_value());
     assert(historical);
     Temperature *dstmin = &historical->temperatureMin6h;
     Temperature *dstmax = &historical->temperatureMax6h;
@@ -2971,7 +2925,7 @@ void HistoricalDataAdapter::setPrecipitationTotal1h(metaf::Precipitation p) {
 }
 
 void HistoricalDataAdapter::setFrozenPrecipitation3h6h(metaf::Precipitation p) {
-    log(Report::Warning::Message::INVALID_3H_6H_REPORT_TIME);
+    log(Report::Warning::Message::INVALID_TIME);
     setData<Precipitation>(historical->precipitationFrozen3or6h,
                            BasicDataAdapter::precipitation(p));
 }
@@ -3094,10 +3048,7 @@ void HistoricalDataAdapter::setPressureTendency(
 }
 
 void HistoricalDataAdapter::setSunshineDuration(std::optional<float> m) {
-    if (!m.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(m.has_value());
     const auto dur = std::floor(*m);
     assert(historical);
     setData<std::optional<int>>(historical->sunshineDurationMinutes24h, dur);
@@ -3173,10 +3124,7 @@ class CurrentDataAdapter : DataAdapter {
 void CurrentDataAdapter::setObscuration(metaf::CloudGroup::Amount amount,
                                         const metaf::Distance height,
                                         std::optional<metaf::CloudType> ct) {
-    if (!ct.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(!ct.has_value());
     assert(current);
     current->obscurations.push_back(
         CloudLayer{BasicDataAdapter::cloudLayerAmount(amount),
@@ -3190,9 +3138,9 @@ void CurrentDataAdapter::setTemperatureDewPoint(metaf::Temperature t,
     auto isPrecise = [](const Temperature &t) {
         if (t.unit != Temperature::Unit::TENTH_C) return false;
         if (!t.temperature.has_value()) return false;
-        // This will prevent duplicate data warning if there is a precise 
+        // This will prevent duplicate data warning if there is a precise
         // temperature group Txxxxxxxx in remarks and in the main temperature
-        // group xx/xx the temperature or dew point is coded M00 
+        // group xx/xx the temperature or dew point is coded M00
         // TODO: implement better duplicated data check
         if (t.temperature == BasicDataAdapter::temperatureM00) return false;
         return true;
@@ -3229,10 +3177,7 @@ void CurrentDataAdapter::setVisibility(const metaf::Distance &min,
     }
     const auto dmin = BasicDataAdapter::distance(min);
     const auto dmax = BasicDataAdapter::distance(max);
-    if (!dmin.has_value() || !dmax.has_value()) {
-        log(Report::Warning::Message::INVALID_DISTANCE_RANGE);
-        return;
-    }
+    assert (dmin.has_value() && dmax.has_value());
     current->variableVisibility.minimum = *dmin;
     current->variableVisibility.maximum = *dmax;
 }
@@ -3406,7 +3351,7 @@ void CurrentDataAdapter::setLightning(metaf::LightningGroup::Frequency f,
     if (cloudGround) result.type.insert(LightningStrikes::Type::CLOUD_GROUND);
     if (cloudCloud) result.type.insert(LightningStrikes::Type::CLOUD_CLOUD);
     if (cloudAir) result.type.insert(LightningStrikes::Type::CLOUD_AIR);
-    if (unknownType) log(Report::Warning::Message::INVALID_LIGHTNING_TYPE);
+    if (unknownType) result.type.insert(LightningStrikes::Type::UNKNOWN);
     for (const auto &dd : dir) {
         result.directions.insert(BasicDataAdapter::cardinalDirection(dd));
     }
@@ -3475,15 +3420,9 @@ void CurrentDataAdapter::addPhenomenaInVicinity(metaf::VicinityGroup::Type t,
 void CurrentDataAdapter::addPhenomenaInVicinity(
     const metaf::WeatherPhenomena &w) {
     const auto weather = BasicDataAdapter::weather(w);
-    if (!weather.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(weather.has_value());
     const auto ph = BasicDataAdapter::vicinityPhenomena(*weather);
-    if (!ph.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(ph.has_value());
     assert(current);
     current->phenomenaInVicinity.push_back(Vicinity{
         *ph,
@@ -3493,20 +3432,14 @@ void CurrentDataAdapter::addPhenomenaInVicinity(
 }
 
 void CurrentDataAdapter::setHailstoneSize(std::optional<float> s) {
-    if (!s.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(!s.has_value());
     assert(current);
     setData<std::optional<int>>(current->hailstoneSizeQuartersInch,
                                 std::floor(*s * 4.0));
 }
 
 void CurrentDataAdapter::setDensityAltitude(std::optional<float> da) {
-    if (!da.has_value()) {
-        log(Report::Warning::Message::REQUIRED_DATA_MISSING);
-        return;
-    }
+    assert(da.has_value());
     assert(current);
     setData<Height>(current->densityAltitude,
                     Height{std::floor(*da), Height::Unit::FEET});
@@ -3701,15 +3634,9 @@ void ForecastDataAdapter::addTurbulence(TurbulenceForecast::Severity s,
 void ForecastDataAdapter::addPhenomenaInVicinityPrevailing(
     const metaf::WeatherPhenomena &w) {
     const auto weather = BasicDataAdapter::weather(w);
-    if (!weather.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(weather.has_value());
     const auto ph = BasicDataAdapter::vicinityPhenomena(*weather);
-    if (!ph.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(ph.has_value());
     assert(forecast);
     forecast->prevailingVicinity.insert(*ph);
 }
@@ -3717,15 +3644,9 @@ void ForecastDataAdapter::addPhenomenaInVicinityPrevailing(
 void ForecastDataAdapter::addPhenomenaInVicinityTrend(
     const metaf::WeatherPhenomena &w) {
     const auto weather = BasicDataAdapter::weather(w);
-    if (!weather.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(weather.has_value());
     const auto ph = BasicDataAdapter::vicinityPhenomena(*weather);
-    if (!ph.has_value()) {
-        log(Report::Warning::Message::INVALID_WEATHER_PHENOMENA);
-        return;
-    }
+    assert(ph.has_value());
     assert(forecast);
     assert(forecast->trends.size());
     forecast->trends.back().vicinity.insert(*ph);
@@ -4052,7 +3973,8 @@ void CollateVisitor::visitVisibilityGroup(const metaf::VisibilityGroup &group,
             break;
         }
         case metaf::VisibilityGroup::Type::DIRECTIONAL:
-            aerodromeData().setVisibility(group.direction(), group.visibility());
+            aerodromeData().setVisibility(group.direction(),
+                                          group.visibility());
             break;
         case metaf::VisibilityGroup::Type::VARIABLE_DIRECTIONAL:
             aerodromeData().setVisibility(group.direction(),
@@ -4068,7 +3990,9 @@ void CollateVisitor::visitVisibilityGroup(const metaf::VisibilityGroup &group,
                                           group.maxVisibility());
             break;
         case metaf::VisibilityGroup::Type::RVR:
-            aerodromeData().setRvr(group.runway(), group.visibility(), group.trend());
+            aerodromeData().setRvr(group.runway(),
+                                   group.visibility(),
+                                   group.trend());
             break;
         case metaf::VisibilityGroup::Type::VARIABLE_RVR:
             aerodromeData().setRvr(group.runway(),
@@ -4244,7 +4168,7 @@ void CollateVisitor::visitPressureGroup(const metaf::PressureGroup &group,
     (void)rawString;
     switch (group.type()) {
         case metaf::PressureGroup::Type::OBSERVED_QNH:
-            if (reportPart == metaf::ReportPart::RMK && 
+            if (reportPart == metaf::ReportPart::RMK &&
                 currentData().hasPressure()) return;
             // TODO: check this SLPxxx group agains previously set pressure
             currentData().setPressureQnh(group.atmosphericPressure());
