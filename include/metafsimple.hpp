@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 6;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -741,7 +741,6 @@ struct Current {
     Precipitation snowWaterEquivalent;
     Precipitation snowDepthOnGround;
     bool snowIncreasingRapidly = false;
-    std::vector<WindShear> windShear;
     std::vector<Vicinity> phenomenaInVicinity;
     std::vector<LightningStrikes> lightningStrikes;
     Height densityAltitude;

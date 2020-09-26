@@ -89,7 +89,6 @@ TEST(IntegrationBasicReports, basicMetarFull) {
             Precipitation(),                       // water equivalent of snow
             Precipitation(),                       // snow depth on ground
             false,                                 // snow increasing rapidly
-            {},                                    // wind shear
             {},                                    // phenomena in vicinity
             {},                                    // lightning strikes
             Height(),                              // density altitude
