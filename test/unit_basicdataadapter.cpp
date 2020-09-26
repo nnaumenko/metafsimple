@@ -86,17 +86,14 @@ TEST(BasicDataAdapter, weatherPrecipitationIncorrect) {
               std::optional<metafsimple::Weather::Precipitation>());
 }
 
-std::string testWeather(const std::string& weatherString,
-                        const metafsimple::Weather& weatherPhenomena) {
+bool testWeather(const std::string& weatherString,
+                 const metafsimple::Weather& weatherPhenomena) {
     const auto w = metaf::WeatherPhenomena::fromString(weatherString, true);
-    if (!w.has_value()) return (weatherString + ": cannot be parsed by Metaf");
+    if (!w.has_value()) return false;
     const auto wp = metafsimple::detail::BasicDataAdapter::weather(w.value());
-    if (!wp.has_value())
-        return (weatherString + ": cannot be converted by BasicDataAdapter");
-    if (!(wp == weatherPhenomena))
-        return (weatherString +
-                ": BasicDataAdapter::weather() return value is invalid");
-    return std::string();
+    if (!wp.has_value()) return false;
+    if (!(wp == weatherPhenomena)) return false;
+    return true;
 }
 
 TEST(BasicDataAdapter, weather) {
@@ -324,19 +321,19 @@ TEST(BasicDataAdapter, weather) {
         std::pair("-FZRADZ",
                   metafsimple::Weather{
                       metafsimple::Weather::Phenomena::
-                      FREEZING_PRECIPITATION_LIGHT,
+                          FREEZING_PRECIPITATION_LIGHT,
                       {metafsimple::Weather::Precipitation::RAIN,
                        metafsimple::Weather::Precipitation::DRIZZLE}}),
         std::pair("+TSRAGR",
                   metafsimple::Weather{
                       metafsimple::Weather::Phenomena::
-                      THUNDERSTORM_PRECIPITATION_HEAVY,
+                          THUNDERSTORM_PRECIPITATION_HEAVY,
                       {metafsimple::Weather::Precipitation::RAIN,
                        metafsimple::Weather::Precipitation::HAIL}}),
         std::pair("SHSNPL",
                   metafsimple::Weather{
                       metafsimple::Weather::Phenomena::
-                      SHOWERY_PRECIPITATION_MODERATE,
+                          SHOWERY_PRECIPITATION_MODERATE,
                       {metafsimple::Weather::Precipitation::SNOW,
                        metafsimple::Weather::Precipitation::ICE_PELLETS}}),
     };
@@ -344,6 +341,6 @@ TEST(BasicDataAdapter, weather) {
     for (const auto& p : phenomena) {
         const auto wStr = std::get<std::string>(p);
         const auto wPh = std::get<metafsimple::Weather>(p);
-        EXPECT_EQ(testWeather(wStr, wPh), std::string());
+        EXPECT_TRUE(testWeather(wStr, wPh));
     }
 }

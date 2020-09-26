@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 6;
-    inline static const int patch = 1;
+    inline static const int patch = 2;
     inline static const char tag[] = "";
 };
 
@@ -3425,7 +3425,10 @@ void CurrentDataAdapter::addPhenomenaInVicinity(
     assert(current);
     current->phenomenaInVicinity.push_back(Vicinity{
         *ph,
-        DistanceRange(),
+        DistanceRange{Distance(), 
+        Distance{Distance::Details::EXACTLY, 5, Distance::Unit::STATUTE_MILES},
+        Distance{Distance::Details::EXACTLY, 10, Distance::Unit::STATUTE_MILES}
+        },
         CardinalDirection::NOT_SPECIFIED,
         {}});
 }

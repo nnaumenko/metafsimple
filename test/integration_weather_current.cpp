@@ -17,8 +17,8 @@ using namespace metafsimple;
 // (obscuration, precipitation, and other phenomena).
 // These tests do not cover groups with weather phenomena in vicinity such as
 // VCSH or VCBLSN, recent weather phenomena and any groups specified in remarks.
-// Not all weather phenomena are tested here (see unit_basicdataadapter.cpp) for
-// complete weather phenomena test.
+// Not all weather phenomena are tested here (see unit_basicdataadapter.cpp for
+// complete weather phenomena test).
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(IntegrationCurrentWeather, haze) {

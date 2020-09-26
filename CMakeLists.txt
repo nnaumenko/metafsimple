@@ -61,6 +61,7 @@ set(SOURCES ${SOURCES}
     test/integration_wind_historical.cpp
     test/integration_chino_visno.cpp
     test/integration_precip_snow.cpp
+    test/integration_misc.cpp
 )
 
 # Tests
