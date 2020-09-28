@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 6;
-    inline static const int patch = 2;
+    inline static const int patch = 3;
     inline static const char tag[] = "";
 };
 
@@ -1261,6 +1261,8 @@ class BasicDataAdapter : DataAdapter {
 
     inline static std::optional<Weather>
     weather(const metaf::WeatherPhenomena &wp);
+    inline static std::optional<Weather>
+    recentWeather(const metaf::WeatherPhenomena &wp);
 
     inline static std::optional<Weather::Phenomena>
     weatherPhenomena(metaf::WeatherPhenomena::Qualifier q,
@@ -1873,6 +1875,19 @@ BasicDataAdapter::weather(const metaf::WeatherPhenomena &wp) {
     }
     return result;
 }
+
+std::optional<Weather>
+BasicDataAdapter::recentWeather(const metaf::WeatherPhenomena &wp) {
+    assert(wp.qualifier() == metaf::WeatherPhenomena::Qualifier::RECENT);
+    Weather result{Weather::Phenomena::PRECIPITATION, {}};
+    for (const auto wpw : wp.weather()) {
+        const auto pr = weatherPrecipitation(wpw);
+        if (!pr.has_value()) return std::optional<Weather>();
+        result.precipitation.insert(*pr);
+    }
+    return result;
+}
+
 
 std::optional<ObservedPhenomena>
 BasicDataAdapter::vicinityPhenomena(const Weather &w) {
@@ -3066,7 +3081,7 @@ HistoricalDataAdapter::weatherEvent(const metaf::WeatherPhenomena &we) {
                 break;
         }
     };
-    const auto w = BasicDataAdapter::weather(we);
+    const auto w = BasicDataAdapter::recentWeather(we);
     if (!w.has_value()) return std::optional<Historical::WeatherEvent>();
     return Historical::WeatherEvent{convertEvent(we.event()),
                                     *w,

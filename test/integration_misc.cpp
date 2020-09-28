@@ -13,7 +13,8 @@
 using namespace metafsimple;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Miscellanious uncommon groups: lightning, vicinity, colour codes
+// Miscellanious uncommon groups: lightning, vicinity, colour codes,
+// low/mid/high cloud layers, density altitude, hailstone size
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(IntegrationMisc, lightning) {

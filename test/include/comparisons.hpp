@@ -292,9 +292,9 @@ static inline bool operator==(const Current &lhs, const Current &rhs) {
 
 static inline bool operator==(const Historical::WeatherEvent &lhs,
                               const Historical::WeatherEvent &rhs) {
-    if (lhs.event == rhs.event) return false;
-    if (lhs.time == rhs.time) return false;
-    if (lhs.weather == rhs.weather) return false;
+    if (lhs.event != rhs.event) return false;
+    if (!(lhs.time == rhs.time)) return false;
+    if (!(lhs.weather == rhs.weather)) return false;
     return true;
 }
 
