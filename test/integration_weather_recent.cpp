@@ -17,7 +17,7 @@ using namespace metafsimple;
 // beginning/ending time group (DZB23E38RAB42)
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST(IntegrationRecentWeather, recentWeather) {
+TEST(IntegrationRecentWeather, recentWeatherPrecipitation) {
     static const auto rawReport =
         "METAR EGXE 272050Z AUTO 26004KT 9999 NCD 05/04 Q1015 REDZ=";
     // 27 SEP 2020
@@ -62,10 +62,114 @@ TEST(IntegrationRecentWeather, recentWeather) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
+TEST(IntegrationRecentWeather, recentWeatherShowers) {
+    static const auto rawReport =
+        "METAR BIEG 302000Z 35007KT 9999 -DZ BKN018 OVC028 09/06 Q0987 RESHRA=";
+    // 30 SEP 2020
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{30, 20, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "BIEG";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionDegrees = 350;
+    refCurrent.weatherData.windSpeed = Speed{7, Speed::Unit::KT};
+    refCurrent.weatherData.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refCurrent.weatherData.weather.push_back(
+        Weather{Weather::Phenomena::PRECIPITATION_LIGHT,
+                {Weather::Precipitation::DRIZZLE}});
+    refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CLOUDS;
+    refCurrent.weatherData.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::BROKEN,
+                   Height{1800, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+    refCurrent.weatherData.cloudLayers.push_back(
+        CloudLayer{CloudLayer::Amount::OVERCAST,
+                   Height{2800, Height::Unit::FEET},
+                   CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS,
+                   std::optional<int>()});
+
+
+    refCurrent.airTemperature = Temperature{9, Temperature::Unit::C};
+    refCurrent.dewPoint = Temperature{6, Temperature::Unit::C};
+    refCurrent.relativeHumidity = 81;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{987, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    Historical refHistorical;
+    refHistorical.recentWeather.push_back(Historical::WeatherEvent{
+        Historical::Event::ENDED,
+        Weather{
+            Weather::Phenomena::SHOWERY_PRECIPITATION,
+            {Weather::Precipitation::RAIN},
+        },
+        Time()});
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+TEST(IntegrationRecentWeather, recentWeatherThunderstorm) {
+    static const auto rawReport =
+        "METAR FKKR 302000Z 26003KT CAVOK 26/25 Q1012 RETS NOSIG=";
+    // 30 SEP 2020
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{30, 20, 0};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "FKKR";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionDegrees = 260;
+    refCurrent.weatherData.windSpeed = Speed{3, Speed::Unit::KT};
+    refCurrent.weatherData.visibility =
+        Distance{Distance::Details::MORE_THAN, 10000, Distance::Unit::METERS};
+    refCurrent.weatherData.skyCondition = Essentials::SkyCondition::CAVOK;
+    refCurrent.weatherData.cavok = true;
+    refCurrent.airTemperature = Temperature{26, Temperature::Unit::C};
+    refCurrent.dewPoint = Temperature{25, Temperature::Unit::C};
+    refCurrent.relativeHumidity = 94;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1012, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    Historical refHistorical;
+    refHistorical.recentWeather.push_back(Historical::WeatherEvent{
+        Historical::Event::ENDED,
+        Weather{Weather::Phenomena::THUNDERSTORM, {}},
+        Time()});
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+
+    Forecast refForecast;
+    refForecast.noSignificantChanges = true;
+    EXPECT_EQ(result.forecast, refForecast);
+}
+
 TEST(IntegrationRecentWeather, weatherEvents) {
     static const auto rawReport =
         "METAR ZZZZ 301946Z /////KT ////SM ///// A////"
-        " RMK DZB23E38RAB42 TSB41=";
+        " RMK DZB23E38SHRAB42 TSB41=";
         //fake report created for this test
 
     const auto result = metafsimple::simplify(rawReport);
@@ -98,7 +202,7 @@ TEST(IntegrationRecentWeather, weatherEvents) {
     refHistorical.recentWeather.push_back(Historical::WeatherEvent{
         Historical::Event::BEGAN,
         Weather{
-            Weather::Phenomena::PRECIPITATION,
+            Weather::Phenomena::SHOWERY_PRECIPITATION,
             {Weather::Precipitation::RAIN},
         },
         Time{std::optional<int>(), 19, 42}});
