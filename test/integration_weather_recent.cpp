@@ -61,3 +61,57 @@ TEST(IntegrationRecentWeather, recentWeather) {
     EXPECT_EQ(result.aerodrome, Aerodrome());
     EXPECT_EQ(result.forecast, Forecast());
 }
+
+TEST(IntegrationRecentWeather, weatherEvents) {
+    static const auto rawReport =
+        "METAR ZZZZ 301946Z /////KT ////SM ///// A////"
+        " RMK DZB23E38RAB42 TSB41=";
+        //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{30, 19, 46};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Historical refHistorical;
+    refHistorical.recentWeather.push_back(Historical::WeatherEvent{
+        Historical::Event::BEGAN,
+        Weather{
+            Weather::Phenomena::PRECIPITATION,
+            {Weather::Precipitation::DRIZZLE},
+        },
+        Time{std::optional<int>(), 19, 23}});
+    refHistorical.recentWeather.push_back(Historical::WeatherEvent{
+        Historical::Event::ENDED,
+        Weather{
+            Weather::Phenomena::PRECIPITATION,
+            {Weather::Precipitation::DRIZZLE},
+        },
+        Time{std::optional<int>(), 19, 38}});
+    refHistorical.recentWeather.push_back(Historical::WeatherEvent{
+        Historical::Event::BEGAN,
+        Weather{
+            Weather::Phenomena::PRECIPITATION,
+            {Weather::Precipitation::RAIN},
+        },
+        Time{std::optional<int>(), 19, 42}});
+    refHistorical.recentWeather.push_back(Historical::WeatherEvent{
+        Historical::Event::BEGAN,
+        Weather{
+            Weather::Phenomena::THUNDERSTORM,
+            {},
+        },
+        Time{std::optional<int>(), 19, 41}});
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.forecast, Forecast());
+}

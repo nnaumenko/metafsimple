@@ -239,3 +239,8 @@ TEST(IntegrationMisc, colourCodeBlack) {
     EXPECT_EQ(result.historical, Historical());
     EXPECT_EQ(result.forecast, Forecast());
 }
+
+// TODO: low/mid/high clouds
+// TODO: density altitude
+// TODO: sunshine duration
+// TODO: hailstone size

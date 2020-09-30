@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 6;
-    inline static const int patch = 3;
+    inline static const int patch = 4;
     inline static const char tag[] = "";
 };
 
@@ -248,6 +248,7 @@ struct Weather {
         HEAVY_DUST_STORM,
         HEAVY_DUST_SAND_STORM,
         PRECIPITATION,
+        SHOWERY_PRECIPITATION,
         PRECIPITATION_LIGHT,
         PRECIPITATION_MODERATE,
         PRECIPITATION_HEAVY,
@@ -1878,8 +1879,23 @@ BasicDataAdapter::weather(const metaf::WeatherPhenomena &wp) {
 
 std::optional<Weather>
 BasicDataAdapter::recentWeather(const metaf::WeatherPhenomena &wp) {
-    assert(wp.qualifier() == metaf::WeatherPhenomena::Qualifier::RECENT);
-    Weather result{Weather::Phenomena::PRECIPITATION, {}};
+    auto descriptorToPhenomena = [](metaf::WeatherPhenomena::Descriptor d) {
+        switch (d) {
+            case metaf::WeatherPhenomena::Descriptor::THUNDERSTORM:
+                return Weather::Phenomena::THUNDERSTORM;
+            case metaf::WeatherPhenomena::Descriptor::SHOWERS:
+                return Weather::Phenomena::SHOWERY_PRECIPITATION;
+            default:
+                return Weather::Phenomena::PRECIPITATION;
+        }
+    };
+    assert(wp.qualifier() == metaf::WeatherPhenomena::Qualifier::RECENT ||
+           wp.qualifier() == metaf::WeatherPhenomena::Qualifier::NONE);
+    assert(wp.descriptor() == metaf::WeatherPhenomena::Descriptor::NONE ||
+           wp.descriptor() == metaf::WeatherPhenomena::Descriptor::
+                                  THUNDERSTORM ||
+           wp.descriptor() == metaf::WeatherPhenomena::Descriptor::SHOWERS);
+    Weather result {descriptorToPhenomena(wp.descriptor()), {}};
     for (const auto wpw : wp.weather()) {
         const auto pr = weatherPrecipitation(wpw);
         if (!pr.has_value()) return std::optional<Weather>();
@@ -1887,7 +1903,6 @@ BasicDataAdapter::recentWeather(const metaf::WeatherPhenomena &wp) {
     }
     return result;
 }
-
 
 std::optional<ObservedPhenomena>
 BasicDataAdapter::vicinityPhenomena(const Weather &w) {
@@ -3191,7 +3206,7 @@ void CurrentDataAdapter::setVisibility(const metaf::Distance &min,
     }
     const auto dmin = BasicDataAdapter::distance(min);
     const auto dmax = BasicDataAdapter::distance(max);
-    assert (dmin.has_value() && dmax.has_value());
+    assert(dmin.has_value() && dmax.has_value());
     current->variableVisibility.minimum = *dmin;
     current->variableVisibility.maximum = *dmax;
 }
@@ -3440,10 +3455,9 @@ void CurrentDataAdapter::addPhenomenaInVicinity(
     assert(current);
     current->phenomenaInVicinity.push_back(Vicinity{
         *ph,
-        DistanceRange{Distance(), 
-        Distance{Distance::Details::EXACTLY, 5, Distance::Unit::STATUTE_MILES},
-        Distance{Distance::Details::EXACTLY, 10, Distance::Unit::STATUTE_MILES}
-        },
+        DistanceRange{Distance(),
+                      Distance{Distance::Details::EXACTLY, 5, Distance::Unit::STATUTE_MILES},
+                      Distance{Distance::Details::EXACTLY, 10, Distance::Unit::STATUTE_MILES}},
         CardinalDirection::NOT_SPECIFIED,
         {}});
 }
