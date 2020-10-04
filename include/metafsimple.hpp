@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 6;
-    inline static const int patch = 4;
+    inline static const int patch = 5;
     inline static const char tag[] = "";
 };
 
@@ -2577,7 +2577,7 @@ void AerodromeDataAdapter::setVisibility(std::optional<metaf::Direction> dir,
 void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
                                   metaf::Distance rvr,
                                   metaf::VisibilityGroup::Trend trend) {
-    assert(rw.has_value());
+    if (!rw.has_value()) return;
     assert(aerodrome);
     const auto ridx = getOrCreateRunway(BasicDataAdapter::runway(*rw));
     if (aerodrome->runways[ridx].visualRangeTrend !=
@@ -2601,7 +2601,7 @@ void AerodromeDataAdapter::setRvr(std::optional<metaf::Runway> rw,
         log(Report::Warning::Message::DUPLICATED_DATA);
         return;
     }
-    setVisibility(aerodrome->runways[ridx].visibility, minRvr, maxRvr);
+    setVisibility(aerodrome->runways[ridx].visualRange, minRvr, maxRvr);
     aerodrome->runways[ridx].visualRangeTrend = rvrTrend(trend);
 }
 

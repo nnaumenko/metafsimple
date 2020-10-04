@@ -219,3 +219,5 @@ TEST(IntegrationRunwayState, runwaySnoclo) {
     EXPECT_EQ(result.historical, Historical());
     EXPECT_EQ(result.forecast, Forecast());
 }
+
+// TODO: runway not operational

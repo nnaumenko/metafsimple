@@ -60,6 +60,7 @@ set(SOURCES ${SOURCES}
     test/integration_runway_state.cpp
     test/integration_wind_historical.cpp
     test/integration_weather_recent.cpp
+    test/integration_rvr.cpp
     test/integration_chino_visno.cpp
     test/integration_precip_snow.cpp
     test/integration_misc.cpp
