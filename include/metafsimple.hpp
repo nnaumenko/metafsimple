@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 6;
-    inline static const int patch = 5;
+    inline static const int patch = 6;
     inline static const char tag[] = "";
 };
 
@@ -2718,10 +2718,7 @@ void AerodromeDataAdapter::setRunwaySnoclo(metaf::Runway rw) {
 void AerodromeDataAdapter::setRunwayNonOp(metaf::Runway rw) {
     assert(aerodrome);
     const auto i = getOrCreateRunway(BasicDataAdapter::runway(rw));
-    if (hasRunwayState(aerodrome->runways[i])) {
-        log(Report::Warning::Message::DUPLICATED_DATA);
-        return;
-    }
+    // No check for duplicate data; this is done in setRunwayState() 
     aerodrome->runways[i].notOperational = true;
 }
 
@@ -4236,6 +4233,11 @@ void CollateVisitor::visitRunwayStateGroup(const metaf::RunwayStateGroup &group,
                                           group.surfaceFriction());
             break;
         case metaf::RunwayStateGroup::Type::RUNWAY_NOT_OPERATIONAL:
+            aerodromeData().setRunwayState(group.runway(),
+                                           group.deposits(),
+                                           group.contaminationExtent(),
+                                           group.depositDepth(),
+                                           group.surfaceFriction());
             aerodromeData().setRunwayNonOp(group.runway());
             break;
         case metaf::RunwayStateGroup::Type::RUNWAY_SNOCLO:

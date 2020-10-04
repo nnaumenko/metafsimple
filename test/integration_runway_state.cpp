@@ -220,4 +220,32 @@ TEST(IntegrationRunwayState, runwaySnoclo) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// TODO: runway not operational
+TEST(IntegrationRunwayState, runwayNotOperational) {
+    static const auto rawReport =
+        "METAR ZZZZ 061909Z R13/7999//=";
+        // Fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{6, 19, 9};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Aerodrome refAerodrome;
+    refAerodrome.runways.push_back(Aerodrome::RunwayData());
+    refAerodrome.runways[0].runway = Runway {13, Runway::Designator::NONE};
+    refAerodrome.runways[0].deposits = Aerodrome::RunwayDeposits::ICE;
+    refAerodrome.runways[0].contaminationExtent = 
+        Aerodrome::RunwayContamExtent::MORE_THAN_50_PERCENT;
+    refAerodrome.runways[0].notOperational = true;
+    EXPECT_EQ(result.aerodrome, refAerodrome);
+
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
