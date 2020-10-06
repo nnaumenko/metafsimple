@@ -100,6 +100,7 @@ TEST(IntegrationMetarTrends, tempo) {
     Forecast refForecast;
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::TEMPO;
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.weather.push_back(
         Weather{Weather::Phenomena::PRECIPITATION_MODERATE,
                 {Weather::Precipitation::DRIZZLE}});
@@ -154,6 +155,7 @@ TEST(IntegrationMetarTrends, becmg) {
     Forecast refForecast;
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::BECMG;
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.windDirectionDegrees = 240;
     refForecast.trends.back().forecast.windSpeed = Speed{5, Speed::Unit::KT};
 
@@ -200,6 +202,7 @@ TEST(IntegrationMetarTrends, fm) {
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::TIMED;
     refForecast.trends.back().timeFrom = Time{std::optional<int>(), 1, 0};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.windDirectionDegrees = 10;
     refForecast.trends.back().forecast.windSpeed = Speed{9, Speed::Unit::KT};
     refForecast.trends.back().forecast.cavok = true;
@@ -258,12 +261,12 @@ TEST(IntegrationMetarTrends, tempoFm) {
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::TEMPO;
     refForecast.trends.back().timeFrom = Time{std::optional<int>(), 0, 0};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.visibility =
         Distance{Distance::Details::EXACTLY, 4000, Distance::Unit::METERS};
     refForecast.trends.back().forecast.weather.push_back(
         Weather{Weather::Phenomena::PRECIPITATION_MODERATE,
                 {Weather::Precipitation::RAIN}});
-
     EXPECT_EQ(result.forecast, refForecast);
 }
 
@@ -316,6 +319,7 @@ TEST(IntegrationMetarTrends, becmgTl) {
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::BECMG;
     refForecast.trends.back().timeUntil = Time{std::optional<int>(), 0, 30};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.skyCondition = Essentials::SkyCondition::CLOUDS;
     refForecast.trends.back().forecast.cloudLayers.push_back(
         CloudLayer{CloudLayer::Amount::SCATTERED,
@@ -382,6 +386,7 @@ TEST(IntegrationMetarTrends, becmgAt) {
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::BECMG;
     refForecast.trends.back().timeAt = Time{std::optional<int>(), 23, 30};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.weather.push_back(
         Weather{Weather::Phenomena::NO_SIGNIFICANT_WEATHER, {}});
     EXPECT_EQ(result.forecast, refForecast);
@@ -441,6 +446,7 @@ TEST(IntegrationMetarTrends, interTimeSpan) {
     refForecast.trends.back().type = Trend::Type::INTER;
     refForecast.trends.back().timeFrom = Time{std::optional<int>(), 23, 0};
     refForecast.trends.back().timeUntil = Time{std::optional<int>(), 2, 0};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.windDirectionDegrees = 260;
     refForecast.trends.back().forecast.windSpeed = Speed{25, Speed::Unit::KT};
     refForecast.trends.back().forecast.gustSpeed = Speed{35, Speed::Unit::KT};
@@ -517,6 +523,7 @@ TEST(IntegrationMetarTrends, multipleTrends) {
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::TIMED;
     refForecast.trends.back().timeFrom = Time{std::optional<int>(), 23, 0};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.windDirectionDegrees = 170;
     refForecast.trends.back().forecast.windSpeed = Speed{20, Speed::Unit::KT};
     refForecast.trends.back().forecast.gustSpeed = Speed{32, Speed::Unit::KT};
@@ -541,8 +548,10 @@ TEST(IntegrationMetarTrends, multipleTrends) {
     // TEMPO 2200/0100 4000 SHRA BKN010
     refForecast.trends.push_back(Trend());
     refForecast.trends.back().type = Trend::Type::TEMPO;
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().timeFrom = Time{std::optional<int>(), 22, 0};
     refForecast.trends.back().timeUntil = Time{std::optional<int>(), 1, 0};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.visibility =
         Distance{Distance::Details::EXACTLY, 4000, Distance::Unit::METERS};
     refForecast.trends.back().forecast.weather.push_back(
@@ -611,6 +620,7 @@ TEST(IntegrationMetarTrends, tempoFmTl) {
     refForecast.trends.back().type = Trend::Type::TEMPO;
     refForecast.trends.back().timeFrom = Time{std::optional<int>(), 17, 30};
     refForecast.trends.back().timeUntil = Time{std::optional<int>(), 17, 50};
+    refForecast.trends.back().metar = true;
     refForecast.trends.back().forecast.visibility =
         Distance{Distance::Details::EXACTLY, 5000, Distance::Unit::METERS};
     refForecast.trends.back().forecast.weather.push_back(

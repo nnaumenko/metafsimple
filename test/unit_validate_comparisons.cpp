@@ -401,6 +401,10 @@ TEST(ValidateComparisons, trend) {
     EXPECT_FALSE(ref == test);
 
     test = ref;
+    test.metar = true;
+    EXPECT_FALSE(ref == test);
+
+    test = ref;
     test.forecast.windDirectionVariable = true;
     EXPECT_FALSE(ref == test);
 

@@ -40,6 +40,7 @@ include_directories(
 set(SOURCES ${SOURCES} 
     googletest/googletest/src/gtest-all.cc
     test/main.cpp
+    test/unit_comparisons.cpp
     test/unit_datatypes.cpp
     test/unit_warninglogger.cpp
     test/unit_metadataadapter.cpp

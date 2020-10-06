@@ -21,8 +21,8 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 6;
-    inline static const int patch = 6;
+    inline static const int minor = 7;
+    inline static const int patch = 0;
     inline static const char tag[] = "";
 };
 
@@ -489,6 +489,7 @@ struct Trend {
     Time timeFrom;
     Time timeUntil;
     Time timeAt;
+    bool metar = false;
     Essentials forecast;
     std::vector<IcingForecast> icing;
     std::vector<TurbulenceForecast> turbulence;
@@ -1090,6 +1091,84 @@ Aerodrome::BrakingAction Aerodrome::RunwayData::brakingAction() const {
     return BrakingAction::GOOD;
 }
 
+static inline bool operator==(const Runway &lhs, const Runway &rhs) {
+    if (lhs.number != rhs.number) return false;
+    if (lhs.designator != rhs.designator) return false;
+    return true;
+}
+
+static inline bool operator==(const Time &lhs, const Time &rhs) {
+    if (lhs.day != rhs.day) return false;
+    if (lhs.hour != rhs.hour) return false;
+    if (lhs.minute != rhs.minute) return false;
+    return true;
+}
+
+static inline bool operator==(const Temperature &lhs, const Temperature &rhs) {
+    if (lhs.temperature != rhs.temperature) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const Speed &lhs, const Speed &rhs) {
+    if (lhs.speed != rhs.speed) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const Distance &lhs, const Distance &rhs) {
+    if (lhs.details != rhs.details) return false;
+    if (lhs.distance != rhs.distance) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const DistanceRange &lhs,
+                              const DistanceRange &rhs) {
+    if (!(lhs.prevailing == rhs.prevailing)) return false;
+    if (!(lhs.minimum == rhs.minimum)) return false;
+    if (!(lhs.maximum == rhs.maximum)) return false;
+    return true;
+}
+
+static inline bool operator==(const Height &lhs, const Height &rhs) {
+    if (lhs.height != rhs.height) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const Ceiling &lhs, const Ceiling &rhs) {
+    if (!(lhs.exact == rhs.exact)) return false;
+    if (!(lhs.minimum == rhs.minimum)) return false;
+    if (!(lhs.maximum == rhs.maximum)) return false;
+    return true;
+}
+
+static inline bool operator==(const Pressure &lhs, const Pressure &rhs) {
+    if (lhs.pressure != rhs.pressure) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const Precipitation &lhs,
+                              const Precipitation &rhs) {
+    if (lhs.amount != rhs.amount) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const WaveHeight &lhs, const WaveHeight &rhs) {
+    if (lhs.waveHeight != rhs.waveHeight) return false;
+    if (lhs.unit != rhs.unit) return false;
+    return true;
+}
+
+static inline bool operator==(const Weather &lhs, const Weather &rhs) {
+    if (lhs.phenomena != rhs.phenomena) return false;
+    if (lhs.precipitation != rhs.precipitation) return false;
+    return true;
+}
+
 }  // namespace metafsimple
 
 namespace metafsimple::detail {
@@ -1100,6 +1179,11 @@ class WarningLogger {
     WarningLogger(std::vector<Report::Warning> &w) : warnings(&w) {}
     void setIdString(std::string id) { idStr = std::move(id); }
     void add(Report::Warning::Message message, std::string id) {
+        assert(warnings);
+        if (!warnings->empty() &&
+            warnings->back().message == message &&
+            warnings->back().id == id)
+            return;
         warnings->push_back(Report::Warning{message, std::move(id)});
     }
     void add(Report::Warning::Message message) {
@@ -1125,94 +1209,165 @@ class DataAdapter {
     }
     WarningLogger *getLogger() { return logger; }
 
-    template <typename T>
-    bool setData(T &data, T value) {
-        if (this->hasData(data)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return false;
-        }
-        data = std::move(value);
-        return true;
-    }
+    inline bool setData(std::optional<int> &data,
+                        const std::optional<int> &value);
+    inline bool setData(Temperature &data, const Temperature &value);
+    inline bool setData(Speed &data, const Speed &value);
+    inline bool setData(Distance &data, const Distance &value);
+    inline bool setData(DistanceRange &data,
+                        const Distance &minValue,
+                        const Distance &maxValue);
+    inline bool setData(Height &data, const Height &value);
+    inline bool setData(Ceiling &data,
+                        const Height &minValue,
+                        const Height &maxValue);
+    inline bool setData(Pressure &data, const Pressure &value);
+    inline bool setData(Precipitation &data, const Precipitation &value);
+    inline bool setData(Essentials::SkyCondition &data,
+                        const Essentials::SkyCondition &value);
+    inline bool setData(WaveHeight &data,
+                        const WaveHeight &value);
 
-    bool setData(DistanceRange &data, Distance value) {
-        if (this->hasData(data.prevailing)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return false;
-        }
-        data.prevailing = std::move(value);
-        return true;
+    inline bool setData(DistanceRange &data, const Distance &value) {
+        return setData(data.prevailing, value);
     }
-
-    bool setData(DistanceRange &data,
-                 Distance minValue,
-                 Distance maxValue) {
-        if (this->hasData(data.minimum) || this->hasData(data.maximum)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return false;
-        }
-        data.minimum = std::move(minValue);
-        data.maximum = std::move(maxValue);
-        return true;
-    }
-
-    bool setData(Ceiling &data, Height value) {
-        if (this->hasData(data.exact)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return false;
-        }
-        data.exact = std::move(value);
-        return true;
-    }
-
-    bool setData(Ceiling &data,
-                 Height minValue,
-                 Height maxValue) {
-        if (this->hasData(data.minimum) || this->hasData(data.maximum)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return false;
-        }
-        data.minimum = std::move(minValue);
-        data.maximum = std::move(maxValue);
-        return true;
+    inline bool setData(Ceiling &data, const Height &value) {
+        return setData(data.exact, value);
     }
 
    private:
     WarningLogger *logger;
-
-    static bool hasData(const bool &data) {
-        return data;
-    }
-    static bool hasData(const std::optional<int> &data) {
-        return data.has_value();
-    }
-    static bool hasData(const Time &data) {
-        return (data.day.has_value() ||
-                data.hour.has_value() ||
-                data.minute.has_value());
-    }
-    static bool hasData(const Temperature &data) {
-        return data.temperature.has_value();
-    }
-    static bool hasData(const Speed &data) {
-        return data.speed.has_value();
-    }
-    static bool hasData(const Distance &data) {
-        return data.distance.has_value();
-    }
-    static bool hasData(const Height &data) {
-        return data.height.has_value();
-    }
-    static bool hasData(const Pressure &data) {
-        return data.pressure.has_value();
-    }
-    static bool hasData(const Precipitation &data) {
-        return data.amount.has_value();
-    }
-    static bool hasData(const WaveHeight &data) {
-        return data.waveHeight.has_value();
-    }
 };
+
+bool DataAdapter::setData(std::optional<int> &data,
+                          const std::optional<int> &value) {
+    if (data == value) return true;
+    if (data.has_value()) {
+        data = std::optional<int>();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = std::move(value);
+    return true;
+}
+
+bool DataAdapter::setData(Temperature &data, const Temperature &value) {
+    if (data == value) return true;
+    if (data.temperature.has_value()) {
+        data = Temperature();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(Speed &data, const Speed &value) {
+    if (data == value) return true;
+    if (data.speed.has_value()) {
+        data = Speed();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(Distance &data, const Distance &value) {
+    if (data == value) return true;
+    if (data.distance.has_value()) {
+        data = Distance();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(DistanceRange &data,
+                          const Distance &minValue,
+                          const Distance &maxValue) {
+    if (data.minimum == minValue && data.maximum == maxValue) return true;
+    if (data.minimum.distance.has_value() ||
+        data.maximum.distance.has_value()) {
+        data.maximum = Distance();
+        data.minimum = Distance();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data.minimum = minValue;
+    data.maximum = maxValue;
+    return true;
+}
+
+bool DataAdapter::setData(Height &data, const Height &value) {
+    if (data == value) return true;
+    if (data.height.has_value()) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(Ceiling &data,
+                          const Height &minValue,
+                          const Height &maxValue) {
+    if (data.minimum == minValue && data.maximum == maxValue) return true;
+    if (data.minimum.height.has_value() || data.maximum.height.has_value()) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data.minimum = minValue;
+    data.maximum = maxValue;
+    return true;
+}
+
+bool DataAdapter::setData(Pressure &data, const Pressure &value) {
+    if (data == value) return true;
+    if (data.pressure.has_value()) {
+        data = Pressure();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(Precipitation &data, const Precipitation &value) {
+    if (data == value) return true;
+    if (data.amount.has_value()) {
+        data = Precipitation();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(Essentials::SkyCondition &data,
+                          const Essentials::SkyCondition &value) {
+    if (data == value) return true;
+    if (data != Essentials::SkyCondition::UNKNOWN) {
+        data = Essentials::SkyCondition::UNKNOWN;
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
+
+bool DataAdapter::setData(WaveHeight &data,
+                          const WaveHeight &value) {
+    if (data == value) return true;
+    if (data.waveHeight.has_value()) {
+        data = WaveHeight();
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return false;
+    }
+    data = value;
+    return true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1895,7 +2050,7 @@ BasicDataAdapter::recentWeather(const metaf::WeatherPhenomena &wp) {
            wp.descriptor() == metaf::WeatherPhenomena::Descriptor::
                                   THUNDERSTORM ||
            wp.descriptor() == metaf::WeatherPhenomena::Descriptor::SHOWERS);
-    Weather result {descriptorToPhenomena(wp.descriptor()), {}};
+    Weather result{descriptorToPhenomena(wp.descriptor()), {}};
     for (const auto wpw : wp.weather()) {
         const auto pr = weatherPrecipitation(wpw);
         if (!pr.has_value()) return std::optional<Weather>();
@@ -2152,13 +2307,6 @@ class StationDataAdapter : DataAdapter {
 
 void StationDataAdapter::addMissingData(Station::MissingData md) {
     assert(station);
-    if (station->missingData.count(md) &&
-        md != Station::MissingData::CHINO_RUNWAY &&
-        md != Station::MissingData::VISNO_RUNWAY &&
-        md != Station::MissingData::CHINO_DIRECTION &&
-        md != Station::MissingData::CHINO_RUNWAY) {
-        log(Report::Warning::Message::DUPLICATED_DATA);
-    }
     station->missingData.insert(md);
 }
 
@@ -2190,25 +2338,17 @@ void StationDataAdapter::setChinoVisno(std::set<Runway> &runways,
                                        std::optional<metaf::Direction> d) {
     if (rw.has_value()) {
         const auto r = BasicDataAdapter::runway(*rw);
-        if (runways.count(r)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-        } else {
-            runways.insert(r);
-        }
+        runways.insert(r);
     }
     if (d.has_value()) {
         const auto dir = BasicDataAdapter::cardinalDirection(*d);
-        if (directions.count(dir)) {
-            log(Report::Warning::Message::DUPLICATED_DATA);
-        } else {
-            directions.insert(dir);
-        }
+        directions.insert(dir);
     }
 }
 
 void StationDataAdapter::setNdv() {
     assert(station);
-    setData<bool>(station->noVisDirectionalVariation, true);
+    station->noVisDirectionalVariation = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2223,11 +2363,11 @@ class EssentialsAdapter : DataAdapter {
     inline void setCavok();
     inline void setSurfaceWind(metaf::Direction dir,
                                metaf::Speed windSpeed,
-                               metaf::Speed gustSpeed,
-                               metaf::Direction varSecBegin,
-                               metaf::Direction verSecEnd);
+                               metaf::Speed gustSpeed);
+    inline void setSurfaceWindVarSec(metaf::Direction varSecBegin,
+                                     metaf::Direction varSecEnd);
     inline void setSurfaceWindCalm();
-    inline bool hasSurfaceWind() const;
+    inline void resetSurfaceWind();
     inline void setVisibility(metaf::Distance vis);
     inline void
     setSkyCondition(metaf::CloudGroup::Amount a,
@@ -2235,6 +2375,7 @@ class EssentialsAdapter : DataAdapter {
                     metaf::CloudGroup::ConvectiveType convType =
                         metaf::CloudGroup::ConvectiveType::NOT_REPORTED);
     inline void setVerticalVisibility(metaf::Distance vv);
+    inline void resetSkyCloudData();
     inline void addWeatherPhenomena(const metaf::WeatherPhenomena &wp);
     inline void setNsw();
     inline bool hasNsw() const;
@@ -2268,103 +2409,126 @@ bool EssentialsAdapter::isEmpty(const Essentials &e) {
 
 void EssentialsAdapter::setCavok() {
     assert(essentials);
-    if (essentials->visibility.distance.has_value() ||
-        essentials->skyCondition != Essentials::SkyCondition::UNKNOWN ||
-        essentials->cavok) {
-        log(Report::Warning::Message::DUPLICATED_DATA);
-        return;
-    }
     const auto vis =
         BasicDataAdapter::distance(metaf::Distance::cavokVisibility());
     assert(vis.has_value());
     essentials->cavok = true;
-    essentials->visibility = *vis;
-    essentials->skyCondition = Essentials::SkyCondition::CAVOK;
+    if (!setData(essentials->visibility, *vis) ||
+        !setData(essentials->skyCondition, Essentials::SkyCondition::CAVOK)) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        essentials->visibility = Distance();
+        resetSkyCloudData();
+        return;
+    }
 }
 
 void EssentialsAdapter::setSurfaceWind(metaf::Direction dir,
                                        metaf::Speed windSpeed,
-                                       metaf::Speed gustSpeed,
-                                       metaf::Direction varSecBegin,
-                                       metaf::Direction varSecEnd) {
+                                       metaf::Speed gustSpeed) {
     assert(essentials);
-    if (hasSurfaceWind()) {
+    const auto d = dir.degrees();
+    const auto dv = (dir.type() == metaf::Direction::Type::VARIABLE);
+    const auto ws = BasicDataAdapter::speed(windSpeed);
+    const auto gs = BasicDataAdapter::speed(gustSpeed);
+    if (essentials->windDirectionVariable && !dv) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        resetSurfaceWind();
         return;
     }
-    essentials->windDirectionDegrees = dir.degrees();
-    if (dir.type() == metaf::Direction::Type::VARIABLE)
-        essentials->windDirectionVariable = true;
-    assert(
-        varSecBegin.degrees().has_value() == varSecEnd.degrees().has_value());
-    essentials->windDirectionVarFromDegrees = varSecBegin.degrees();
-    essentials->windDirectionVarToDegrees = varSecEnd.degrees();
-    essentials->windSpeed = BasicDataAdapter::speed(windSpeed);
-    essentials->gustSpeed = BasicDataAdapter::speed(gustSpeed);
+    if (essentials->windCalm ||
+        !setData(essentials->windDirectionDegrees, d) ||
+        !setData(essentials->windSpeed, ws) ||
+        !setData(essentials->gustSpeed, gs)) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        resetSurfaceWind();
+        return;
+    }
+    essentials->windDirectionVariable = dv;
+}
+
+void EssentialsAdapter::setSurfaceWindVarSec(metaf::Direction varSecBegin,
+                                             metaf::Direction varSecEnd) {
+    assert(essentials);
+    const auto vf = varSecBegin.degrees();
+    const auto vt = varSecEnd.degrees();
+    assert(vf.has_value() == vt.has_value());
+    if (!setData(essentials->windDirectionVarFromDegrees, vf) ||
+        !setData(essentials->windDirectionVarToDegrees, vt)) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        essentials->windDirectionVarFromDegrees = std::optional<int>();
+        essentials->windDirectionVarToDegrees = std::optional<int>();
+        return;
+    }
 }
 
 void EssentialsAdapter::setSurfaceWindCalm() {
     assert(essentials);
-    if (hasSurfaceWind()) {
+    if (essentials->windDirectionDegrees.has_value() ||
+        essentials->windDirectionVarFromDegrees.has_value() ||
+        essentials->windDirectionVarToDegrees.has_value() ||
+        essentials->windSpeed.speed.has_value() ||
+        essentials->gustSpeed.speed.has_value() ||
+        essentials->windDirectionVariable) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        resetSurfaceWind();
         return;
     }
     essentials->windCalm = true;
 }
 
-bool EssentialsAdapter::hasSurfaceWind() const {
-    assert(essentials);
-    return (essentials->windDirectionDegrees.has_value() ||
-            essentials->windDirectionVarFromDegrees.has_value() ||
-            essentials->windDirectionVarToDegrees.has_value() ||
-            essentials->windSpeed.speed.has_value() ||
-            essentials->gustSpeed.speed.has_value() ||
-            essentials->windCalm);
+void EssentialsAdapter::resetSurfaceWind() {
+    essentials->windCalm = false;
+    essentials->windDirectionVariable = false;
+    essentials->windDirectionDegrees = std::optional<int>();
+    essentials->windSpeed = Speed();
+    essentials->gustSpeed = Speed();
 }
 
 void EssentialsAdapter::setVisibility(metaf::Distance vis) {
     const auto v = BasicDataAdapter::distance(vis);
     assert(v.has_value());
     assert(essentials);
-    setData<Distance>(essentials->visibility, *v);
+    setData(essentials->visibility, *v);
 }
 
 void EssentialsAdapter::setSkyCondition(metaf::CloudGroup::Amount a,
                                         metaf::Distance height,
                                         metaf::CloudGroup::ConvectiveType
                                             convType) {
-    switch (essentials->skyCondition) {
-        case Essentials::SkyCondition::UNKNOWN:
-            essentials->skyCondition = skyCondition(a);
-            if (essentials->skyCondition != Essentials::SkyCondition::CLOUDS)
-                break;
-            [[fallthrough]];
-        case Essentials::SkyCondition::CLOUDS:
-            if (skyCondition(a) == essentials->skyCondition) {
-                // TODO: check for duplicate cloud layer height?
-                essentials->cloudLayers.push_back(CloudLayer{
-                    BasicDataAdapter::cloudLayerAmount(a),
-                    BasicDataAdapter::height(height),
-                    cloudLayerDetail(convType),
-                    std::optional<int>()});
-                break;
-            }
-            [[fallthrough]];
-        default:
-            log(Report::Warning::Message::DUPLICATED_DATA);
-            return;
+    const auto sc = skyCondition(a);
+    if (!setData(essentials->skyCondition, sc) || essentials->cavok) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        resetSkyCloudData();
+        return;
+    }
+    if (sc == Essentials::SkyCondition::CLOUDS) {
+        essentials->cloudLayers.push_back(CloudLayer{
+            BasicDataAdapter::cloudLayerAmount(a),
+            BasicDataAdapter::height(height),
+            cloudLayerDetail(convType),
+            std::optional<int>()});
+        // TODO: check for different cloud layers with same base height?
+        return;
     }
 }
 
 void EssentialsAdapter::setVerticalVisibility(metaf::Distance vv) {
     assert(essentials);
-    if (essentials->skyCondition != Essentials::SkyCondition::UNKNOWN) {
+    const auto vertVis = BasicDataAdapter::height(vv);
+    if (!setData(essentials->skyCondition,
+                 Essentials::SkyCondition::OBSCURED) ||
+        !setData(essentials->verticalVisibility, vertVis)) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        resetSkyCloudData();
         return;
     }
-    if (!setData<Height>(essentials->verticalVisibility,
-                         BasicDataAdapter::height(vv))) return;
-    essentials->skyCondition = Essentials::SkyCondition::OBSCURED;
+}
+
+void EssentialsAdapter::resetSkyCloudData() {
+    essentials->skyCondition = Essentials::SkyCondition::UNKNOWN;
+    essentials->cloudLayers.clear();
+    essentials->cavok = false;
+    essentials->verticalVisibility = Height();
 }
 
 void EssentialsAdapter::addWeatherPhenomena(const metaf::WeatherPhenomena &wp) {
@@ -2373,6 +2537,7 @@ void EssentialsAdapter::addWeatherPhenomena(const metaf::WeatherPhenomena &wp) {
     assert(essentials);
     if (hasNsw()) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        essentials->weather.clear();
         return;
     }
     // TODO: check for duplicate weather phenomena?
@@ -2381,8 +2546,10 @@ void EssentialsAdapter::addWeatherPhenomena(const metaf::WeatherPhenomena &wp) {
 
 void EssentialsAdapter::setNsw() {
     assert(essentials);
+    if (hasNsw()) return;
     if (!essentials->weather.empty()) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        essentials->weather.clear();
         return;
     }
     essentials->weather.push_back(Weather{
@@ -2520,9 +2687,13 @@ void AerodromeDataAdapter::setColourCode(Aerodrome::ColourCode code,
                                          bool codeBlack) {
     assert(code != Aerodrome::ColourCode::NOT_SPECIFIED);
     assert(aerodrome);
+    if (aerodrome->colourCode == code &&
+        aerodrome->colourCodeBlack == codeBlack) return;
     if (aerodrome->colourCode != Aerodrome::ColourCode::NOT_SPECIFIED ||
         aerodrome->colourCodeBlack) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        aerodrome->colourCode = Aerodrome::ColourCode::NOT_SPECIFIED;
+        aerodrome->colourCodeBlack = false;
         return;
     }
     aerodrome->colourCode = code;
@@ -2611,7 +2782,7 @@ void AerodromeDataAdapter::setCeiling(std::optional<metaf::Runway> rw,
     assert(aerodrome);
     auto c = getCeiling(rw, dir);
     if (!c) return;
-    setData<Height>(c->exact, BasicDataAdapter::height(ceiling));
+    setData(c->exact, BasicDataAdapter::height(ceiling));
 }
 
 void AerodromeDataAdapter::setCeiling(std::optional<metaf::Runway> rw,
@@ -2718,7 +2889,7 @@ void AerodromeDataAdapter::setRunwaySnoclo(metaf::Runway rw) {
 void AerodromeDataAdapter::setRunwayNonOp(metaf::Runway rw) {
     assert(aerodrome);
     const auto i = getOrCreateRunway(BasicDataAdapter::runway(rw));
-    // No check for duplicate data; this is done in setRunwayState() 
+    // No check for duplicate data; this is done in setRunwayState()
     aerodrome->runways[i].notOperational = true;
 }
 
@@ -2727,12 +2898,12 @@ void AerodromeDataAdapter::setRunwayWindShearLowerLayers(
     assert(aerodrome);
     assert(rw.has_value());
     const auto i = getOrCreateRunway(BasicDataAdapter::runway(*rw));
-    setData<bool>(aerodrome->runways[i].windShearLowerLayers, true);
+    aerodrome->runways[i].windShearLowerLayers = true;
 }
 
 void AerodromeDataAdapter::setAerodromeSnoclo() {
     assert(aerodrome);
-    setData<bool>(aerodrome->snoclo, true);
+    aerodrome->snoclo = true;
 }
 
 size_t AerodromeDataAdapter::getOrCreateRunway(const Runway &r) {
@@ -2763,7 +2934,7 @@ void AerodromeDataAdapter::setVisibility(Distance &d,
                                          const metaf::Distance &md) {
     const auto vis = BasicDataAdapter::distance(md);
     assert(vis.has_value());
-    setData<Distance>(d, *vis);
+    setData(d, *vis);
 }
 
 void AerodromeDataAdapter::setVisibility(DistanceRange &d,
@@ -2852,26 +3023,75 @@ class HistoricalDataAdapter : DataAdapter {
     inline void setMinMaxTemperature(bool last24h,
                                      metaf::Temperature min,
                                      metaf::Temperature max);
-    inline void setPrecipitationTotal1h(metaf::Precipitation p);
-    inline void setFrozenPrecipitation3h6h(metaf::Precipitation p);
-    inline void setFrozenPrecipitation3h(metaf::Precipitation p);
-    inline void setFrozenPrecipitation6h(metaf::Precipitation p);
-    inline void setFrozenPrecipitation24h(metaf::Precipitation p);
-    inline void setSnow6h(metaf::Precipitation p);
-    inline void setWaterEquivalentOfSnow(metaf::Precipitation p);
-    inline void setIceAccretion1h(metaf::Precipitation p);
-    inline void setIceAccretion3h(metaf::Precipitation p);
-    inline void setIceAccretion6h(metaf::Precipitation p);
-    inline void setTotalSnowfall(metaf::Precipitation p);
-    inline void setSnowfallIncrease1h(metaf::Precipitation p);
-    inline void setPrecipitationSinceLastReport(metaf::Precipitation p);
-    inline void setRainfall(metaf::Precipitation since9am,
-                            metaf::Precipitation last10m);
+
+    void setPrecipitationTotal1h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->precipitationTotal1h,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setFrozenPrecipitation3h6h(metaf::Precipitation p) {
+        log(Report::Warning::Message::INVALID_TIME);
+        assert(historical);
+        setData(historical->precipitationFrozen3or6h,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setFrozenPrecipitation3h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->precipitationFrozen3h,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setFrozenPrecipitation6h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->precipitationFrozen6h,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setFrozenPrecipitation24h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->precipitationFrozen24h,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setSnow6h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->snow6h, BasicDataAdapter::precipitation(p));
+    }
+    void setIceAccretion1h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->icing1h, BasicDataAdapter::precipitation(p));
+    }
+    void setIceAccretion3h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->icing3h, BasicDataAdapter::precipitation(p));
+    }
+    void setIceAccretion6h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->icing6h, BasicDataAdapter::precipitation(p));
+    }
+    void setTotalSnowfall(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->snowfallTotal, BasicDataAdapter::precipitation(p));
+    }
+    void setSnowfallIncrease1h(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->snowfallIncrease1h,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setPrecipitationSinceLastReport(metaf::Precipitation p) {
+        assert(historical);
+        setData(historical->precipitationSinceLastReport,
+                BasicDataAdapter::precipitation(p));
+    }
+    void setRainfall(metaf::Precipitation since9am,
+                     metaf::Precipitation last10m) {
+        assert(historical);
+        historical->rainfallSince0900LocalTime =
+            BasicDataAdapter::precipitation(since9am);
+        historical->rainfall10m = BasicDataAdapter::precipitation(last10m);
+    }
     inline void setPressureTendency(metaf::PressureTendencyGroup::Type t,
                                     metaf::Pressure difference);
     inline void setSunshineDuration(std::optional<float> m);
-    inline static std::optional<Historical::WeatherEvent>
-    weatherEvent(const metaf::WeatherPhenomena &we);
+    inline static std::optional<Historical::WeatherEvent> weatherEvent(
+        const metaf::WeatherPhenomena &we);
 
    private:
     Historical *historical;
@@ -2890,6 +3110,9 @@ void HistoricalDataAdapter::setPeakWind(metaf::Direction d,
     assert(historical);
     if (hasPeakWind(*historical)) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        historical->peakWindDirectionDegrees = std::optional<int>();
+        historical->peakWindSpeed = Speed();
+        historical->peakWindObserved = Time();
         return;
     }
     historical->peakWindDirectionDegrees = d.degrees();
@@ -2909,6 +3132,9 @@ void HistoricalDataAdapter::setWindShift(bool fropa,
     assert(historical);
     if (hasWindShift(*historical)) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        historical->windShift = false;
+        historical->windShiftFrontPassage = false;
+        historical->windShiftBegan = Time();
         return;
     }
     historical->windShift = !fropa;
@@ -2920,6 +3146,8 @@ void HistoricalDataAdapter::addRecentWeather(
     const metaf::WeatherPhenomena &wp) {
     const auto w = weatherEvent(wp);
     assert(w.has_value());
+    assert(historical);
+    // TODO: check for duplicate recent weather groups
     historical->recentWeather.push_back(*w);
 }
 
@@ -2939,79 +3167,12 @@ void HistoricalDataAdapter::setMinMaxTemperature(bool last24h,
     }
     if (dstmin->temperature.has_value() && dstmax->temperature.has_value()) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        *dstmin = Temperature();
+        *dstmax = Temperature();
         return;
     }
     *dstmin = tmin;
     *dstmax = tmax;
-}
-
-void HistoricalDataAdapter::setPrecipitationTotal1h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->precipitationTotal1h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setFrozenPrecipitation3h6h(metaf::Precipitation p) {
-    log(Report::Warning::Message::INVALID_TIME);
-    setData<Precipitation>(historical->precipitationFrozen3or6h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setFrozenPrecipitation3h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->precipitationFrozen3h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setFrozenPrecipitation6h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->precipitationFrozen6h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setFrozenPrecipitation24h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->precipitationFrozen24h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setSnow6h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->snow6h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setIceAccretion1h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->icing1h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setIceAccretion3h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->icing3h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setIceAccretion6h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->icing6h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setTotalSnowfall(metaf::Precipitation p) {
-    setData<Precipitation>(historical->snowfallTotal,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setSnowfallIncrease1h(metaf::Precipitation p) {
-    setData<Precipitation>(historical->snowfallIncrease1h,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setPrecipitationSinceLastReport(
-    metaf::Precipitation p) {
-    setData<Precipitation>(historical->precipitationSinceLastReport,
-                           BasicDataAdapter::precipitation(p));
-}
-
-void HistoricalDataAdapter::setRainfall(metaf::Precipitation since9am,
-                                        metaf::Precipitation last10m) {
-    historical->rainfallSince0900LocalTime =
-        BasicDataAdapter::precipitation(since9am);
-    historical->rainfall10m = BasicDataAdapter::precipitation(last10m);
 }
 
 void HistoricalDataAdapter::setPressureTendency(
@@ -3066,6 +3227,9 @@ void HistoricalDataAdapter::setPressureTendency(
         historical->pressureTrend != Historical::PressureTrend::UNKNOWN ||
         historical->pressureChange3h.pressure.has_value()) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        historical->pressureChange3h = Pressure();
+        historical->pressureTendency = Historical::PressureTendency::UNKNOWN;
+        historical->pressureTrend = Historical::PressureTrend::UNKNOWN;
         return;
     }
     historical->pressureChange3h = BasicDataAdapter::pressure(difference);
@@ -3077,7 +3241,7 @@ void HistoricalDataAdapter::setSunshineDuration(std::optional<float> m) {
     assert(m.has_value());
     const auto dur = std::floor(*m);
     assert(historical);
-    setData<std::optional<int>>(historical->sunshineDurationMinutes24h, dur);
+    setData(historical->sunshineDurationMinutes24h, dur);
 }
 
 std::optional<Historical::WeatherEvent>
@@ -3176,13 +3340,11 @@ void CurrentDataAdapter::setTemperatureDewPoint(metaf::Temperature t,
     // consistency
     if (t.isPrecise() && !isPrecise(current->airTemperature))
         current->airTemperature.temperature = std::optional<int>();
-    setData<Temperature>(current->airTemperature,
-                         BasicDataAdapter::temperature(t));
+    setData(current->airTemperature, BasicDataAdapter::temperature(t));
 
     if (dp.isPrecise() && !isPrecise(current->dewPoint))
         current->dewPoint.temperature = std::optional<int>();
-    setData<Temperature>(current->dewPoint,
-                         BasicDataAdapter::temperature(dp));
+    setData(current->dewPoint, BasicDataAdapter::temperature(dp));
 }
 
 void CurrentDataAdapter::setRelativeHumidity(metaf::Temperature t,
@@ -3210,39 +3372,44 @@ void CurrentDataAdapter::setVisibility(const metaf::Distance &min,
 
 void CurrentDataAdapter::setPressureQnh(metaf::Pressure p) {
     assert(current);
-    setData<Pressure>(current->weatherData.seaLevelPressure,
-                      BasicDataAdapter::pressure(p));
+    setData(current->weatherData.seaLevelPressure,
+            BasicDataAdapter::pressure(p));
 }
 
 void CurrentDataAdapter::setPressureQfe(metaf::Pressure p) {
     assert(current);
-    setData<Pressure>(current->pressureGroundLevel,
-                      BasicDataAdapter::pressure(p));
+    setData(current->pressureGroundLevel,
+            BasicDataAdapter::pressure(p));
 }
 
 void CurrentDataAdapter::setSeaSurface(metaf::Temperature t,
                                        metaf::WaveHeight wh) {
     assert(current);
-    setData<Temperature>(current->seaSurfaceTemperature,
-                         BasicDataAdapter::temperature(t));
-    setData<WaveHeight>(current->waveHeight, BasicDataAdapter::waveHeight(wh));
+    if (!setData(current->seaSurfaceTemperature,
+                 BasicDataAdapter::temperature(t)) ||
+        !setData(current->waveHeight, BasicDataAdapter::waveHeight(wh))) {
+        log(Report::Warning::Message::DUPLICATED_DATA);
+        return;
+        current->seaSurfaceTemperature = Temperature();
+        current->waveHeight = WaveHeight();
+    }
+
+    ;
 }
 
 void CurrentDataAdapter::setSnowDepth(metaf::Precipitation p) {
     assert(current);
-    setData<Precipitation>(current->snowDepthOnGround,
-                           BasicDataAdapter::precipitation(p));
+    setData(current->snowDepthOnGround, BasicDataAdapter::precipitation(p));
 }
 
 void CurrentDataAdapter::setSnowIncreasingRapidly() {
     assert(current);
-    setData<bool>(current->snowIncreasingRapidly, true);
+    current->snowIncreasingRapidly = true;
 }
 
 void CurrentDataAdapter::setWaterEquivalentOfSnow(metaf::Precipitation p) {
     assert(current);
-    setData<Precipitation>(current->snowWaterEquivalent,
-                           BasicDataAdapter::precipitation(p));
+    setData(current->snowWaterEquivalent, BasicDataAdapter::precipitation(p));
 }
 
 void CurrentDataAdapter::addTypesToCloudLayers(
@@ -3462,20 +3629,19 @@ void CurrentDataAdapter::addPhenomenaInVicinity(
 void CurrentDataAdapter::setHailstoneSize(std::optional<float> s) {
     assert(!s.has_value());
     assert(current);
-    setData<std::optional<int>>(current->hailstoneSizeQuartersInch,
-                                std::floor(*s * 4.0));
+    setData(current->hailstoneSizeQuartersInch, std::floor(*s * 4.0));
 }
 
 void CurrentDataAdapter::setDensityAltitude(std::optional<float> da) {
     assert(da.has_value());
     assert(current);
-    setData<Height>(current->densityAltitude,
-                    Height{std::floor(*da), Height::Unit::FEET});
+    setData(current->densityAltitude,
+            Height{std::floor(*da), Height::Unit::FEET});
 }
 
 void CurrentDataAdapter::setFrostOnInstrument() {
     assert(current);
-    setData<bool>(current->frostOnInstrument, true);
+    current->frostOnInstrument = true;
 }
 
 bool CurrentDataAdapter::hasPressure() {
@@ -3495,7 +3661,8 @@ class ForecastDataAdapter : DataAdapter {
                          metaf::TrendGroup::Probability p,
                          std::optional<metaf::MetafTime> tfrom,
                          std::optional<metaf::MetafTime> tuntil,
-                         std::optional<metaf::MetafTime> tat);
+                         std::optional<metaf::MetafTime> tat,
+                         bool metar);
     bool isTrend() const {
         assert(forecast);
         return !forecast->trends.empty();
@@ -3526,21 +3693,22 @@ class ForecastDataAdapter : DataAdapter {
 void ForecastDataAdapter::setWindShearConditions() {
     assert(forecast);
     if (forecast->trends.empty()) {
-        setData<bool>(forecast->prevailingWsConds, true);
+        forecast->prevailingWsConds = true;
     } else {
-        setData<bool>(forecast->trends.back().windShearConditions, true);
+        forecast->trends.back().windShearConditions = true;
     }
 }
 
 void ForecastDataAdapter::setNosig() {
-    setData<bool>(forecast->noSignificantChanges, true);
+    forecast->noSignificantChanges = true;
 }
 
 void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
                                    metaf::TrendGroup::Probability p,
                                    std::optional<metaf::MetafTime> tfrom,
                                    std::optional<metaf::MetafTime> tuntil,
-                                   std::optional<metaf::MetafTime> tat) {
+                                   std::optional<metaf::MetafTime> tat,
+                                   bool metar) {
     auto trendType = [](metaf::TrendGroup::Type type) {
         switch (type) {
             case metaf::TrendGroup::Type::NOSIG:
@@ -3584,6 +3752,7 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
         BasicDataAdapter::time(tfrom),
         BasicDataAdapter::time(tuntil),
         BasicDataAdapter::time(tat),
+        metar,
         Essentials(),
         {},
         {},
@@ -3593,12 +3762,12 @@ void ForecastDataAdapter::addTrend(metaf::TrendGroup::Type t,
 void ForecastDataAdapter::setLowestPressure(metaf::Pressure p) {
     assert(forecast);
     if (forecast->trends.empty()) {
-        setData<Pressure>(forecast->prevailing.seaLevelPressure,
-                          BasicDataAdapter::pressure(p));
+        setData(forecast->prevailing.seaLevelPressure,
+                BasicDataAdapter::pressure(p));
 
     } else {
-        setData<Pressure>(forecast->trends.back().forecast.seaLevelPressure,
-                          BasicDataAdapter::pressure(p));
+        setData(forecast->trends.back().forecast.seaLevelPressure,
+                BasicDataAdapter::pressure(p));
     }
 }
 
@@ -3708,6 +3877,10 @@ class CollateVisitor : public metaf::Visitor<void> {
     }
     ForecastDataAdapter forecastData() {
         return ForecastDataAdapter(result.forecast, &logger);
+    }
+    bool isMetar() {
+        return (result.report.type == Report::Type::METAR ||
+                result.report.type == Report::Type::SPECI);
     }
 
     Simple result;
@@ -3925,7 +4098,8 @@ void CollateVisitor::visitTrendGroup(const metaf::TrendGroup &group,
                             group.probability(),
                             group.timeFrom(),
                             group.timeUntil(),
-                            group.timeAt());
+                            group.timeAt(),
+                            isMetar());
 }
 
 void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,
@@ -3938,14 +4112,21 @@ void CollateVisitor::visitWindGroup(const metaf::WindGroup &group,
             currentOrTrendBlock().setSurfaceWindCalm();
             break;
         case metaf::WindGroup::Type::SURFACE_WIND:
-        case metaf::WindGroup::Type::SURFACE_WIND_WITH_VARIABLE_SECTOR:
-        case metaf::WindGroup::Type::VARIABLE_WIND_SECTOR: {
             currentOrTrendBlock().setSurfaceWind(group.direction(),
                                                  group.windSpeed(),
-                                                 group.gustSpeed(),
-                                                 group.varSectorBegin(),
-                                                 group.varSectorEnd());
-        } break;
+                                                 group.gustSpeed());
+            break;
+        case metaf::WindGroup::Type::SURFACE_WIND_WITH_VARIABLE_SECTOR:
+            currentOrTrendBlock().setSurfaceWind(group.direction(),
+                                                 group.windSpeed(),
+                                                 group.gustSpeed());
+            currentOrTrendBlock().setSurfaceWindVarSec(group.varSectorBegin(),
+                                                       group.varSectorEnd());
+            break;
+        case metaf::WindGroup::Type::VARIABLE_WIND_SECTOR:
+            currentOrTrendBlock().setSurfaceWindVarSec(group.varSectorBegin(),
+                                                       group.varSectorEnd());
+            break;
         case metaf::WindGroup::Type::WIND_SHEAR:
             currentOrTrendBlock().addWindShear(group.height(),
                                                group.direction(),

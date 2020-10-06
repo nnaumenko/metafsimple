@@ -13,84 +13,6 @@
 
 namespace metafsimple {
 
-static inline bool operator==(const Runway &lhs, const Runway &rhs) {
-    if (lhs.number != rhs.number) return false;
-    if (lhs.designator != rhs.designator) return false;
-    return true;
-}
-
-static inline bool operator==(const Time &lhs, const Time &rhs) {
-    if (lhs.day != rhs.day) return false;
-    if (lhs.hour != rhs.hour) return false;
-    if (lhs.minute != rhs.minute) return false;
-    return true;
-}
-
-static inline bool operator==(const Temperature &lhs, const Temperature &rhs) {
-    if (lhs.temperature != rhs.temperature) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const Speed &lhs, const Speed &rhs) {
-    if (lhs.speed != rhs.speed) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const Distance &lhs, const Distance &rhs) {
-    if (lhs.details != rhs.details) return false;
-    if (lhs.distance != rhs.distance) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const DistanceRange &lhs,
-                              const DistanceRange &rhs) {
-    if (!(lhs.prevailing == rhs.prevailing)) return false;
-    if (!(lhs.minimum == rhs.minimum)) return false;
-    if (!(lhs.maximum == rhs.maximum)) return false;
-    return true;
-}
-
-static inline bool operator==(const Height &lhs, const Height &rhs) {
-    if (lhs.height != rhs.height) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const Ceiling &lhs, const Ceiling &rhs) {
-    if (!(lhs.exact == rhs.exact)) return false;
-    if (!(lhs.minimum == rhs.minimum)) return false;
-    if (!(lhs.maximum == rhs.maximum)) return false;
-    return true;
-}
-
-static inline bool operator==(const Pressure &lhs, const Pressure &rhs) {
-    if (lhs.pressure != rhs.pressure) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const Precipitation &lhs,
-                              const Precipitation &rhs) {
-    if (lhs.amount != rhs.amount) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const WaveHeight &lhs, const WaveHeight &rhs) {
-    if (lhs.waveHeight != rhs.waveHeight) return false;
-    if (lhs.unit != rhs.unit) return false;
-    return true;
-}
-
-static inline bool operator==(const Weather &lhs, const Weather &rhs) {
-    if (lhs.phenomena != rhs.phenomena) return false;
-    if (lhs.precipitation != rhs.precipitation) return false;
-    return true;
-}
-
 static inline bool operator==(const CloudLayer &lhs, const CloudLayer &rhs) {
     if (lhs.amount != rhs.amount) return false;
     if (!(lhs.height == rhs.height)) return false;
@@ -162,6 +84,7 @@ static inline bool operator==(const Trend &lhs, const Trend &rhs) {
     if (!(lhs.timeFrom == rhs.timeFrom)) return false;
     if (!(lhs.timeUntil == rhs.timeUntil)) return false;
     if (!(lhs.timeAt == rhs.timeAt)) return false;
+    if (lhs.metar != rhs.metar) return false;
     if (!(lhs.forecast == rhs.forecast)) return false;
     if (lhs.icing != rhs.icing) return false;
     if (lhs.turbulence != rhs.turbulence) return false;
