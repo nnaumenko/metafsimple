@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 7;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -1241,18 +1241,18 @@ class DataAdapter {
 
 bool DataAdapter::setData(std::optional<int> &data,
                           const std::optional<int> &value) {
-    if (data == value) return true;
+    if (data == value || !value.has_value()) return true;
     if (data.has_value()) {
         data = std::optional<int>();
         log(Report::Warning::Message::DUPLICATED_DATA);
         return false;
     }
-    data = std::move(value);
+    data = value;
     return true;
 }
 
 bool DataAdapter::setData(Temperature &data, const Temperature &value) {
-    if (data == value) return true;
+    if (data == value || !value.temperature.has_value()) return true;
     if (data.temperature.has_value()) {
         data = Temperature();
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -1263,7 +1263,7 @@ bool DataAdapter::setData(Temperature &data, const Temperature &value) {
 }
 
 bool DataAdapter::setData(Speed &data, const Speed &value) {
-    if (data == value) return true;
+    if (data == value || !value.speed.has_value()) return true;
     if (data.speed.has_value()) {
         data = Speed();
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -1274,7 +1274,7 @@ bool DataAdapter::setData(Speed &data, const Speed &value) {
 }
 
 bool DataAdapter::setData(Distance &data, const Distance &value) {
-    if (data == value) return true;
+    if (data == value || !value.distance.has_value()) return true;
     if (data.distance.has_value()) {
         data = Distance();
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -1288,15 +1288,17 @@ bool DataAdapter::setData(DistanceRange &data,
                           const Distance &minValue,
                           const Distance &maxValue) {
     if (data.minimum == minValue && data.maximum == maxValue) return true;
-    if (data.minimum.distance.has_value() ||
-        data.maximum.distance.has_value()) {
+
+    //    if (data.minimum.distance.has_value() ||
+    //        data.maximum.distance.has_value()) {
+    if (!setData(data.minimum, minValue) || !setData(data.maximum, maxValue)) {
         data.maximum = Distance();
         data.minimum = Distance();
         log(Report::Warning::Message::DUPLICATED_DATA);
         return false;
     }
-    data.minimum = minValue;
-    data.maximum = maxValue;
+    //    data.minimum = minValue;
+    //    data.maximum = maxValue;
     return true;
 }
 
@@ -1314,17 +1316,20 @@ bool DataAdapter::setData(Ceiling &data,
                           const Height &minValue,
                           const Height &maxValue) {
     if (data.minimum == minValue && data.maximum == maxValue) return true;
-    if (data.minimum.height.has_value() || data.maximum.height.has_value()) {
+    if (!setData(data.minimum, minValue) || !setData(data.maximum, maxValue)) {
+        //    if (data.minimum.height.has_value() || data.maximum.height.has_value()) {
         log(Report::Warning::Message::DUPLICATED_DATA);
+        data.minimum = Height();
+        data.maximum = Height();
         return false;
     }
-    data.minimum = minValue;
-    data.maximum = maxValue;
+    //    data.minimum = minValue;
+    //    data.maximum = maxValue;
     return true;
 }
 
 bool DataAdapter::setData(Pressure &data, const Pressure &value) {
-    if (data == value) return true;
+    if (data == value || !value.pressure.has_value()) return true;
     if (data.pressure.has_value()) {
         data = Pressure();
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -1335,7 +1340,7 @@ bool DataAdapter::setData(Pressure &data, const Pressure &value) {
 }
 
 bool DataAdapter::setData(Precipitation &data, const Precipitation &value) {
-    if (data == value) return true;
+    if (data == value || !value.amount.has_value()) return true;
     if (data.amount.has_value()) {
         data = Precipitation();
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -1347,7 +1352,8 @@ bool DataAdapter::setData(Precipitation &data, const Precipitation &value) {
 
 bool DataAdapter::setData(Essentials::SkyCondition &data,
                           const Essentials::SkyCondition &value) {
-    if (data == value) return true;
+    if (data == value || value == Essentials::SkyCondition::UNKNOWN)
+        return true;
     if (data != Essentials::SkyCondition::UNKNOWN) {
         data = Essentials::SkyCondition::UNKNOWN;
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -1359,7 +1365,7 @@ bool DataAdapter::setData(Essentials::SkyCondition &data,
 
 bool DataAdapter::setData(WaveHeight &data,
                           const WaveHeight &value) {
-    if (data == value) return true;
+    if (data == value || !value.waveHeight.has_value()) return true;
     if (data.waveHeight.has_value()) {
         data = WaveHeight();
         log(Report::Warning::Message::DUPLICATED_DATA);
@@ -2430,7 +2436,12 @@ void EssentialsAdapter::setSurfaceWind(metaf::Direction dir,
     const auto dv = (dir.type() == metaf::Direction::Type::VARIABLE);
     const auto ws = BasicDataAdapter::speed(windSpeed);
     const auto gs = BasicDataAdapter::speed(gustSpeed);
-    if (essentials->windDirectionVariable && !dv) {
+
+    const bool cannotSetVariableDir =
+        essentials->windDirectionDegrees.has_value() || essentials->windCalm;
+
+    if ((cannotSetVariableDir && dv) ||
+        (essentials->windDirectionVariable && d.has_value())) {
         log(Report::Warning::Message::DUPLICATED_DATA);
         resetSurfaceWind();
         return;
@@ -2443,7 +2454,7 @@ void EssentialsAdapter::setSurfaceWind(metaf::Direction dir,
         resetSurfaceWind();
         return;
     }
-    essentials->windDirectionVariable = dv;
+    if (dv) essentials->windDirectionVariable = true;
 }
 
 void EssentialsAdapter::setSurfaceWindVarSec(metaf::Direction varSecBegin,

@@ -16,6 +16,8 @@ using namespace metafsimple;
 // Basic METAR report with various wind groups: calm wind, wind speed measured
 // in meters per second, variable wind direction, variable wind sector,
 // wind with gusts
+// Purpose: to confirm on realistic reports where possible, that the wind groups
+// are processed correctly
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(IntegrationWind, calmWind) {
@@ -343,8 +345,9 @@ TEST(IntegrationWind, variableWindSectorOnly) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// The tests below cover the handling of  various duplicate and inconsistent
-// wind data.
+// Testing for duplicate and inconsistent wind groups without direction sector
+// Purpose: to confirm that reports with errors such as wind group repeated
+// twice, two different wind groups, etc. are processed as per spec
 ////////////////////////////////////////////////////////////////////////////////
 
 // The wind group repeated twice: no warning, duplicate group is ignored
@@ -377,7 +380,292 @@ TEST(IntegrationWind, duplicateWindGroup) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// One wind group followed by variable wind sector and the same wind group
+// The wind group with gust speed repeated twice: no warning, duplicate group
+// is ignored
+TEST(IntegrationWind, duplicateWindGroupGusts) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z 27012G15KT 27012G15KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionDegrees = 270;
+    refCurrent.weatherData.windSpeed = Speed{12, Speed::Unit::KT};
+    refCurrent.weatherData.gustSpeed = Speed{15, Speed::Unit::KT};
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// Two different wind groups, inconsistent wind data: warning is given and
+// no wind data included on the report
+TEST(IntegrationWind, twoWindGroups) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z 27008KT 31010KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(
+        Report::Warning{Report::Warning::Message::DUPLICATED_DATA, "31010KT"});
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// This test is similar to previous one, except the second group reports
+// variable wind direction
+TEST(IntegrationWind, twoWindGroupsNormalVrb) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z 27008KT VRB08KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(
+        Report::Warning{Report::Warning::Message::DUPLICATED_DATA, "VRB08KT"});
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// This test is similar to previous one, only group order is changed
+TEST(IntegrationWind, twoWindGroupsVrbNormal) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z VRB08KT 27008KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(
+        Report::Warning{Report::Warning::Message::DUPLICATED_DATA, "27008KT"});
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// Two wind groups with different gust speed, inconsistent wind data: warning
+// is given and no wind data included on the report
+TEST(IntegrationWind, twoWindGroupsGustSpeedDifferent) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z 27012G15KT 27012G16KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(
+        Report::Warning{Report::Warning::Message::DUPLICATED_DATA,
+                        "27012G16KT"});
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// Two inconsistent wind groups, the first group specifies variable wind, the
+// second group specifies no wind
+TEST(IntegrationWind, twoWindGroupsVrbCalm) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z VRB08KT 00000KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(
+        Report::Warning{Report::Warning::Message::DUPLICATED_DATA, "00000KT"});
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// This test is similar to previous one, only group order is changed
+TEST(IntegrationWind, twoWindGroupsCalmVrb) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z 00000KT VRB08KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(
+        Report::Warning{Report::Warning::Message::DUPLICATED_DATA, "VRB08KT"});
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// Two wind groups, the first group specifies variable wind, the second group
+// specifies non-reported wind: no warning given
+TEST(IntegrationWind, twoWindGroupsVrbNonReported) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z VRB08KT /////KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionVariable = true;
+    refCurrent.weatherData.windSpeed = Speed{8, Speed::Unit::KT};
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// This test is similar to previous one, only group order is changed
+TEST(IntegrationWind, twoWindGroupsNonReportedVrb) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z /////KT VRB08KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionVariable = true;
+    refCurrent.weatherData.windSpeed = Speed{8, Speed::Unit::KT};
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Testing for duplicate and inconsistent wind groups with variable direction
+// sector & variable direction sector groups without main wind group
+// Purpose: to confirm that reports with errors such as wind group repeated
+// twice, two different wind groups, etc. are processed as per spec
+////////////////////////////////////////////////////////////////////////////////
+
+// A wind group followed by variable wind sector and the same wind group
 // repeated without variable wind sector: no warning, duplicate group ignored
 TEST(IntegrationWind, duplicateWindGroupWithVarSector) {
     static const auto rawReport =
@@ -411,37 +699,6 @@ TEST(IntegrationWind, duplicateWindGroupWithVarSector) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// Two different wind groups, inconsistent wind data: warning is given and 
-// no wind data included on the report
-TEST(IntegrationWind, twoWindGroups) {
-    static const auto rawReport =
-        "METAR ZZZZ 291704Z 27008KT 31010KT Q1015=";
-    // fake report created for this test
-
-    const auto result = metafsimple::simplify(rawReport);
-
-    Report refReport;
-    refReport.type = Report::Type::METAR;
-    refReport.reportTime = Time{29, 17, 4};
-    refReport.error = Report::Error::NO_ERROR;
-    refReport.warnings.push_back(
-        Report::Warning{Report::Warning::Message::DUPLICATED_DATA, "31010KT"});
-    EXPECT_EQ(result.report, refReport);
-
-    Station refStation;
-    refStation.icaoCode = "ZZZZ";
-    EXPECT_EQ(result.station, refStation);
-
-    Current refCurrent;
-    refCurrent.weatherData.seaLevelPressure =
-        Pressure{1015, Pressure::Unit::HPA};
-    EXPECT_EQ(result.current, refCurrent);
-
-    EXPECT_EQ(result.aerodrome, Aerodrome());
-    EXPECT_EQ(result.historical, Historical());
-    EXPECT_EQ(result.forecast, Forecast());
-}
-
 // Two different wind groups with variable wind sector group located before,
 // between, and after wind groups, inconsistent wind data but correct variable
 // wind sector data: warning is given and no wind data included on the report
@@ -466,7 +723,7 @@ TEST(IntegrationWind, twoWindGroupsWithVarSector) {
     EXPECT_EQ(resultAlt1.forecast, result.forecast);
     // The result of processing of rawReport and rawReportAlt1 is almost the
     // same, just different group causes the warning
-    // We reset group string in the Report's and compare them 
+    // We reset group string in the Report's and compare them
     Report resultReportWithoutWarningId = result.report;
     ASSERT_EQ(resultReportWithoutWarningId.warnings.size(), 1u);
     resultReportWithoutWarningId.warnings[0].id = "";
@@ -563,8 +820,8 @@ TEST(IntegrationWind, duplicateVariableWindSector) {
 }
 
 // Two different variable wind sector groups, inconsistant wind sector data:
-// warning is given and only wind direction and speed is included in the 
-// result, variable wind sector is ignored 
+// warning is given and only wind direction and speed is included in the
+// result, variable wind sector is ignored
 TEST(IntegrationWind, twoVariableWindSectorGroups) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 27008KT 250V300 210V360 Q1015=";
@@ -596,7 +853,7 @@ TEST(IntegrationWind, twoVariableWindSectorGroups) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// This test is similar to previous one, only group order is different 
+// This test is similar to previous one, only group order is different
 TEST(IntegrationWind, twoVariableWindSectorsAroundWindData) {
     static const auto rawReport =
         "METAR ZZZZ 291704Z 210V360 27008KT 250V300 Q1015=";
@@ -619,7 +876,44 @@ TEST(IntegrationWind, twoVariableWindSectorsAroundWindData) {
 
     Current refCurrent;
     refCurrent.weatherData.windDirectionDegrees = 270;
-    refCurrent.weatherData.windSpeed = Speed {8, Speed::Unit::KT};
+    refCurrent.weatherData.windSpeed = Speed{8, Speed::Unit::KT};
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{1015, Pressure::Unit::HPA};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+// A wind group with non-reported wind group: no warning, non-reported
+// group ignored
+TEST(IntegrationWind, twoWindGroupsNonReported) {
+    static const auto rawReport =
+        "METAR ZZZZ 291704Z 27008KT /////KT Q1015=";
+    // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    static const auto rawReportAlt =
+        "METAR ZZZZ 291704Z /////KT 27008KT Q1015=";
+    // fake report created for this test
+    const auto resultAlt = metafsimple::simplify(rawReportAlt);
+    EXPECT_EQ(resultAlt, result);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{29, 17, 4};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windDirectionDegrees = 270;
+    refCurrent.weatherData.windSpeed = Speed{8, Speed::Unit::KT};
     refCurrent.weatherData.seaLevelPressure =
         Pressure{1015, Pressure::Unit::HPA};
     EXPECT_EQ(result.current, refCurrent);
