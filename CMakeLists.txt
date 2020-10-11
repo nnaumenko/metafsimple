@@ -16,6 +16,13 @@ set(CLANG_COVERAGE_LINK_FLAGS "-lpthread -lm -fprofile-instr-generate -fcoverage
 set(GCC_COVERAGE_COMPILE_FLAGS "-O0 -fprofile-arcs -ftest-coverage")
 set(GCC_COVERAGE_LINK_FLAGS "-pthread -lgcov --coverage")
 
+message("$EMSDK = " $ENV{EMSDK})
+
+if(DEFINED ENV{EMSDK})
+	set(CMAKE_CXX_COMPILER emcc)
+endif()
+
+message("Compiler: " ${CMAKE_CXX_COMPILER})
 message("Compiler ID: " ${CMAKE_CXX_COMPILER_ID})
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -93,3 +100,19 @@ set_target_properties(testcoverage PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
     COMPILE_FLAGS ${COVERAGE_COMPILE_FLAGS}
     LINK_FLAGS ${COVERAGE_LINK_FLAGS})
+
+# Example
+
+add_executable(demo examples/demo.cpp)
+
+if(CMAKE_CXX_COMPILER MATCHES "emcc")    
+	set_target_properties(demo PROPERTIES 
+		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
+		OUTPUT_NAME "demo.html"
+		LINK_FLAGS "-Oz --bind --shell-file ${PROJECT_SOURCE_DIR}/examples/demo-wasm-shell.html -s \"EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']\""
+    )
+else()
+    set_target_properties(demo PROPERTIES 
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
+    )
+endif()

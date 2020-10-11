@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="Metafsimple library demo">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Metafsimple library demo</title>
+
+    <style type="text/css">
+        body {
+            background-color: #7395ae;
+            color: #ffffff;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        a:link {
+            color: #ffffff;
+        }
+
+        a:visited {
+            color: #d4dce3;
+        }
+
+        a:hover {
+            color: #ffffff;
+        }
+
+        a:active {
+            color: #d4dce3;
+        }
+
+        table {
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #000000;
+            border-collapse: collapse;
+        }
+
+        h1 {
+            font-size: 1.5em;
+        }
+
+        th {
+            border: 1px solid #000000;
+            font-weight: bold;
+            text-align: left;
+            padding: 0.33em;
+            background-color: #557a95;
+            color: white;
+        }
+
+        td {
+            border: 1px solid #000000;
+            text-align: left;
+            padding: 0.33em;
+        }
+
+        tr:hover {
+            background-color: #b1a296;
+            color: white;
+        }
+
+        td {
+            text-align: left;
+        }
+    </style>
+
+    <script>
+
+        function clearResult() {
+            document.getElementById("result").innerHTML = "";
+        };
+
+        function getInputFromHash() {
+            const sampleReportStr = '=';
+            console.log(window.location.hash);
+            if (window.location.hash) {
+                const report = decodeURIComponent(window.location.hash.substring(1));
+                document.getElementById("input").value = report;
+            } else {
+                document.getElementById("input").value = sampleReportStr;
+                window.location.hash = '#' + encodeURIComponent(sampleReportStr);
+            }
+        }
+
+        function decode() {
+            clearResult();
+            var inputStr = document.getElementById("input").value;
+            console.log(inputStr);
+            window.location.hash = '#' + encodeURIComponent(inputStr);
+            var result = Module.demo(inputStr);
+            console.log(result);
+            result = '<table><tr><td>' + result;
+            result = result.replace(
+                /===============================================================================\n/g,
+                '</td></tr></table><table><tr><td>'
+            );
+            result = result.replace(
+                /-------------------------------------------------------------------------------\n/g,
+                '</td></tr><tr><td>'
+            );
+            result = result.replace(/\n/g, '<br>');
+            result = result + '</td></tr></table>';
+            result = result.replace(/<tr><td><\/td><\/tr>/g, '');
+            result = result.replace(/<table><\/table>/g, '');
+            document.getElementById("result").innerHTML = result;
+        };
+
+    </script>
+
+    {{{ SCRIPT }}}
+
+</head>
+
+<body onload="getInputFromHash()">
+    <div>
+        <h1>Decode and simplify METAR &amp; TAF reports</h1>
+        Enter or paste METAR or TAF here:<br>
+        <textarea id="input" rows="8" cols="80" onInput="decode()"></textarea><br>
+        <br><br>
+        Result:<br>
+        <br>
+        <div id = "result">
+        </div>
+    </div>
+</body>
+
+</html>
