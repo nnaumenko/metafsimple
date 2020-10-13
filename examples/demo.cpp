@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 #include "metafsimple.hpp"
 
@@ -21,6 +22,30 @@ static const auto newPart =
 static const auto newReport =
     "========================================"
     "=======================================\n";
+
+std::string ordinalNumber(int i) {
+    auto suffix = [](int n) {
+        switch (n % 10) {
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
+        }
+    };
+    return (std::to_string(i) + suffix(i));
+}
+
+std::string formatReport(const std::string & s) {
+    std::string r = s;
+    r.erase(std::remove(r.begin(), r.end(), '\n'), r.end());
+    r.erase(std::remove(r.begin(), r.end(), '\r'), r.end());
+    r.erase(std::remove(r.begin(), r.end(), '\t'), r.end());
+    return r;
+};
 
 std::string toStr(std::optional<int> i, size_t minDigits = 0) {
     if (!i.has_value()) return "";
@@ -157,50 +182,46 @@ std::string toStr(Report report) {
         return w.id + ": " + warningMessage(w.message);
     };
     std::ostringstream result;
-    result << "Report type: " << type(report.type) << newLine;
+    result << "type: " << type(report.type) << newLine;
     if (report.missing)
-        result << "This report is missing" << newLine;
+        result << "missing: indicates missing report" << newLine;
     if (report.cancelled)
-        result << "This report cancels previous forecast" << newLine;
+        result << "cancelled: cancels previous forecast" << newLine;
     if (report.correctional) {
-        result << "This report corrects previous report";
+        result << "correctional: corrects previous report" << newLine;
         if (report.correctionNumber) {
-            result << " (corection " << report.correctionNumber << ")";
+            result << "correctionNumber: " << report.correctionNumber;
+            result << " (this is the ";
+            result << ordinalNumber(report.correctionNumber) << " correction)";
+            result << newLine;
         }
-        result << newLine;
     }
     if (report.amended)
-        result << "This report amends previous report" << newLine;
+        result << "ameded: amends previous report" << newLine;
     if (report.automated) {
-        result << "This report fully automated and produced with no ";
+        result << "automated: fully automated report produced with no ";
         result << "human intervention or oversight" << newLine;
     }
     if (const auto t = toStr(report.reportTime); !t.empty())
-        result << "Report release time: " << t << newLine;
-    const auto tf = toStr(report.applicableFrom);
-    const auto tu = toStr(report.applicableUntil);
-    if (!tf.empty() || !tu.empty()) {
-        result << "Report is applicable";
-        if (!tf.empty()) result << " from " << tf;
-        if (!tu.empty()) result << ", until " << tu;
+        result << "reportTime: report released on " << t << newLine;
+    if (const auto t = toStr(report.applicableFrom); !t.empty())
+        result << "applicableFrom: report is applicable from " << t << newLine;
+    if (const auto t = toStr(report.applicableUntil); !t.empty()) {
+        result << "applicableUntil: report is applicable until " << t;
         result << newLine;
     }
-    if (report.error != Report::Error::NO_ERROR) {
-        result << "Error while parsing this report: ";
-        result << error(report.error) << newLine;
-    }
+    if (report.error != Report::Error::NO_ERROR)
+        result << "error: " << error(report.error) << newLine;
     if (!report.warnings.empty()) {
-        result << "The following warnings were generated ";
-        result << "while processing the report: " << newLine;
+        result << "warnings: the following warnings were generated ";
+        result << "while processing this report" << newLine;
         for (const auto& w : report.warnings) {
             result << " - " << warning(w) << newLine;
         }
     }
     if (!report.plainText.empty()) {
-        result << "The parser was unable to decode the following group";
-        if (report.plainText.size() != 1) result << 's';
-        result << " in this report:" << newLine;
-        result << "(possibly they are plain text remarks)" << newLine;
+        result << "plainText: unable to decode the following group(s) in this ";
+        result << "report (possibly they are plain text remarks)" << newLine;
         for (const auto& pt : report.plainText) {
             result << " - " << pt << newLine;
         }
@@ -211,39 +232,30 @@ std::string toStr(Report report) {
 
 std::string demo(const std::string& report) {
     const auto simple = simplify(report);
-    std::string result = newReport;
+    std::ostringstream result;
+    result << newReport;
 
-    result += "Raw report:";
-    result += newLine;
-    result += report;
-    result += newLine;
-    result += newPart;
+    result << "Raw report: " << formatReport(report) << newLine << newPart;
 
-    result += "Report data:\n";
-    result += toStr(simple.report);
-    result += newPart;
+    result << "report (report type, time, attributes, parsing info, etc.)\n";
+    result << toStr(simple.report) << newPart;
     /*
-    result += "Station data:\n";
-    result += toStr(simple.station);
-    result += newPart;
+    result << "station (station name, capabilities, missing data, etc)\n";
+    result << toStr(simple.station) << newPart;
 
-    result += "Aerodrome data:\n";
-    result += toStr(simple.aerodrome);
-    result += newPart;
+    result << "aerodrome (aerodrome, runway, and directional data)\n";
+    result << toStr(simple.aerodrome) << newPart;
 
-    result += "Current weather data:\n";
-    result += toStr(simple.current);
-    result += newPart;
+    result << "current (current weather conditions)\n";
+    result << toStr(simple.current) << newPart;
 
-    result += "Cumulative and historical data:\n";
-    result += toStr(simple.historical);
-    result += newPart;
+    result << "historical (recent weather, cumulative and historical data)\n";
+    result << toStr(simple.historical) << newPart;;
 
-    result += "Forecast data:\n";
-    result += toStr(simple.forecast);
-    result += newPart;
+    result << "forecast (forecast and weather trends)\n";
+    result << toStr(simple.forecast);
 */
-    return result;
+    return result.str();
 }
 
 #ifdef __EMSCRIPTEN__

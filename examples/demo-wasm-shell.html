@@ -85,6 +85,43 @@
             }
         }
 
+        function formatOutput(s) {
+            const newReport = '===============================================================================';
+            const newPart = '-------------------------------------------------------------------------------';
+            const newLine = '\n';
+            const newColumn = ": ";
+
+            let a = s.split(newLine);
+            if (a[0] == newReport) a.shift();
+            if (a[a.length - 1] == newLine) a.pop();
+            console.log(a);
+
+            let result = '<table>\n';
+            for (let i = 0; i < a.length; i++) {
+                let str = a[i];
+                if (str == newReport) {
+                    result += '</table>\n<br>\n<table>\n';
+                    continue;
+                }
+                if (str == newPart) continue;
+                const c = str.indexOf(newColumn);
+                if (c == -1) {
+                    result += '<tr><td colspan=2>';
+                    result += str;
+                    result += '</td><tr>\n';
+                } else {
+                    result += '<tr><td>';
+                    result += str.substring(0, c);
+                    result += '</td><td>';
+                    result += str.substring(c + newColumn.length);
+                    result += '</td></tr>\n';
+                }
+            }
+            result += '</table>\n';
+            console.log(result);
+            return result;
+        }
+
         function decode() {
             clearResult();
             var inputStr = document.getElementById("input").value;
@@ -92,20 +129,25 @@
             window.location.hash = '#' + encodeURIComponent(inputStr);
             var result = Module.demo(inputStr);
             console.log(result);
-            result = '<table><tr><td>' + result;
-            result = result.replace(
-                /===============================================================================\n/g,
-                '</td></tr></table><table><tr><td>'
-            );
-            result = result.replace(
-                /-------------------------------------------------------------------------------\n/g,
-                '</td></tr><tr><td>'
-            );
-            result = result.replace(/\n/g, '<br>');
-            result = result + '</td></tr></table>';
-            result = result.replace(/<tr><td><\/td><\/tr>/g, '');
-            result = result.replace(/<table><\/table>/g, '');
-            document.getElementById("result").innerHTML = result;
+            document.getElementById("result").innerHTML = formatOutput(result);
+            /*           
+           
+           
+                       result = '<table><tr><td>' + result;
+                       result = result.replace(
+                           /===============================================================================\n/g,
+                           '</td></tr></table><table><tr><td>'
+                       );
+                       result = result.replace(
+                           /-------------------------------------------------------------------------------\n/g,
+                           '</td></tr><tr><td>'
+                       );
+                       result = result.replace(/\n/g, '<br>');
+                       result = result + '</td></tr></table>';
+                       result = result.replace(/<tr><td><\/td><\/tr>/g, '');
+                       result = result.replace(/<table><\/table>/g, '');
+                       document.getElementById("result").innerHTML = result;
+           */
         };
 
     </script>
@@ -120,9 +162,8 @@
         Enter or paste METAR or TAF here:<br>
         <textarea id="input" rows="8" cols="80" onInput="decode()"></textarea><br>
         <br><br>
-        Result:<br>
-        <br>
-        <div id = "result">
+        Decoded report:<br>
+        <div id="result">
         </div>
     </div>
 </body>
