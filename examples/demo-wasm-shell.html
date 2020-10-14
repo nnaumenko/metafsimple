@@ -97,13 +97,14 @@
             console.log(a);
 
             let result = '<table>\n';
+            let styleClass = undefined;
             for (let i = 0; i < a.length; i++) {
                 let str = a[i];
                 if (str == newReport) {
                     result += '</table>\n<br>\n<table>\n';
                     continue;
                 }
-                if (str == newPart) continue;
+                if (str == newPart) { styleClass = 'part'; continue; }
                 const c = str.indexOf(newColumn);
                 if (c == -1) {
                     result += '<tr><td colspan=2>';
@@ -116,6 +117,7 @@
                     result += str.substring(c + newColumn.length);
                     result += '</td></tr>\n';
                 }
+                styleClass = undefined;
             }
             result += '</table>\n';
             console.log(result);
