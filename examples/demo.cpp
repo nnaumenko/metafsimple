@@ -22,6 +22,7 @@ static const auto newPart =
 static const auto newReport =
     "========================================"
     "=======================================\n";
+static const auto newItem = " - ";
 
 std::string ordinalNumber(int i) {
     auto suffix = [](int n) {
@@ -131,6 +132,148 @@ std::string toStr(const Temperature& t) {
     }
 }
 
+std::string toStr(const Distance& d) {
+    auto mileFraction = [](Distance::Fraction f) {
+        switch (f) {
+            case Distance::Fraction::F_0:
+                return ""s;
+            case Distance::Fraction::F_1_16:
+                return "1/16"s;
+            case Distance::Fraction::F_1_8:
+                return "1/8"s;
+            case Distance::Fraction::F_3_16:
+                return "3/16"s;
+            case Distance::Fraction::F_1_4:
+                return "1/4"s;
+            case Distance::Fraction::F_5_16:
+                return "5/16"s;
+            case Distance::Fraction::F_3_8:
+                return "3/8"s;
+            case Distance::Fraction::F_7_16:
+                return "7/16"s;
+            case Distance::Fraction::F_1_2:
+                return "1/2"s;
+            case Distance::Fraction::F_9_16:
+                return "9/16"s;
+            case Distance::Fraction::F_5_8:
+                return "5/8"s;
+            case Distance::Fraction::F_11_16:
+                return "11/16"s;
+            case Distance::Fraction::F_3_4:
+                return "3/4"s;
+            case Distance::Fraction::F_13_16:
+                return "13/16"s;
+            case Distance::Fraction::F_7_8:
+                return "7/8"s;
+            case Distance::Fraction::F_15_16:
+                return "15/16"s;
+        }
+    };
+    auto details = [](Distance::Details d) {
+        switch (d) {
+            case Distance::Details::EXACTLY:
+                return ""s;
+            case Distance::Details::LESS_THAN:
+                return "<"s;
+            case Distance::Details::MORE_THAN:
+                return ">"s;
+        }
+    };
+    auto statuteMiles = [=](int i, Distance::Fraction f) {
+        if (!i && f == Distance::Fraction::F_0) return std::to_string(i);
+        if (!i) return mileFraction(f);
+        return std::to_string(i) + " " + mileFraction(f);
+    };
+    const auto dt = details(d.details);
+    const auto m = d.toUnit(Distance::Unit::METERS);
+    const auto ft = d.toUnit(Distance::Unit::FEET);
+    const auto sm = d.milesInt();
+    if (!m.has_value() || !ft.has_value() || !sm.has_value()) return "";
+    const auto smStr = statuteMiles(*sm, d.milesFraction());
+    switch (d.unit) {
+        case Distance::Unit::METERS:
+            if (*ft < 10000) {  // 10000 is an arbitrary value here
+                return dt + " " + std::to_string(*m) + " m (" +
+                       dt + " " + std::to_string(*ft) + " ft, " +
+                       dt + " " + smStr + " statute miles)";
+            }
+            return dt + " " + std::to_string(*m / 1000.0) + " km (" +
+                   dt + " " + smStr + " statute miles)";
+        case Distance::Unit::STATUTE_MILES:
+        case Distance::Unit::STATUTE_MILE_1_16S:
+            if (*ft < 10000) {  // 10000 is an arbitrary value here
+                return dt + " " + smStr + " statute miles (" +
+                       dt + " " + std::to_string(*ft) + " ft, " +
+                       dt + " " + std::to_string(*m) + " m)";
+            }
+            return dt + " " + smStr + " statute miles (" +
+                   dt + " " + std::to_string(*m / 1000.0) + " km)";
+        case Distance::Unit::FEET:
+            return dt + " " + std::to_string(*ft) + " ft (" +
+                   dt + " " + smStr + " statute miles, " +
+                   dt + " " + std::to_string(*m) + " m)";
+    }
+}
+
+std::string toStr(const DistanceRange& d) {
+    std::string result = toStr(d.prevailing);
+    const auto min = toStr(d.minimum);
+    const auto max = toStr(d.maximum);
+    if (min.empty() && max.empty()) return result;
+    if (!result.empty()) result += ", variable";
+    if (!min.empty()) {
+        result += " from ";
+        result += min;
+    }
+    if (!max.empty()) {
+        result += " up to ";
+        result += max;
+    }
+    return result;
+}
+
+std::string toStr(const Height& h) {
+    const auto ft = h.toUnit(Height::Unit::FEET);
+    const auto m = h.toUnit(Height::Unit::METERS);
+    if (!ft.has_value() || !m.has_value()) return "";
+    switch (h.unit) {
+        case Height::Unit::FEET:
+            return std::to_string(*ft) + " ft (" + std::to_string(*m) + " m)";
+        case Height::Unit::METERS:
+            return std::to_string(*m) + " m (" + std::to_string(*ft) + " ft)";
+    }
+}
+
+std::string toStr(const Ceiling& c) {
+    std::string result = toStr(c.exact);
+    const auto min = toStr(c.minimum);
+    const auto max = toStr(c.maximum);
+    if (min.empty() && max.empty()) return result;
+    if (!result.empty()) result += ", variable";
+    if (!min.empty()) {
+        result += " from ";
+        result += min;
+    }
+    if (!max.empty()) {
+        result += " up to ";
+        result += max;
+    }
+    return result;
+}
+
+std::string toStr(const Precipitation& p) {
+    const auto in = p.toUnit(Precipitation::Unit::IN);
+    const auto mm = p.toUnit(Precipitation::Unit::MM);
+    if (!in.has_value() || !mm.has_value()) return "";
+    switch (p.unit) {
+        case Precipitation::Unit::IN:
+        case Precipitation::Unit::HUNDREDTHS_IN:
+            return std::to_string(*in) + " \" (" + std::to_string(*mm) + " mm)";
+        case Precipitation::Unit::MM:
+            return std::to_string(*mm) + " mm (" + std::to_string(*in) + " \")";
+    }
+}
+
 std::string toStr(const Report& report) {
     auto type = [](Report::Type t) {
         switch (t) {
@@ -216,14 +359,14 @@ std::string toStr(const Report& report) {
         result << "warnings: the following warnings were generated ";
         result << "while processing this report" << newLine;
         for (const auto& w : report.warnings) {
-            result << " - " << warning(w) << newLine;
+            result << newItem << warning(w) << newLine;
         }
     }
     if (!report.plainText.empty()) {
         result << "plainText: unable to decode the following group(s) in this ";
         result << "report (possibly they are plain text remarks)" << newLine;
         for (const auto& pt : report.plainText) {
-            result << " - " << pt << newLine;
+            result << newItem << pt << newLine;
         }
     }
 
@@ -326,27 +469,27 @@ std::string toStr(const Station& station) {
     if (station.noVisDirectionalVariation) {
         result << "noVisDirectionalVariation: this station cannot ";
         result << "differentiate the directional variation of visibility";
-        result << newLine;        
+        result << newLine;
     }
     if (!station.missingData.empty()) {
         result << "missingData: station reports that the following data ";
         result << "are missing" << newLine;
         for (const auto md : station.missingData) {
-            result << " - " << missingData(md) << newLine;
+            result << newItem << missingData(md) << newLine;
         }
     }
     if (!station.runwaysNoCeilingData.empty()) {
         result << "runwaysNoCeilingData: station reports that the ceiling ";
         result << "data is missing for the following runways" << newLine;
         for (const auto rw : station.runwaysNoCeilingData) {
-            result << " - runway " << toStr(rw) << newLine;
+            result << newItem << "runway " << toStr(rw) << newLine;
         }
     }
     if (!station.runwaysNoVisData.empty()) {
         result << "runwaysNoVisData: station reports that the visibility ";
         result << "data is missing for the following runways" << newLine;
         for (const auto rw : station.runwaysNoVisData) {
-            result << " - runway " << toStr(rw) << newLine;
+            result << newItem << "runway " << toStr(rw) << newLine;
         }
     }
     return result.str();
@@ -354,99 +497,204 @@ std::string toStr(const Station& station) {
 
 std::string toStr(const Aerodrome& aerodrome) {
     auto colourCode = [](Aerodrome::ColourCode c) {
-        switch(c) {
+        switch (c) {
             case Aerodrome::ColourCode::NOT_SPECIFIED:
-            return "";
+                return "";
             case Aerodrome::ColourCode::BLUE:
-            return "blue";
+                return "blue";
             case Aerodrome::ColourCode::WHITE:
-            return "white";
+                return "white";
             case Aerodrome::ColourCode::GREEN:
-            return "green";
+                return "green";
             case Aerodrome::ColourCode::YELLOW1:
-            return "yellow1";
+                return "yellow1";
             case Aerodrome::ColourCode::YELLOW2:
-            return "yellow2";
+                return "yellow2";
             case Aerodrome::ColourCode::AMBER:
-            return "amber";
+                return "amber";
             case Aerodrome::ColourCode::RED:
-            return "red";
+                return "red";
         }
     };
     auto rvrTrend = [](Aerodrome::RvrTrend r) {
-        switch(r) {
+        switch (r) {
             case Aerodrome::RvrTrend::UNKNOWN:
-            return "";
+                return "";
             case Aerodrome::RvrTrend::DOWNWARD:
-            return "downward";
+                return "downward";
             case Aerodrome::RvrTrend::NEUTRAL:
-            return "neutral";
+                return "neutral";
             case Aerodrome::RvrTrend::UPWARD:
-            return "upward";
+                return "upward";
         }
     };
     auto runwayDeposits = [](Aerodrome::RunwayDeposits d) {
-        switch(d) {
+        switch (d) {
             case Aerodrome::RunwayDeposits::UNKNOWN:
-            return "";
+                return "";
             case Aerodrome::RunwayDeposits::CLEAR_AND_DRY:
-            return "clear and dry";
+                return "clear and dry";
             case Aerodrome::RunwayDeposits::DAMP:
-            return "damp";
+                return "damp";
             case Aerodrome::RunwayDeposits::WET_AND_WATER_PATCHES:
-            return "wet and there are water patches";
+                return "wet and there are water patches";
             case Aerodrome::RunwayDeposits::RIME_AND_FROST_COVERED:
-            return "rime and frost covered";
+                return "rime and frost covered";
             case Aerodrome::RunwayDeposits::DRY_SNOW:
-            return "dry snow covered";
+                return "dry snow covered";
             case Aerodrome::RunwayDeposits::WET_SNOW:
-            return "wet snow covered";
+                return "wet snow covered";
             case Aerodrome::RunwayDeposits::SLUSH:
-            return "slush covered";
+                return "slush covered";
             case Aerodrome::RunwayDeposits::ICE:
-            return "ice covered";
+                return "ice covered";
             case Aerodrome::RunwayDeposits::COMPACTED_OR_ROLLED_SNOW:
-            return "covered in compacted or rolled snow";
+                return "covered in compacted or rolled snow";
             case Aerodrome::RunwayDeposits::FROZEN_RUTS_OR_RIDGES:
-            return "ice or snow covered with frozen ruts or ridges";
+                return "ice or snow covered with frozen ruts or ridges";
         }
     };
     auto runwayContamExtent = [](Aerodrome::RunwayContamExtent r) {
-        switch(r) {
+        switch (r) {
             case Aerodrome::RunwayContamExtent::UNKNOWN:
-            return "";
+                return "";
             case Aerodrome::RunwayContamExtent::NO_DEPOSITS:
-            return "none";
+                return "none";
             case Aerodrome::RunwayContamExtent::LESS_THAN_11_PERCENT:
-            return "less than 11 percent";
+                return "less than 11 percent";
             case Aerodrome::RunwayContamExtent::FROM_11_TO_25_PERCENT:
-            return "11 to 25 percent";
+                return "11 to 25 percent";
             case Aerodrome::RunwayContamExtent::FROM_26_TO_50_PERCENT:
-            return "26 to 50 percent";
+                return "26 to 50 percent";
             case Aerodrome::RunwayContamExtent::MORE_THAN_50_PERCENT:
-            return "more than 50 percent";
+                return "more than 50 percent";
         }
     };
     auto brakingAction = [](Aerodrome::BrakingAction ba) {
-        switch(ba) {
+        switch (ba) {
             case Aerodrome::BrakingAction::UNKNOWN:
-            return "";
+                return "";
             case Aerodrome::BrakingAction::POOR:
-            return "poor";
+                return "poor";
             case Aerodrome::BrakingAction::MEDIUM_POOR:
-            return "medium-poor";
+                return "medium-poor";
             case Aerodrome::BrakingAction::MEDIUM:
-            return "medium";
+                return "medium";
             case Aerodrome::BrakingAction::MEDIUM_GOOD:
-            return "medium-good";
+                return "medium-good";
             case Aerodrome::BrakingAction::GOOD:
-            return "good";
+                return "good";
             case Aerodrome::BrakingAction::UNRELIABLE:
-            return "unreliable or unmeasurable";
+                return "unreliable or unmeasurable";
         }
     };
+    auto runwayData = [&](const Aerodrome::RunwayData& rd,
+                          bool includeRunway = false) {
+        std::ostringstream result;
+        if (includeRunway)
+            result << newItem << "runway: " << toStr(rd.runway) << newLine;
+        if (rd.notOperational) {
+            result << newItem << "notOperational: runway not operational";
+            result << newLine;
+        }
+        if (rd.snoclo) {
+            result << newItem << "snoclo: ";
+            result << "runway closed due to snow accumulation" << newLine;
+        }
+        if (rd.clrd) {
+            result << newItem << "clrd: deposits cleared or ceased to exist";
+            result << newLine;
+        }
+        if (rd.windShearLowerLayers) {
+            result << newItem << "windShearLowerLayers: ";
+            result << "wind shear in the lower layers" << newLine;
+        }
+        if (rd.deposits != Aerodrome::RunwayDeposits::UNKNOWN) {
+            result << newItem << "deposits: runway is ";
+            result << runwayDeposits(rd.deposits) << newLine;
+        }
+        if (rd.contaminationExtent != Aerodrome::RunwayContamExtent::UNKNOWN) {
+            result << newItem << "contaminationExtent: ";
+            result << runwayContamExtent(rd.contaminationExtent);
+            result << " of runway covered with deposits" << newLine;
+        }
+        if (rd.depositDepth.amount.has_value()) {
+            result << newItem << "depositDepth: runway deposit depth ";
+            result << toStr(rd.depositDepth) << newLine;
+        }
+        if (rd.coefficient.has_value()) {
+            result << newItem << "coefficient: friction coefficient 0.";
+            result << toStr(rd.coefficient) << ", braking action " << newLine;
+            result << brakingAction(rd.brakingAction());
+        }
+        if (rd.surfaceFrictionUnreliable) {
+            result << newItem << "surfaceFrictionUnreliable: ";
+            result << "surface friction unrealiable or unmeasureable" << newLine;
+        }
+        if (const auto s = toStr(rd.visualRange); !s.empty()) {
+            result << newItem << "visualRange: runway visual range is ";
+            result << s << newLine;
+        }
+        if (rd.visualRangeTrend != Aerodrome::RvrTrend::UNKNOWN) {
+            result << newItem << "visualRangeTrend: ";
+            result << "runway visual range trend is ";
+            result << rvrTrend(rd.visualRangeTrend) << newLine;
+        }
+        if (const auto s = toStr(rd.ceiling); !s.empty())
+            result << newItem << "ceiling: ceiling is " << s << newLine;
+        if (const auto s = toStr(rd.visibility); !s.empty()) {
+            result << newItem << "visibility: runway visibility is ";
+            result << s << newLine;
+        }
+        return result.str();
+    };
+    auto directionData = [](const Aerodrome::DirectionData& dd,
+                            bool includeDirection = false) {
+        std::ostringstream result;
+        if (includeDirection)
+            result << newItem << toStr(dd.cardinalDirection) << newLine;
+        if (const auto s = toStr(dd.visibility); !s.empty()) {
+            result << newItem << "visibility: directional visibility is ";
+            result << s << newLine;
+        }
+        if (const auto s = toStr(dd.ceiling); !s.empty())
+            result << newItem << "ceiling: ceiling is " << s << newLine;
+        return result.str();
+    };
     std::ostringstream result;
-    // TODO
+    if (aerodrome.snoclo) {
+        result << "snoclo: aerodrome closed due to snow accumulation";
+        result << newLine;
+    }
+    if (aerodrome.colourCode != Aerodrome::ColourCode::NOT_SPECIFIED)
+        result << "colourCode: " << colourCode(aerodrome.colourCode) << newLine;
+    if (aerodrome.colourCodeBlack) {
+        result << "colourCodeBlack: aerodrome closed due to snow accumulation ";
+        result << "or non-weather reasons" << newLine;
+    }
+    if (!aerodrome.runways.empty()) {
+        for (const auto& r : aerodrome.runways) {
+            result << "runways: data for runway " << toStr(r.runway) << newLine;
+            result << runwayData(r);
+        }
+    }
+    if (!aerodrome.directions.empty()) {
+        for (const auto& d : aerodrome.directions) {
+            result << "directions: data for direction towards";
+            result << toStr(d.cardinalDirection) << newLine;
+            result << directionData(d);
+        }
+    }
+    if (const auto s = toStr(aerodrome.ceiling); !s.empty())
+        result << "ceiling: ceiling is " << s << newLine;
+    if (const auto s = toStr(aerodrome.surfaceVisibility); !s.empty()) {
+        result << "surfaceVisibility: visibility on surface level is ";
+        result << s << newLine;
+    }
+    if (const auto s = toStr(aerodrome.towerVisibility); !s.empty()) {
+        result << "towerVisibility: visibility from ATC tower is ";
+        result << s << newLine;
+    }
     return result.str();
 }
 
@@ -462,10 +710,10 @@ std::string demo(const std::string& report) {
 
     result << "station (station name, capabilities, missing data, etc)\n";
     result << toStr(simple.station) << newPart;
-/*
+
     result << "aerodrome (aerodrome, runway, and directional data)\n";
     result << toStr(simple.aerodrome) << newPart;
-
+/*
     result << "current (current weather conditions)\n";
     result << toStr(simple.current) << newPart;
 

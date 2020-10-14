@@ -105,6 +105,8 @@
                     continue;
                 }
                 if (str == newPart) { styleClass = 'part'; continue; }
+                str = str.replace(/</g, '&lt;');
+                str = str.replace(/>/g, '&lt;');
                 const c = str.indexOf(newColumn);
                 if (c == -1) {
                     result += '<tr><td colspan=2>';
