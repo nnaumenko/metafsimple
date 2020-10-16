@@ -132,6 +132,39 @@ std::string toStr(const Temperature& t) {
     }
 }
 
+std::string toStr(const Speed& s) {
+    const auto kt = s.toUnit(Speed::Unit::KT);
+    const auto mps = s.toUnit(Speed::Unit::MPS);
+    const auto kmh = s.toUnit(Speed::Unit::KMH);
+    const auto mph = s.toUnit(Speed::Unit::MPH);
+    if (!kt.has_value() ||
+        !mps.has_value() ||
+        !kmh.has_value() ||
+        !mph.has_value()) return "";
+    switch (s.unit) {
+        case Speed::Unit::KT:
+            return std::to_string(*kt) + " knots (" +
+                   std::to_string(*mps) + " m/s, " +
+                   std::to_string(*kmh) + " km/h, " +
+                   std::to_string(*mph) + " mph)";
+        case Speed::Unit::MPS:
+            return std::to_string(*mps) + " m/s (" +
+                   std::to_string(*kt) + " kt, " +
+                   std::to_string(*kmh) + " km/h, " +
+                   std::to_string(*mph) + " mph)";
+        case Speed::Unit::KMH:
+            return std::to_string(*kmh) + " km/h (" +
+                   std::to_string(*kt) + " kt, " +
+                   std::to_string(*mps) + " m/s, " +
+                   std::to_string(*mph) + " mph)";
+        case Speed::Unit::MPH:
+            return std::to_string(*mph) + " mph (" +
+                   std::to_string(*kt) + " kt, " +
+                   std::to_string(*mps) + " m/s, " +
+                   std::to_string(*kmh) + " km/h)";
+    }
+}
+
 std::string toStr(const Distance& d) {
     auto mileFraction = [](Distance::Fraction f) {
         switch (f) {
@@ -261,6 +294,29 @@ std::string toStr(const Ceiling& c) {
     return result;
 }
 
+std::string toStr(const Pressure& p) {
+    const auto hpa = p.toUnit(Pressure::Unit::HPA);
+    const auto inhg = p.toUnit(Pressure::Unit::IN_HG);
+    const auto mmhg = p.toUnit(Pressure::Unit::MM_HG);
+    if (!hpa.has_value() || !inhg.has_value() || !mmhg.has_value())
+        return "";
+    switch (p.unit) {
+        case Pressure::Unit::HPA:
+            return std::to_string(*hpa) + " hPa (" +
+                   std::to_string(*inhg) + " \"Hg, " +
+                   std::to_string(*mmhg) + " mmHg)";
+        case Pressure::Unit::IN_HG:
+        case Pressure::Unit::HUNDREDTHS_IN_HG:
+            return std::to_string(*inhg) + " \"Hg (" +
+                   std::to_string(*hpa) + " hPa, " +
+                   std::to_string(*mmhg) + " mmHg)";
+        case Pressure::Unit::MM_HG:
+            return std::to_string(*mmhg) + " mmHg (" +
+                   std::to_string(*hpa) + " hPa, " +
+                   std::to_string(*inhg) + " \"Hg)";
+    }
+}
+
 std::string toStr(const Precipitation& p) {
     const auto in = p.toUnit(Precipitation::Unit::IN);
     const auto mm = p.toUnit(Precipitation::Unit::MM);
@@ -272,6 +328,376 @@ std::string toStr(const Precipitation& p) {
         case Precipitation::Unit::MM:
             return std::to_string(*mm) + " mm (" + std::to_string(*in) + " \")";
     }
+}
+
+std::string toStr(const WaveHeight& wh) {
+    const auto m = wh.toUnit(WaveHeight::Unit::METERS);
+    const auto ft = wh.toUnit(WaveHeight::Unit::FEET);
+    const auto yd = wh.toUnit(WaveHeight::Unit::YARDS);
+    if (!m.has_value() || !ft.has_value() || !yd.has_value()) return "";
+    switch (wh.unit) {
+        case WaveHeight::Unit::METERS:
+        case WaveHeight::Unit::DECIMETERS:
+            return std::to_string(*m) + " m (" +
+                   std::to_string(*ft) + " ft" +
+                   std::to_string(*yd) + "yd)";
+        case WaveHeight::Unit::FEET:
+            return std::to_string(*ft) + " ft (" +
+                   std::to_string(*m) + " m" +
+                   std::to_string(*yd) + "yd)";
+        case WaveHeight::Unit::YARDS:
+            return std::to_string(*yd) + " yd (" +
+                   std::to_string(*m) + " m" +
+                   std::to_string(*ft) + "ft)";
+    }
+}
+
+std::string toStr(const Weather& w) {
+    auto phenomena = [](Weather::Phenomena p) {
+        switch (p) {
+            case Weather::Phenomena::UNKNOWN:
+                return "";
+            case Weather::Phenomena::NO_SIGNIFICANT_WEATHER:
+                return "no significant weather (end of weather phenomena)";
+            case Weather::Phenomena::SHALLOW_FOG:
+                return "shallow fog (ground fog)";
+            case Weather::Phenomena::PARTIAL_FOG:
+                return "partial fog (fog covering part of the location)";
+            case Weather::Phenomena::PATCHES_FOG:
+                return "patches of fog (randomly covering the location)";
+            case Weather::Phenomena::FREEZING_FOG:
+                return "freezing fog or fog at freezing temperatures";
+            case Weather::Phenomena::FOG:
+                return "fog";
+            case Weather::Phenomena::DRIFTING_DUST:
+                return "low drifting dust";
+            case Weather::Phenomena::BLOWING_DUST:
+                return "blowing dust";
+            case Weather::Phenomena::DUST:
+                return "widespread dust";
+            case Weather::Phenomena::DRIFTING_SAND:
+                return "low drifting sand";
+            case Weather::Phenomena::BLOWING_SAND:
+                return "blowing sand";
+            case Weather::Phenomena::SAND:
+                return "sand";
+            case Weather::Phenomena::DRIFTING_SNOW:
+                return "low drifting snow";
+            case Weather::Phenomena::BLOWING_SNOW:
+                return "blowing snow";
+            case Weather::Phenomena::BLOWING_SPRAY:
+                return "blowing spray";
+            case Weather::Phenomena::ICE_CRYSTALS:
+                return "ice crystals";
+            case Weather::Phenomena::MIST:
+                return "mist";
+            case Weather::Phenomena::SMOKE:
+                return "smoke";
+            case Weather::Phenomena::VOLCANIC_ASH:
+                return "volcanic ash";
+            case Weather::Phenomena::HAZE:
+                return "haze";
+            case Weather::Phenomena::DUST_WHIRLS:
+                return "dust or sand whirls";
+            case Weather::Phenomena::SQUALLS:
+                return "squalls";
+            case Weather::Phenomena::FUNNEL_CLOUD:
+                return "funnel cloud";
+            case Weather::Phenomena::TORNADO:
+                return "tornado";
+            case Weather::Phenomena::SAND_STORM:
+                return "sand storm";
+            case Weather::Phenomena::DUST_STORM:
+                return "dust storm";
+            case Weather::Phenomena::DUST_SAND_STORM:
+                return "dust and sand storm";
+            case Weather::Phenomena::HEAVY_SAND_STORM:
+                return "heavy sand storm";
+            case Weather::Phenomena::HEAVY_DUST_STORM:
+                return "heavy dust storm";
+            case Weather::Phenomena::HEAVY_DUST_SAND_STORM:
+                return "heavy dust and sand storm";
+            case Weather::Phenomena::PRECIPITATION:
+                return "precipitation";
+            case Weather::Phenomena::SHOWERY_PRECIPITATION:
+                return "showery precipitation";
+            case Weather::Phenomena::PRECIPITATION_LIGHT:
+                return "precipitation of light intensity";
+            case Weather::Phenomena::PRECIPITATION_MODERATE:
+                return "precipitation of moderate intensity";
+            case Weather::Phenomena::PRECIPITATION_HEAVY:
+                return "precipitation of heavy intensity";
+            case Weather::Phenomena::SHOWERY_PRECIPITATION_LIGHT:
+                return "showery precipitation of light intensity";
+            case Weather::Phenomena::SHOWERY_PRECIPITATION_MODERATE:
+                return "showery precipitation of moderate intensity";
+            case Weather::Phenomena::SHOWERY_PRECIPITATION_HEAVY:
+                return "showery precipitation of heavy intensity";
+            case Weather::Phenomena::FREEZING_PRECIPITATION_LIGHT:
+                return "freezing precipitation of light intensity";
+            case Weather::Phenomena::FREEZING_PRECIPITATION_MODERATE:
+                return "freezing precipitation of moderate intensity";
+            case Weather::Phenomena::FREEZING_PRECIPITATION_HEAVY:
+                return "freezing precipitation of heavy intensity";
+            case Weather::Phenomena::THUNDERSTORM:
+                return "thunderstorm";
+            case Weather::Phenomena::THUNDERSTORM_PRECIPITATION_LIGHT:
+                return "thunderstorm with precipitation of light intensity";
+            case Weather::Phenomena::THUNDERSTORM_PRECIPITATION_MODERATE:
+                return "thunderstorm with precipitation of moderate intensity";
+            case Weather::Phenomena::THUNDERSTORM_PRECIPITATION_HEAVY:
+                return "thunderstorm with precipitation of heavy intensity";
+        }
+    };
+    auto precipitation = [](Weather::Precipitation p) {
+        switch (p) {
+            case Weather::Precipitation::DRIZZLE:
+                return "drizzle";
+            case Weather::Precipitation::RAIN:
+                return "rain";
+            case Weather::Precipitation::SNOW:
+                return "snow";
+            case Weather::Precipitation::SNOW_GRAINS:
+                return "snow grains";
+            case Weather::Precipitation::ICE_PELLETS:
+                return "ice pellets";
+            case Weather::Precipitation::HAIL:
+                return "hail";
+            case Weather::Precipitation::SMALL_HAIL:
+                return "small hail (graupel)";
+            case Weather::Precipitation::UNDETERMINED:
+                return "undetermined precipitation";
+        }
+    };
+    std::string result = phenomena(w.phenomena);
+    for (const auto p : w.precipitation)
+        result += ", "s + precipitation(p);
+    return result;
+}
+
+std::string toStr(const CloudLayer& cl) {
+    auto amount = [](CloudLayer::Amount a) {
+        switch (a) {
+            case CloudLayer::Amount::UNKNOWN:
+                return "amount unknown";
+            case CloudLayer::Amount::FEW:
+                return "few clouds";
+            case CloudLayer::Amount::SCATTERED:
+                return "scattered clouds";
+            case CloudLayer::Amount::BROKEN:
+                return "broken clouds";
+            case CloudLayer::Amount::OVERCAST:
+                return "overcast";
+            case CloudLayer::Amount::VARIABLE_FEW_SCATTERED:
+                return "variable between few and scattered clouds";
+            case CloudLayer::Amount::VARIABLE_SCATTERED_BROKEN:
+                return "variable between scattered and broken clouds";
+            case CloudLayer::Amount::VARIABLE_BROKEN_OVERCAST:
+                return "variable between broken clouds and overcast";
+        }
+    };
+    auto details = [](CloudLayer::Details d) {
+        switch (d) {
+            case CloudLayer::Details::UNKNOWN:
+            return "unknown";
+            case CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS:
+            return "neither towering cumulus nor cumulonimbus";
+            case CloudLayer::Details::CUMULONIMBUS:
+            return "cumulonimbus";
+            case CloudLayer::Details::TOWERING_CUMULUS:
+            return "towering cumulus";
+            case CloudLayer::Details::CUMULUS:
+            return "cumulus";
+            case CloudLayer::Details::CUMULUS_FRACTUS:
+            return "cumulus fractus";
+            case CloudLayer::Details::STRATOCUMULUS:
+            return "stratocumulus";
+            case CloudLayer::Details::NIMBOSTRATUS:
+            return "nimbostratus";
+            case CloudLayer::Details::STRATUS:
+            return "stratus";
+            case CloudLayer::Details::STRATUS_FRACTUS:
+            return "stratus fractus";
+            case CloudLayer::Details::ALTOSTRATUS:
+            return "altostratus";
+            case CloudLayer::Details::ALTOCUMULUS:
+            return "altocumulus";
+            case CloudLayer::Details::ALTOCUMULUS_CASTELLANUS:
+            return "altocumulus castellanus";
+            case CloudLayer::Details::CIRRUS:
+            return "cirrus";
+            case CloudLayer::Details::CIRROSTRATUS:
+            return "cirrostratus";
+            case CloudLayer::Details::CIRROCUMULUS:
+            return "cirrocumulus";
+            case CloudLayer::Details::BLOWING_SNOW:
+            return "blowing snow";
+            case CloudLayer::Details::BLOWING_DUST:
+            return "blowing dust";
+            case CloudLayer::Details::BLOWING_SAND:
+            return "blowing sand";
+            case CloudLayer::Details::ICE_CRYSTALS:
+            return "ice crystals";
+            case CloudLayer::Details::RAIN:
+            return "rain";
+            case CloudLayer::Details::DRIZZLE:
+            return "drizzle";
+            case CloudLayer::Details::SNOW:
+            return "snow";
+            case CloudLayer::Details::ICE_PELLETS:
+            return "ice pellets";
+            case CloudLayer::Details::SMOKE:
+            return "smoke";
+            case CloudLayer::Details::FOG:
+            return "fog";
+            case CloudLayer::Details::MIST:
+            return "mist";
+            case CloudLayer::Details::HAZE:
+            return "haze";
+            case CloudLayer::Details::VOLCANIC_ASH:
+            return "volcanic ash";
+        }
+    };
+    std::string result = amount(cl.amount) + ", "s + details(cl.details);
+    if (cl.height.height.has_value())
+        result += " at height "s + toStr(cl.height);
+    if (const auto s = toStr(cl.okta); !s.empty())
+        result += " covering "s + s + "/8 of the sky"s + newLine;
+    return result;
+}
+
+std::string toStr(ObservedPhenomena p) {
+    switch (p) {
+        case ObservedPhenomena::THUNDERSTORM:
+        return "thunderstorm";
+        case ObservedPhenomena::CUMULONIMBUS:
+        return "cumulonimbus clouds";
+        case ObservedPhenomena::CUMULONIMBUS_MAMMATUS:
+        return "cumulonimbus mammatus clouds";
+        case ObservedPhenomena::TOWERING_CUMULUS:
+        return "towering cumulus clouds";
+        case ObservedPhenomena::ALTOCUMULUS_CASTELLANUS:
+        return "altocumulus castellanus clouds";
+        case ObservedPhenomena::STRATOCUMULUS_STANDING_LENTICULAR:
+        return "stratocumulus standing lenticular cloud";
+        case ObservedPhenomena::ALTOCUMULUS_STANDING_LENTICULAR:
+        return "stratocumulus standing lenticular cloud";
+        case ObservedPhenomena::CIRROCUMULUS_STANDING_LENTICULAR:
+        return "cirrocumulus standing lenticular cloud";
+        case ObservedPhenomena::ROTOR_CLOUD:
+        return "rotor cloud";
+        case ObservedPhenomena::VIRGA:
+        return "virga";
+        case ObservedPhenomena::PRECIPITATION:
+        return "precipitation";
+        case ObservedPhenomena::FOG:
+        return "fog";
+        case ObservedPhenomena::FOG_SHALLOW:
+        return "shallow fog";
+        case ObservedPhenomena::FOG_PATCHES:
+        return "patches of fog";
+        case ObservedPhenomena::HAZE:
+        return "haze";
+        case ObservedPhenomena::SMOKE:
+        return "smoke";
+        case ObservedPhenomena::BLOWING_SNOW:
+        return "blowing snow";
+        case ObservedPhenomena::BLOWING_SAND:
+        return "blowing sand";
+        case ObservedPhenomena::BLOWING_DUST:
+        return "blowing dust";
+        case ObservedPhenomena::DUST_WHIRLS:
+        return "dust or sand whirls";
+        case ObservedPhenomena::SAND_STORM:
+        return "sand storm";
+        case ObservedPhenomena::DUST_STORM:
+        return "dust storm";
+        case ObservedPhenomena::VOLCANIC_ASH:
+        return "volcanic ash";
+        case ObservedPhenomena::FUNNEL_CLOUD:
+        return "funnel cloud";
+    }
+}
+
+std::string toStr(const Vicinity & v) {
+    std::ostringstream result;
+    result << toStr(v.phenomena);
+    if (!v.directions.empty()) {
+        result << "towards ";
+        bool comma = false;
+        for (const auto d : v.directions) {
+            if (comma) result << ", ";
+            comma = true;
+            result << toStr(d);
+        }
+    }
+    if (const auto s = toStr(v.distance); !s.empty())
+        result << " at distance " << s;
+    if (v.moving != CardinalDirection::NOT_SPECIFIED)
+        result << " moving towards " << toStr(v.moving);
+    return result.str();
+}
+
+std::string toStr(const LightningStrikes & ls) {
+    auto freq = [](LightningStrikes::Frequency f) {
+        switch (f) {
+            case LightningStrikes::Frequency::UNKNOWN:
+            return "";
+            case LightningStrikes::Frequency::OCCASIONAL:
+            return "occassional";
+            case LightningStrikes::Frequency::FREQUENT:
+            return "frequent";
+            case LightningStrikes::Frequency::CONSTANT:
+            return "constant";
+        }
+    };
+    auto lightningType = [](LightningStrikes::Type t) {
+        switch(t) {
+            case LightningStrikes::Type::UNKNOWN:
+            return "unknown lightning type";
+            case LightningStrikes::Type::CLOUD_AIR:
+            return "cloud-to-air without strike to ground";
+            case LightningStrikes::Type::CLOUD_CLOUD:
+            return "cloud-to-cloud";
+            case LightningStrikes::Type::IN_CLOUD:
+            return "in cloud";
+            case LightningStrikes::Type::CLOUD_GROUND:
+            return "cloud-to-ground";
+        }
+    };
+    std::ostringstream result;
+    if (ls.frequency != LightningStrikes::Frequency::UNKNOWN)
+        result << freq(ls.frequency) << " ";
+    result << "lightning strikes";
+    if (!ls.type.empty()) {
+        bool comma = false;
+        for (auto t : ls.type) {
+            if (comma) result << ", ";
+            comma = true;
+            result << lightningType(t);
+        }
+    }
+    if (const auto s = toStr(ls.distance); !s.empty())
+        result << " at distance " << s;
+    if (!ls.directions.empty()) {
+        result << "towards ";
+        bool comma = false;
+        for (const auto d : ls.directions) {
+            if (comma) result << ", ";
+            comma = true;
+            result << toStr(d);
+        }
+    }
+    return result.str();
+}
+
+std::string toStr(const WindShear & ws) {
+    std::ostringstream result;
+    if (ws.height.height.has_value()) 
+        result << "at height " << toStr(ws.height) << ", ";
+    result << "wind direction is " << std::to_string(ws.directionDegrees);
+    result << " and wind speed is " << toStr(ws.windSpeed);
+    return result.str();
 }
 
 std::string toStr(const Report& report) {
@@ -713,10 +1139,10 @@ std::string demo(const std::string& report) {
 
     result << "aerodrome (aerodrome, runway, and directional data)\n";
     result << toStr(simple.aerodrome) << newPart;
-/*
-    result << "current (current weather conditions)\n";
-    result << toStr(simple.current) << newPart;
 
+//    result << "current (current weather conditions)\n";
+//    result << toStr(simple.current) << newPart;
+    /*
     result << "historical (recent weather, cumulative and historical data)\n";
     result << toStr(simple.historical) << newPart;;
 
