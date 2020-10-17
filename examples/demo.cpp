@@ -226,25 +226,25 @@ std::string toStr(const Distance& d) {
     switch (d.unit) {
         case Distance::Unit::METERS:
             if (*ft < 10000) {  // 10000 is an arbitrary value here
-                return dt + " " + std::to_string(*m) + " m (" +
-                       dt + " " + std::to_string(*ft) + " ft, " +
-                       dt + " " + smStr + " statute miles)";
+                return dt + std::to_string(*m) + " m (" +
+                       dt + std::to_string(*ft) + " ft, " +
+                       dt + smStr + " statute miles)";
             }
-            return dt + " " + std::to_string(*m / 1000.0) + " km (" +
-                   dt + " " + smStr + " statute miles)";
+            return dt + std::to_string(*m / 1000.0) + " km (" +
+                   dt + smStr + " statute miles)";
         case Distance::Unit::STATUTE_MILES:
         case Distance::Unit::STATUTE_MILE_1_16S:
             if (*ft < 10000) {  // 10000 is an arbitrary value here
-                return dt + " " + smStr + " statute miles (" +
-                       dt + " " + std::to_string(*ft) + " ft, " +
-                       dt + " " + std::to_string(*m) + " m)";
+                return dt + smStr + " statute miles (" +
+                       dt + std::to_string(*ft) + " ft, " +
+                       dt + std::to_string(*m) + " m)";
             }
-            return dt + " " + smStr + " statute miles (" +
-                   dt + " " + std::to_string(*m / 1000.0) + " km)";
+            return dt + smStr + " statute miles (" +
+                   dt + std::to_string(*m / 1000.0) + " km)";
         case Distance::Unit::FEET:
-            return dt + " " + std::to_string(*ft) + " ft (" +
-                   dt + " " + smStr + " statute miles, " +
-                   dt + " " + std::to_string(*m) + " m)";
+            return dt + std::to_string(*ft) + " ft (" +
+                   dt + smStr + " statute miles, " +
+                   dt + std::to_string(*m) + " m)";
     }
 }
 
@@ -358,7 +358,8 @@ std::string toStr(const Weather& w) {
             case Weather::Phenomena::UNKNOWN:
                 return "";
             case Weather::Phenomena::NO_SIGNIFICANT_WEATHER:
-                return "no significant weather (end of weather phenomena)";
+                return "no significant weather (indicates the end of previous "
+                       "weather phenomena)";
             case Weather::Phenomena::SHALLOW_FOG:
                 return "shallow fog (ground fog)";
             case Weather::Phenomena::PARTIAL_FOG:
@@ -499,63 +500,63 @@ std::string toStr(const CloudLayer& cl) {
     auto details = [](CloudLayer::Details d) {
         switch (d) {
             case CloudLayer::Details::UNKNOWN:
-            return "unknown";
+                return "unknown";
             case CloudLayer::Details::NOT_TOWERING_CUMULUS_NOT_CUMULONIMBUS:
-            return "neither towering cumulus nor cumulonimbus";
+                return "non-convective";
             case CloudLayer::Details::CUMULONIMBUS:
-            return "cumulonimbus";
+                return "cumulonimbus";
             case CloudLayer::Details::TOWERING_CUMULUS:
-            return "towering cumulus";
+                return "towering cumulus";
             case CloudLayer::Details::CUMULUS:
-            return "cumulus";
+                return "cumulus";
             case CloudLayer::Details::CUMULUS_FRACTUS:
-            return "cumulus fractus";
+                return "cumulus fractus";
             case CloudLayer::Details::STRATOCUMULUS:
-            return "stratocumulus";
+                return "stratocumulus";
             case CloudLayer::Details::NIMBOSTRATUS:
-            return "nimbostratus";
+                return "nimbostratus";
             case CloudLayer::Details::STRATUS:
-            return "stratus";
+                return "stratus";
             case CloudLayer::Details::STRATUS_FRACTUS:
-            return "stratus fractus";
+                return "stratus fractus";
             case CloudLayer::Details::ALTOSTRATUS:
-            return "altostratus";
+                return "altostratus";
             case CloudLayer::Details::ALTOCUMULUS:
-            return "altocumulus";
+                return "altocumulus";
             case CloudLayer::Details::ALTOCUMULUS_CASTELLANUS:
-            return "altocumulus castellanus";
+                return "altocumulus castellanus";
             case CloudLayer::Details::CIRRUS:
-            return "cirrus";
+                return "cirrus";
             case CloudLayer::Details::CIRROSTRATUS:
-            return "cirrostratus";
+                return "cirrostratus";
             case CloudLayer::Details::CIRROCUMULUS:
-            return "cirrocumulus";
+                return "cirrocumulus";
             case CloudLayer::Details::BLOWING_SNOW:
-            return "blowing snow";
+                return "blowing snow";
             case CloudLayer::Details::BLOWING_DUST:
-            return "blowing dust";
+                return "blowing dust";
             case CloudLayer::Details::BLOWING_SAND:
-            return "blowing sand";
+                return "blowing sand";
             case CloudLayer::Details::ICE_CRYSTALS:
-            return "ice crystals";
+                return "ice crystals";
             case CloudLayer::Details::RAIN:
-            return "rain";
+                return "rain";
             case CloudLayer::Details::DRIZZLE:
-            return "drizzle";
+                return "drizzle";
             case CloudLayer::Details::SNOW:
-            return "snow";
+                return "snow";
             case CloudLayer::Details::ICE_PELLETS:
-            return "ice pellets";
+                return "ice pellets";
             case CloudLayer::Details::SMOKE:
-            return "smoke";
+                return "smoke";
             case CloudLayer::Details::FOG:
-            return "fog";
+                return "fog";
             case CloudLayer::Details::MIST:
-            return "mist";
+                return "mist";
             case CloudLayer::Details::HAZE:
-            return "haze";
+                return "haze";
             case CloudLayer::Details::VOLCANIC_ASH:
-            return "volcanic ash";
+                return "volcanic ash";
         }
     };
     std::string result = amount(cl.amount) + ", "s + details(cl.details);
@@ -569,57 +570,57 @@ std::string toStr(const CloudLayer& cl) {
 std::string toStr(ObservedPhenomena p) {
     switch (p) {
         case ObservedPhenomena::THUNDERSTORM:
-        return "thunderstorm";
+            return "thunderstorm";
         case ObservedPhenomena::CUMULONIMBUS:
-        return "cumulonimbus clouds";
+            return "cumulonimbus clouds";
         case ObservedPhenomena::CUMULONIMBUS_MAMMATUS:
-        return "cumulonimbus mammatus clouds";
+            return "cumulonimbus mammatus clouds";
         case ObservedPhenomena::TOWERING_CUMULUS:
-        return "towering cumulus clouds";
+            return "towering cumulus clouds";
         case ObservedPhenomena::ALTOCUMULUS_CASTELLANUS:
-        return "altocumulus castellanus clouds";
+            return "altocumulus castellanus clouds";
         case ObservedPhenomena::STRATOCUMULUS_STANDING_LENTICULAR:
-        return "stratocumulus standing lenticular cloud";
+            return "stratocumulus standing lenticular cloud";
         case ObservedPhenomena::ALTOCUMULUS_STANDING_LENTICULAR:
-        return "stratocumulus standing lenticular cloud";
+            return "stratocumulus standing lenticular cloud";
         case ObservedPhenomena::CIRROCUMULUS_STANDING_LENTICULAR:
-        return "cirrocumulus standing lenticular cloud";
+            return "cirrocumulus standing lenticular cloud";
         case ObservedPhenomena::ROTOR_CLOUD:
-        return "rotor cloud";
+            return "rotor cloud";
         case ObservedPhenomena::VIRGA:
-        return "virga";
+            return "virga";
         case ObservedPhenomena::PRECIPITATION:
-        return "precipitation";
+            return "precipitation";
         case ObservedPhenomena::FOG:
-        return "fog";
+            return "fog";
         case ObservedPhenomena::FOG_SHALLOW:
-        return "shallow fog";
+            return "shallow fog";
         case ObservedPhenomena::FOG_PATCHES:
-        return "patches of fog";
+            return "patches of fog";
         case ObservedPhenomena::HAZE:
-        return "haze";
+            return "haze";
         case ObservedPhenomena::SMOKE:
-        return "smoke";
+            return "smoke";
         case ObservedPhenomena::BLOWING_SNOW:
-        return "blowing snow";
+            return "blowing snow";
         case ObservedPhenomena::BLOWING_SAND:
-        return "blowing sand";
+            return "blowing sand";
         case ObservedPhenomena::BLOWING_DUST:
-        return "blowing dust";
+            return "blowing dust";
         case ObservedPhenomena::DUST_WHIRLS:
-        return "dust or sand whirls";
+            return "dust or sand whirls";
         case ObservedPhenomena::SAND_STORM:
-        return "sand storm";
+            return "sand storm";
         case ObservedPhenomena::DUST_STORM:
-        return "dust storm";
+            return "dust storm";
         case ObservedPhenomena::VOLCANIC_ASH:
-        return "volcanic ash";
+            return "volcanic ash";
         case ObservedPhenomena::FUNNEL_CLOUD:
-        return "funnel cloud";
+            return "funnel cloud";
     }
 }
 
-std::string toStr(const Vicinity & v) {
+std::string toStr(const Vicinity& v) {
     std::ostringstream result;
     result << toStr(v.phenomena);
     if (!v.directions.empty()) {
@@ -638,31 +639,31 @@ std::string toStr(const Vicinity & v) {
     return result.str();
 }
 
-std::string toStr(const LightningStrikes & ls) {
+std::string toStr(const LightningStrikes& ls) {
     auto freq = [](LightningStrikes::Frequency f) {
         switch (f) {
             case LightningStrikes::Frequency::UNKNOWN:
-            return "";
+                return "";
             case LightningStrikes::Frequency::OCCASIONAL:
-            return "occassional";
+                return "occassional";
             case LightningStrikes::Frequency::FREQUENT:
-            return "frequent";
+                return "frequent";
             case LightningStrikes::Frequency::CONSTANT:
-            return "constant";
+                return "constant";
         }
     };
     auto lightningType = [](LightningStrikes::Type t) {
-        switch(t) {
+        switch (t) {
             case LightningStrikes::Type::UNKNOWN:
-            return "unknown lightning type";
+                return "unknown lightning type";
             case LightningStrikes::Type::CLOUD_AIR:
-            return "cloud-to-air without strike to ground";
+                return "cloud-to-air without strike to ground";
             case LightningStrikes::Type::CLOUD_CLOUD:
-            return "cloud-to-cloud";
+                return "cloud-to-cloud";
             case LightningStrikes::Type::IN_CLOUD:
-            return "in cloud";
+                return "in cloud";
             case LightningStrikes::Type::CLOUD_GROUND:
-            return "cloud-to-ground";
+                return "cloud-to-ground";
         }
     };
     std::ostringstream result;
@@ -691,12 +692,104 @@ std::string toStr(const LightningStrikes & ls) {
     return result.str();
 }
 
-std::string toStr(const WindShear & ws) {
+std::string toStr(const WindShear& ws) {
     std::ostringstream result;
-    if (ws.height.height.has_value()) 
+    if (ws.height.height.has_value())
         result << "at height " << toStr(ws.height) << ", ";
     result << "wind direction is " << std::to_string(ws.directionDegrees);
     result << " and wind speed is " << toStr(ws.windSpeed);
+    return result.str();
+}
+
+std::string toStr(const Essentials& e) {
+    auto skyCondition = [](Essentials::SkyCondition sc) {
+        switch (sc) {
+            case Essentials::SkyCondition::UNKNOWN:
+                return "";
+            case Essentials::SkyCondition::CLEAR_CLR:
+                return "clear sky (station is at least partly automated)";
+            case Essentials::SkyCondition::CLEAR_SKC:
+                return "clear sky (report produced by human observer)";
+            case Essentials::SkyCondition::CLEAR_NCD:
+                return "clear sky, no clouds detected by automated station";
+            case Essentials::SkyCondition::NO_SIGNIFICANT_CLOUD:
+                return "no significant cloud";
+            case Essentials::SkyCondition::CAVOK:
+                return "ceiling and visibility OK";
+            case Essentials::SkyCondition::CLOUDS:
+                return "one or more cloud layer in the sky";
+            case Essentials::SkyCondition::OBSCURED:
+                return "sky obscured";
+        }
+    };
+    std::ostringstream result;
+    if (e.windDirectionDegrees.has_value()) {
+        result << "windDirectionDegrees: wind direction ";
+        result << toStr(e.windDirectionDegrees) << " degrees" << newLine;
+    }
+    if (e.windDirectionVariable) {
+        result << "windDirectionVariable: wind direction is variable, no ";
+        result << "mean direction" << newLine;
+    }
+    if (e.windDirectionVarFromDegrees.has_value()) {
+        result << "windDirectionVarFromDegrees: wind direction is variable ";
+        result << "in a sector clockwise from ";
+        result << toStr(e.windDirectionVarFromDegrees) << " degrees" << newLine;
+    }
+    if (e.windDirectionVarToDegrees.has_value()) {
+        result << "windDirectionVarToDegrees: wind direction is variable ";
+        result << "in a sector clockwise to ";
+        result << toStr(e.windDirectionVarToDegrees) << " degrees" << newLine;
+    }
+    if (e.windSpeed.speed.has_value()) {
+        result << "windSpeed: sustained wind speed is " << toStr(e.windSpeed);
+        result << newLine;
+    }
+    if (e.gustSpeed.speed.has_value()) {
+        result << "gustSpeed: wind gust speed is " << toStr(e.gustSpeed);
+        result << newLine;
+    }
+    if (e.windCalm) result << "windCalm: calm wind (no wind)" << newLine;
+    if (e.visibility.distance.has_value()) {
+        result << "visibility: prevailing visibility is ";
+        result << toStr(e.visibility) << newLine;
+    }
+    if (e.cavok) {
+        result << "cavok: ceiling and visibility OK, visibility 10 km or more "
+                  "in all directions, no cloud below 5000 feet (1500 meters), "
+                  "no cumulonimbus, no towering cumulus, no significant "
+                  "weather phenomena";
+        result << newLine;
+    }
+    if (e.skyCondition != Essentials::SkyCondition::UNKNOWN)
+        result << "skyCondition: " << skyCondition(e.skyCondition) << newLine;
+    if (!e.cloudLayers.empty()) {
+        result << "cloudLayers: the following cloud layers are present";
+        result << newLine;
+        for (const auto& c : e.cloudLayers) {
+            result << newItem << toStr(c) << newLine;
+        }
+    }
+    if (e.verticalVisibility.height.has_value()) {
+        result << "verticalVisibility: vertical visibility is ";
+        result << toStr(e.verticalVisibility) << newLine;
+    }
+    if (!e.weather.empty()) {
+        result << "weather: the following weather phenomena occur" << newLine;
+        for (const auto& w : e.weather) {
+            result << newItem << toStr(w) << newLine;
+        }
+    }
+    if (e.seaLevelPressure.pressure.has_value()) {
+        result << "seaLevelPressure: the atmospheric pressure normalised to ";
+        result << "sea level is " << toStr(e.seaLevelPressure) << newLine;
+    }
+    if (!e.windShear.empty()) {
+        result << "windShear: the wind shear is as as follows" << newLine;
+        for (const auto& ws : e.windShear) {
+            result << newItem << toStr(ws) << newLine;
+        }
+    }
     return result.str();
 }
 
@@ -898,23 +991,36 @@ std::string toStr(const Station& station) {
         result << newLine;
     }
     if (!station.missingData.empty()) {
-        result << "missingData: station reports that the following data ";
-        result << "are missing" << newLine;
+        result << "missingData: the following data are missing" << newLine;
         for (const auto md : station.missingData) {
             result << newItem << missingData(md) << newLine;
         }
     }
     if (!station.runwaysNoCeilingData.empty()) {
-        result << "runwaysNoCeilingData: station reports that the ceiling ";
-        result << "data is missing for the following runways" << newLine;
+        result << "runwaysNoCeilingData: ceiling data is missing for the ";
+        result << "following runways" << newLine;
         for (const auto rw : station.runwaysNoCeilingData) {
             result << newItem << "runway " << toStr(rw) << newLine;
         }
     }
     if (!station.runwaysNoVisData.empty()) {
-        result << "runwaysNoVisData: station reports that the visibility ";
-        result << "data is missing for the following runways" << newLine;
+        result << "runwaysNoVisData: visibility data is missing for the ";
+        result << "following runways" << newLine;
         for (const auto rw : station.runwaysNoVisData) {
+            result << newItem << "runway " << toStr(rw) << newLine;
+        }
+    }
+    if (!station.directionsNoCeilingData.empty()) {
+        result << "directionsNoCeilingData: ceiling data is missing for the ";
+        result << "following directions" << newLine;
+        for (const auto rw : station.directionsNoCeilingData) {
+            result << newItem << "runway " << toStr(rw) << newLine;
+        }
+    }
+    if (!station.directionsNoVisData.empty()) {
+        result << "directionsNoVisData: visibility data is missing for the ";
+        result << "following directions" << newLine;
+        for (const auto rw : station.directionsNoVisData) {
             result << newItem << "runway " << toStr(rw) << newLine;
         }
     }
@@ -1050,8 +1156,8 @@ std::string toStr(const Aerodrome& aerodrome) {
         }
         if (rd.coefficient.has_value()) {
             result << newItem << "coefficient: friction coefficient 0.";
-            result << toStr(rd.coefficient) << ", braking action " << newLine;
-            result << brakingAction(rd.brakingAction());
+            result << toStr(rd.coefficient) << ", braking action ";
+            result << brakingAction(rd.brakingAction()) << newLine;
         }
         if (rd.surfaceFrictionUnreliable) {
             result << newItem << "surfaceFrictionUnreliable: ";
@@ -1124,6 +1230,185 @@ std::string toStr(const Aerodrome& aerodrome) {
     return result.str();
 }
 
+std::string toStr(const Current& current) {
+    const auto lowCloudLayer = [](Current::LowCloudLayer l) {
+        switch (l) {
+            case Current::LowCloudLayer::UNKNOWN:
+                return "";
+            case Current::LowCloudLayer::NO_CLOUDS:
+                return "absent";
+            case Current::LowCloudLayer::CU_HU_CU_FR:
+                return "Cumulus Humilis and/or Cumulus Fractus";
+            case Current::LowCloudLayer::CU_MED_CU_CON:
+                return "Cumulus Mediocris or Cumulus Congestus";
+            case Current::LowCloudLayer::CB_CAL:
+                return "Cumulonimbus Calvus";
+            case Current::LowCloudLayer::SC_CUGEN:
+                return "Stratocumulus Cumulogenitus";
+            case Current::LowCloudLayer::SC_NON_CUGEN:
+                return "Stratocumulus Non-Cumulogenitus";
+            case Current::LowCloudLayer::ST_NEB_ST_FR:
+                return "Stratus Nebulosus and/or Stratus Fractus of dry "
+                       "weather";
+            case Current::LowCloudLayer::ST_FR_CU_FR_PANNUS:
+                return "Stratus Fractus and/or Cumulus Fractus of wet weather";
+            case Current::LowCloudLayer::CU_SC_NON_CUGEN_DIFFERENT_LEVELS:
+                return "Cumulus and Stratocumulus with bases at different "
+                       "levels";
+            case Current::LowCloudLayer::CB_CAP:
+                return "Cumulonimbus Capillatus or Cumulonimbus Capillatus "
+                       "Incus";
+        }
+    };
+    const auto midCloudLayer = [](Current::MidCloudLayer m) {
+        switch (m) {
+            case Current::MidCloudLayer::UNKNOWN:
+                return "";
+            case Current::MidCloudLayer::NO_CLOUDS:
+                return "absent";
+            case Current::MidCloudLayer::AS_TR:
+                return "Altostratus Translucidus";
+            case Current::MidCloudLayer::AS_OP_NS:
+                return "Altostratus Opacus or Nimbostratus";
+            case Current::MidCloudLayer::AC_TR:
+                return "Altocumulus Translucidus at a single level "
+                       "(mackerel sky)";
+            case Current::MidCloudLayer::AC_TR_LEN_PATCHES:
+                return "continually changing patches of Altocumulus "
+                       "Translucidus";
+            case Current::MidCloudLayer::AC_TR_AC_OP_SPREADING:
+                return "Altocumulus Translucidus or Altocumulus Opacus, "
+                       "spreading";
+            case Current::MidCloudLayer::AC_CUGEN_AC_CBGEN:
+                return "Altocumulus Cumulogenitus or Altocumulus "
+                       "Cumulonimbogenitus";
+            case Current::MidCloudLayer::AC_DU_AC_OP_AC_WITH_AS_OR_NS:
+                return "Altocumulus Duplicatus, or Altocumulus Opacus (not "
+                       "spreading), or Altocumulus with Altostratus or "
+                       "Nimbostratus.";
+            case Current::MidCloudLayer::AC_CAS_AC_FLO:
+                return "Altocumulus Castellanus or Altocumulus Floccus";
+            case Current::MidCloudLayer::AC_OF_CHAOTIC_SKY:
+                return "Altocumuls of chaotic sky (variety of ill-defined cloud"
+                       "types)";
+        }
+    };
+    const auto highCloudLayer = [](Current::HighCloudLayer h) {
+        switch (h) {
+            case Current::HighCloudLayer::UNKNOWN:
+                return "";
+            case Current::HighCloudLayer::NO_CLOUDS:
+                return "absent";
+            case Current::HighCloudLayer::CI_FIB_CI_UNC:
+                return "Cirrus Fibratus and/or Cirrus Uncinus, not spreading";
+            case Current::HighCloudLayer::CI_SPI_CI_CAS_CI_FLO:
+                return "Cirrus Spissatus or Cirrus Castellanus or Cirrus "
+                       "Floccus)";
+            case Current::HighCloudLayer::CI_SPI_CBGEN:
+                return "Cirrus Spissatus Cumulonimbogenitus";
+            case Current::HighCloudLayer::CI_FIB_CI_UNC_SPREADING:
+                return "Cirrus Uncinus and/or Cirrus Fibratus, spreading";
+            case Current::HighCloudLayer::CI_CS_LOW_ABOVE_HORIZON:
+                return "Cirrostratus, possibly with Cirrus, spreading but below "
+                       "45 degrees above the horizon";
+            case Current::HighCloudLayer::CI_CS_HIGH_ABOVE_HORIZON:
+                return "Cirrostratus, possibly with Cirrus, spreading but below "
+                       "45 degrees above the horizon, not covering whole sky";
+            case Current::HighCloudLayer::CS_NEB_CS_FIB_COVERING_ENTIRE_SKY:
+                return "Cirrostratus Nebulosus or Cirrostratus Fibratus "
+                       "covering whole sky";
+            case Current::HighCloudLayer::CS:
+                return "Cirrostratus not spreading and not covering whole sky";
+            case Current::HighCloudLayer::CC:
+                return "Cirrocumulus alone, or predominant among the "
+                       "high-layer clouds";
+        }
+    };
+    std::ostringstream result;
+    result << "weatherData: essential weather data are below" << newLine;
+    result << toStr(current.weatherData);
+    if (const auto s = toStr(current.variableVisibility); !s.empty())
+        result << "variableVisibility: visibility is variable " << s << newLine;
+    if (!current.obscurations.empty()) {
+        result << "obscurations: the following obscurations are present";
+        result << newLine;
+        for (const auto& c : current.obscurations) {
+            result << newItem << toStr(c) << newLine;
+        }
+    }
+    if (current.lowCloudLayer != Current::LowCloudLayer::UNKNOWN) {
+        result << "lowCloudLayer: low cloud layer is ";
+        result << lowCloudLayer(current.lowCloudLayer) << newLine;
+    }
+    if (current.midCloudLayer != Current::MidCloudLayer::UNKNOWN) {
+        result << "midCloudLayer: middle cloud layer is ";
+        result << midCloudLayer(current.midCloudLayer) << newLine;
+    }
+    if (current.highCloudLayer != Current::HighCloudLayer::UNKNOWN) {
+        result << "highCloudLayer: high cloud layer is ";
+        result << highCloudLayer(current.highCloudLayer) << newLine;
+    }
+    if (current.airTemperature.temperature.has_value()) {
+        result << "airTemperature: ambient air temperature ";
+        result << toStr(current.airTemperature) << newLine;
+    }
+    if (current.dewPoint.temperature.has_value())
+        result << "dewPoint: dew point " << toStr(current.dewPoint) << newLine;
+    if (current.relativeHumidity.has_value()) {
+        result << "relativeHumidity: relative humidity ";
+        result << toStr(current.relativeHumidity) << "%" << newLine;
+    }
+    if (current.pressureGroundLevel.pressure.has_value()) {
+        result << "pressureGroundLevel: actual pressure at ground level ";
+        result << toStr(current.pressureGroundLevel) << newLine;
+    }
+    if (current.seaSurfaceTemperature.temperature.has_value()) {
+        result << "seaSurfaceTemperature: temperature of sea surface ";
+        result << toStr(current.seaSurfaceTemperature) << newLine;
+    }
+    if (current.waveHeight.waveHeight.has_value()) {
+        result << "waveHeight: sea wave height ";
+        result << toStr(current.waveHeight) << newLine;
+    }
+    if (current.snowWaterEquivalent.amount.has_value()) {
+        result << "snowWaterEquivalent: water equivalent of snow on ground ";
+        result << toStr(current.snowWaterEquivalent) << newLine;
+    }
+    if (current.snowDepthOnGround.amount.has_value()) {
+        result << "snowDepthOnGround: snow depth on ground ";
+        result << toStr(current.snowDepthOnGround) << newLine;
+    }
+    if (current.snowIncreasingRapidly) {
+        result << "snowIncreasingRapidly: snow increasing rapidly";
+        result << newLine;
+    }
+    if (!current.phenomenaInVicinity.empty()) {
+        result << "phenomenaInVicinity: the following phenomena are observed ";
+        result << "in vicinity of the station" << newLine;
+        for (const auto& v : current.phenomenaInVicinity)
+            result << newItem << toStr(v) << newLine;
+    }
+    if (!current.lightningStrikes.empty()) {
+        result << "lightningStrikes: lightning strikes are observed" << newLine;
+        for (const auto& l : current.lightningStrikes)
+            result << newItem << toStr(l) << newLine;
+    }
+    if (current.densityAltitude.height.has_value()) {
+        result << "densityAltitude: density altitude is ";
+        result << toStr(current.densityAltitude) << newLine;
+    }
+    if (current.hailstoneSizeQuartersInch.has_value()) {
+        result << "hailstoneSizeQuartersInch: largest hailstone size ";
+        result << toStr(current.hailstoneSizeQuartersInch);
+        result << " quarters of inch" << newLine;
+    }
+    if (current.frostOnInstrument) {
+        result << "frostOnInstrument: frost observed on the instrument";
+        result << newLine;
+    }
+    return result.str();
+}
+
 std::string demo(const std::string& report) {
     const auto simple = simplify(report);
     std::ostringstream result;
@@ -1140,8 +1425,8 @@ std::string demo(const std::string& report) {
     result << "aerodrome (aerodrome, runway, and directional data)\n";
     result << toStr(simple.aerodrome) << newPart;
 
-//    result << "current (current weather conditions)\n";
-//    result << toStr(simple.current) << newPart;
+    result << "current (current weather conditions)\n";
+    result << toStr(simple.current) << newPart;
     /*
     result << "historical (recent weather, cumulative and historical data)\n";
     result << toStr(simple.historical) << newPart;;
