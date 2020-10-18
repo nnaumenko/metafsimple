@@ -1409,6 +1409,190 @@ std::string toStr(const Current& current) {
     return result.str();
 }
 
+std::string toStr(const Historical& historical) {
+    auto pressureTendency = [](Historical::PressureTendency p) {
+        switch (p) {
+            case Historical::PressureTendency::UNKNOWN:
+                return "";
+            case Historical::PressureTendency::INCREASING_THEN_DECREASING:
+                return "increasing then decreasing";
+            case Historical::PressureTendency::INCREASING_MORE_SLOWLY:
+                return "increasing more slowly";
+            case Historical::PressureTendency::INCREASING:
+                return "increasing";
+            case Historical::PressureTendency::INCREASING_MORE_RAPIDLY:
+                return "increasing more rapidly";
+            case Historical::PressureTendency::STEADY:
+                return "steady";
+            case Historical::PressureTendency::DECREASING_THEN_INCREASING:
+                return "decreasing then increasing";
+            case Historical::PressureTendency::DECREASING_MORE_SLOWLY:
+                return "decreasing more slowly";
+            case Historical::PressureTendency::DECREASING:
+                return "decreasing";
+            case Historical::PressureTendency::DECREASING_MORE_RAPIDLY:
+                return "decreasing more rapidly";
+            case Historical::PressureTendency::RISING_RAPIDLY:
+                return "rising rapidly";
+            case Historical::PressureTendency::FALLING_RAPIDLY:
+                return "falling rapidly";
+        }
+    };
+    auto pressureTrend = [](Historical::PressureTrend t) {
+        switch (t) {
+            case Historical::PressureTrend::UNKNOWN:
+                return "";
+            case Historical::PressureTrend::HIGHER:
+                return "higher than";
+            case Historical::PressureTrend::HIGHER_OR_SAME:
+                return "higher or the same as";
+            case Historical::PressureTrend::SAME:
+                return "the same as";
+            case Historical::PressureTrend::LOWER_OR_SAME:
+                return "lower or the same as";
+            case Historical::PressureTrend::LOWER:
+                return "lower than";
+        }
+    };
+    auto event = [](Historical::Event e) {
+        switch (e) {
+            case Historical::Event::BEGAN:
+                return "began";
+            case Historical::Event::ENDED:
+                return "ended";
+        }
+    };
+    auto weatherEvent = [&](const Historical::WeatherEvent& we) {
+        std::string result = toStr(we.weather) + " "s + event(we.event);
+        if (const auto t = toStr(we.time); !t.empty())
+            result += " at " + t;
+        return result;
+    };
+    std::ostringstream result;
+    if (historical.peakWindDirectionDegrees.has_value()) {
+        result << "peakWindDirectionDegrees: peak wind direction is ";
+        result << toStr(historical.peakWindDirectionDegrees);
+        result << " degrees" << newLine;
+    }
+    if (historical.peakWindSpeed.speed.has_value()) {
+        result << "peakWindSpeed: peak wind speed ";
+        result << toStr(historical.peakWindSpeed) << newLine;
+    }
+    if (const auto t = toStr(historical.peakWindObserved); !t.empty()) {
+        result << "peakWindObserved: peak wind observed at ";
+        result << toStr(historical.peakWindObserved) << newLine;
+    }
+    if (historical.windShift)
+        result << "windShift: wind shift occurred" << newLine;
+    if (historical.windShiftFrontPassage) {
+        result << "windShiftFrontPassage: wind shift associated with ";
+        result << "frontal passage occurred" << newLine;
+    }
+    if (const auto t = toStr(historical.windShiftBegan); !t.empty())
+        result << "windShiftBegan: wind shift began at " << t << newLine;
+    if (historical.temperatureMin6h.temperature.has_value()) {
+        result << "temperatureMin6h: 6-hourly minimum temperature ";
+        result << toStr(historical.temperatureMin6h) << newLine;
+    }
+    if (historical.temperatureMax6h.temperature.has_value()) {
+        result << "temperatureMax6h: 6-hourly maximum temperature ";
+        result << toStr(historical.temperatureMax6h) << newLine;
+    }
+    if (historical.temperatureMin24h.temperature.has_value()) {
+        result << "temperatureMin24h: 24-hourly minimum temperature ";
+        result << toStr(historical.temperatureMin24h) << newLine;
+    }
+    if (historical.temperatureMax24h.temperature.has_value()) {
+        result << "temperatureMax24h: 24-hourly maximum temperature ";
+        result << toStr(historical.temperatureMax24h) << newLine;
+    }
+    if (historical.pressureTendency != Historical::PressureTendency::UNKNOWN) {
+        result << "pressureTendency: atmospheric pressure for the ";
+        result << "last 3 hours was ";
+        result << pressureTendency(historical.pressureTendency) << newLine;
+    }
+    if (historical.pressureTrend != Historical::PressureTrend::UNKNOWN) {
+        result << "pressureTrend: atmospheric pressure is ";
+        result << pressureTrend(historical.pressureTrend);
+        result << " 3 hours ago" << newLine;
+    }
+    if (historical.pressureChange3h.pressure.has_value()) {
+        result << "pressureChange3h: atmospheric pressure change for the last ";
+        result << "3 hours is ";
+        result << toStr(historical.pressureChange3h) << newLine;
+    }
+    if (!historical.recentWeather.empty()) {
+        result << "recentWeather: the following weather events occurred";
+        result << " recently";
+        for (const auto& e : historical.recentWeather)
+            result << newItem << weatherEvent(e) << newLine;
+    }
+    if (historical.rainfall10m.amount.has_value()) {
+        result << "rainfall10m: rainfall for the last 10 minutes ";
+        result << toStr(historical.rainfall10m) << newLine;
+    }
+    if (historical.rainfallSince0900LocalTime.amount.has_value()) {
+        result << "rainfallSince0900LocalTime: rainfall since 09:00 (9AM) ";
+        result << "local time ";
+        result << toStr(historical.rainfallSince0900LocalTime) << newLine;
+    }
+    if (historical.precipitationSinceLastReport.amount.has_value()) {
+        result << "precipitationSinceLastReport: precipitation since last ";
+        result << "report ";
+        result << toStr(historical.precipitationSinceLastReport) << newLine;
+    }
+    if (historical.precipitationTotal1h.amount.has_value()) {
+        result << "precipitationTotal1h: total precipitation for the last 1 ";
+        result << "hour ";
+        result << toStr(historical.precipitationTotal1h) << newLine;
+    }
+    if (historical.precipitationFrozen3or6h.amount.has_value()) {
+        result << "precipitationFrozen3or6h: frozen precipitation for the ";
+        result << "last 3 or 6 hours ";
+        result << toStr(historical.precipitationFrozen3or6h) << newLine;
+    }
+    if (historical.precipitationFrozen3h.amount.has_value()) {
+        result << "precipitationFrozen3h: frozen precipitation for the ";
+        result << "last 3 hours ";
+        result << toStr(historical.precipitationFrozen3h) << newLine;
+    }
+    if (historical.precipitationFrozen6h.amount.has_value()) {
+        result << "precipitationFrozen6h: frozen precipitation for the ";
+        result << "last 6 hours ";
+        result << toStr(historical.precipitationFrozen6h) << newLine;
+    }
+    if (historical.precipitationFrozen24h.amount.has_value()) {
+        result << "precipitationFrozen24h: frozen precipitation for the ";
+        result << "last 24 hours ";
+        result << toStr(historical.precipitationFrozen24h) << newLine;
+    }
+    if (historical.snow6h.amount.has_value()) {
+        result << "snow6h: snowfall for the last 6 hours ";
+        result << toStr(historical.snow6h) << newLine;
+    }
+    if (historical.snowfallTotal.amount.has_value()) {
+        result << "snowfallTotal: total snowfall ";
+        result << toStr(historical.snowfallTotal) << newLine;
+    }
+    if (historical.snowfallIncrease1h.amount.has_value()) {
+        result << "snowfallIncrease1h: total snowfall ";
+        result << toStr(historical.snowfallIncrease1h) << newLine;
+    }
+    if (historical.icing1h.amount.has_value()) {
+        result << "icing1h: ice accretion for the last 1 hour ";
+        result << toStr(historical.icing1h) << newLine;
+    }
+    if (historical.icing3h.amount.has_value()) {
+        result << "icing3h: ice accretion for the last 3 hours ";
+        result << toStr(historical.icing3h) << newLine;
+    }
+    if (historical.icing6h.amount.has_value()) {
+        result << "icing6h: ice accretion for the last 6 hours ";
+        result << toStr(historical.icing6h) << newLine;
+    }
+    return result.str();
+}
+
 std::string demo(const std::string& report) {
     const auto simple = simplify(report);
     std::ostringstream result;
@@ -1427,10 +1611,10 @@ std::string demo(const std::string& report) {
 
     result << "current (current weather conditions)\n";
     result << toStr(simple.current) << newPart;
-    /*
-    result << "historical (recent weather, cumulative and historical data)\n";
-    result << toStr(simple.historical) << newPart;;
 
+    result << "historical (recent weather, cumulative and historical data)\n";
+    result << toStr(simple.historical) << newPart;
+    /*
     result << "forecast (forecast and weather trends)\n";
     result << toStr(simple.forecast);
 */
