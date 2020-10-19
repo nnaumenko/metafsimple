@@ -701,7 +701,7 @@ std::string toStr(const WindShear& ws) {
     return result.str();
 }
 
-std::string toStr(const Essentials& e) {
+std::string toStr(const Essentials& e, bool list = false) {
     auto skyCondition = [](Essentials::SkyCondition sc) {
         switch (sc) {
             case Essentials::SkyCondition::UNKNOWN:
@@ -724,37 +724,48 @@ std::string toStr(const Essentials& e) {
     };
     std::ostringstream result;
     if (e.windDirectionDegrees.has_value()) {
+        if (list) result << newItem;
         result << "windDirectionDegrees: wind direction ";
         result << toStr(e.windDirectionDegrees) << " degrees" << newLine;
     }
     if (e.windDirectionVariable) {
+        if (list) result << newItem;
         result << "windDirectionVariable: wind direction is variable, no ";
         result << "mean direction" << newLine;
     }
     if (e.windDirectionVarFromDegrees.has_value()) {
+        if (list) result << newItem;
         result << "windDirectionVarFromDegrees: wind direction is variable ";
         result << "in a sector clockwise from ";
         result << toStr(e.windDirectionVarFromDegrees) << " degrees" << newLine;
     }
     if (e.windDirectionVarToDegrees.has_value()) {
+        if (list) result << newItem;
         result << "windDirectionVarToDegrees: wind direction is variable ";
         result << "in a sector clockwise to ";
         result << toStr(e.windDirectionVarToDegrees) << " degrees" << newLine;
     }
     if (e.windSpeed.speed.has_value()) {
+        if (list) result << newItem;
         result << "windSpeed: sustained wind speed is " << toStr(e.windSpeed);
         result << newLine;
     }
     if (e.gustSpeed.speed.has_value()) {
+        if (list) result << newItem;
         result << "gustSpeed: wind gust speed is " << toStr(e.gustSpeed);
         result << newLine;
     }
-    if (e.windCalm) result << "windCalm: calm wind (no wind)" << newLine;
+    if (e.windCalm) {
+        if (list) result << newItem;
+        result << "windCalm: calm wind (no wind)" << newLine;
+    }
     if (e.visibility.distance.has_value()) {
+        if (list) result << newItem;
         result << "visibility: prevailing visibility is ";
         result << toStr(e.visibility) << newLine;
     }
     if (e.cavok) {
+        if (list) result << newItem;
         result << "cavok: ceiling and visibility OK, visibility 10 km or more "
                   "in all directions, no cloud below 5000 feet (1500 meters), "
                   "no cumulonimbus, no towering cumulus, no significant "
@@ -762,8 +773,10 @@ std::string toStr(const Essentials& e) {
         result << newLine;
     }
     if (e.skyCondition != Essentials::SkyCondition::UNKNOWN)
+        if (list) result << newItem;
         result << "skyCondition: " << skyCondition(e.skyCondition) << newLine;
     if (!e.cloudLayers.empty()) {
+        if (list) result << newItem;
         result << "cloudLayers: the following cloud layers are present";
         result << newLine;
         for (const auto& c : e.cloudLayers) {
@@ -771,20 +784,24 @@ std::string toStr(const Essentials& e) {
         }
     }
     if (e.verticalVisibility.height.has_value()) {
+        if (list) result << newItem;
         result << "verticalVisibility: vertical visibility is ";
         result << toStr(e.verticalVisibility) << newLine;
     }
     if (!e.weather.empty()) {
+        if (list) result << newItem;
         result << "weather: the following weather phenomena occur" << newLine;
         for (const auto& w : e.weather) {
             result << newItem << toStr(w) << newLine;
         }
     }
     if (e.seaLevelPressure.pressure.has_value()) {
+        if (list) result << newItem;
         result << "seaLevelPressure: the atmospheric pressure normalised to ";
         result << "sea level is " << toStr(e.seaLevelPressure) << newLine;
     }
     if (!e.windShear.empty()) {
+        if (list) result << newItem;
         result << "windShear: the wind shear is as as follows" << newLine;
         for (const auto& ws : e.windShear) {
             result << newItem << toStr(ws) << newLine;
@@ -1326,7 +1343,7 @@ std::string toStr(const Current& current) {
     };
     std::ostringstream result;
     result << "weatherData: essential weather data are below" << newLine;
-    result << toStr(current.weatherData);
+    result << toStr(current.weatherData, true);
     if (const auto s = toStr(current.variableVisibility); !s.empty())
         result << "variableVisibility: visibility is variable " << s << newLine;
     if (!current.obscurations.empty()) {
@@ -1593,6 +1610,193 @@ std::string toStr(const Historical& historical) {
     return result.str();
 }
 
+std::string toStr(const IcingForecast& f) {
+    auto severity = [](IcingForecast::Severity s) {
+        switch (s) {
+            case IcingForecast::Severity::NONE_OR_TRACE:
+                return "none or trace";
+            case IcingForecast::Severity::LIGHT:
+                return "light";
+            case IcingForecast::Severity::MODERATE:
+                return "moderate";
+            case IcingForecast::Severity::SEVERE:
+                return "severe";
+        }
+    };
+    auto type = [](IcingForecast::Type t) {
+        switch (t) {
+            case IcingForecast::Type::NONE:
+                return "";
+            case IcingForecast::Type::RIME_IN_CLOUD:
+                return "rime-in-cloud";
+            case IcingForecast::Type::CLEAR_IN_PRECIPITATION:
+                return "clear-in-precipitation";
+            case IcingForecast::Type::MIXED:
+                return "mixed";
+        }
+    };
+    std::ostringstream result;
+    if (f.type == IcingForecast::Type::NONE) {
+        result << "no";
+    } else {
+        result << severity(f.severity);
+        result << " " << type(f.type);
+    }
+    result << " icing at height from " << toStr(f.minHeight) << " up to ";
+    result << toStr(f.maxHeight);
+    return result.str();
+}
+
+std::string toStr(const TurbulenceForecast& tf) {
+    auto severity = [](TurbulenceForecast::Severity s) {
+        switch (s) {
+            case TurbulenceForecast::Severity::NONE:
+                return "no";
+            case TurbulenceForecast::Severity::LIGHT:
+                return "light";
+            case TurbulenceForecast::Severity::MODERATE:
+                return "moderate";
+            case TurbulenceForecast::Severity::SEVERE:
+                return "severe";
+            case TurbulenceForecast::Severity::EXTREME:
+                return "extreme";
+        }
+    };
+    auto location = [](TurbulenceForecast::Location l) {
+        switch (l) {
+            case TurbulenceForecast::Location::NONE:
+                return ""s;
+            case TurbulenceForecast::Location::IN_CLOUD:
+                return "in cloud "s;
+            case TurbulenceForecast::Location::IN_CLEAR_AIR:
+                return "in clear air "s;
+        }
+    };
+    std::ostringstream result;
+    result << severity(tf.severity) << " turbulence ";
+    result << location(tf.location) << "at height from ";
+    result << toStr(tf.minHeight) << " up to " << toStr(tf.maxHeight);
+    return result.str();
+}
+
+std::string toStr(const TemperatureForecast& tf) {
+    std::ostringstream result;
+    result << "temperature " << toStr(tf.temperature) << " expected at ";
+    result << toStr(tf.time);
+    return result.str();
+}
+
+std::string toStr(const Trend& t) {
+    auto type = [](const Trend::Type t) {
+        switch (t) {
+            case Trend::Type::BECMG:
+                return "becoming "
+                       "(weather conditions expected to change gradually)";
+            case Trend::Type::TEMPO:
+                return "temporary "
+                       "(weather conditions expected to arise for less than "
+                       " 60 minutes)";
+            case Trend::Type::INTER:
+                return "intermediary "
+                       "(weather conditions expected to arise for less than "
+                       " 30 minutes)";
+            case Trend::Type::TIMED:
+                return "timed "
+                       "(weather conditions expected within time frame)";
+            case Trend::Type::PROB:
+                return "probability "
+                       "(weather conditions expected with the specified "
+                       "probability and no other details are provided)";
+        }
+    };
+    std::ostringstream result;
+    result << newItem << "type: " << type(t.type) << newLine;
+    if (t.probability.has_value()) {
+        result << newItem << "probability: " << toStr(t.probability);
+        result << " %" << newLine;
+    }
+    if (t.metar)
+        result << "metar: this trend was reported in METAR rather than TAF";
+    if (const auto tm = toStr(t.timeFrom); !tm.empty())
+        result << newItem << "timeFrom: expected from " << tm << newLine;
+    if (const auto tm = toStr(t.timeUntil); !tm.empty())
+        result << newItem << "timeUntil: expected until " << tm << newLine;
+    if (const auto tm = toStr(t.timeAt); !tm.empty())
+        result << newItem << "timeAt: expected at " << tm << newLine;
+    result << newItem << "forecast: the following weather conditions ";
+    result << "are expected" << newLine;
+    result << toStr(t.forecast, true);
+    if (!t.vicinity.empty()) {
+        result << newItem << "vicinity: the following phenomena are expected";
+        result << "in the vicinity of the station" << newLine;
+        for (const auto & v : t.vicinity) {
+            result << newItem << toStr(v) << newLine;
+        }
+    }
+    if (!t.icing.empty()) {
+        result << newItem << "icing: icing conditions are expected" << newLine;
+        for (const auto & f : t.icing) {
+            result << newItem << toStr(f) << newLine;
+        }
+    }
+    if (!t.turbulence.empty()) {
+        result << newItem << "turbulence: turbulence conditions are expected";
+        result << newLine;
+        for (const auto & f : t.turbulence) {
+            result << newItem << toStr(f) << newLine;
+        }
+    }
+    if (t.windShearConditions) {
+        result << "windShearConditions: potential wind shear conditions are ";
+        result << "present" << newLine;
+    }
+    return result.str();
+}
+
+std::string toStr(const Forecast & forecast) {
+    std::ostringstream result;
+    result << "prevailing: the following weather conditions are expected to ";
+    result << "prevail" << newLine;
+    result << toStr(forecast.prevailing, true) << newLine;
+    if (!forecast.prevailingIcing.empty()) {
+        result << newItem << "prevailingIcing: the following icing conditions ";
+        result << "are expected to prevail" << newLine;
+        for (const auto & f : forecast.prevailingIcing) {
+            result << newItem << toStr(f) << newLine;
+        }
+    }
+    if (!forecast.prevailingTurbulence.empty()) {
+        result << newItem << "turbulence: the following turbulence conditions ";
+        result << "are expected to prevail" << newLine;
+        for (const auto & f : forecast.prevailingTurbulence) {
+            result << newItem << toStr(f) << newLine;
+        }
+    }
+    if (!forecast.prevailingVicinity.empty()) {
+        result << newItem << "prevailingVicinity: the following phenomena are ";
+        result << "expected to prevail in vicinity" << newLine;
+        for (const auto & v : forecast.prevailingVicinity) {
+            result << newItem << toStr(v) << newLine;
+        }
+    }
+    if (forecast.prevailingWsConds) {
+        result << newItem << "prevailingWsConds: potential wind shear ";
+        result << "are expected to prevail" << newLine;
+    }
+    if (forecast.noSignificantChanges) {
+        result << newItem << "noSignificantChanges: no significant weather ";
+        result << "changes are expected" << newLine;
+    }
+    if (!forecast.trends.empty()) {
+        result << newItem << "trends: the weather trends are as follows";
+        result << newLine;
+        for (const auto & t : forecast.trends) {
+            result << toStr(t);
+        }
+    }
+    return result.str();
+}
+
 std::string demo(const std::string& report) {
     const auto simple = simplify(report);
     std::ostringstream result;
@@ -1614,10 +1818,10 @@ std::string demo(const std::string& report) {
 
     result << "historical (recent weather, cumulative and historical data)\n";
     result << toStr(simple.historical) << newPart;
-    /*
+    
     result << "forecast (forecast and weather trends)\n";
     result << toStr(simple.forecast);
-*/
+
     return result.str();
 }
 
