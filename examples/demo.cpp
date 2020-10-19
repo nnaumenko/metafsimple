@@ -772,9 +772,10 @@ std::string toStr(const Essentials& e, bool list = false) {
                   "weather phenomena";
         result << newLine;
     }
-    if (e.skyCondition != Essentials::SkyCondition::UNKNOWN)
+    if (e.skyCondition != Essentials::SkyCondition::UNKNOWN) {
         if (list) result << newItem;
         result << "skyCondition: " << skyCondition(e.skyCondition) << newLine;
+    }
     if (!e.cloudLayers.empty()) {
         if (list) result << newItem;
         result << "cloudLayers: the following cloud layers are present";

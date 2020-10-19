@@ -10,6 +10,8 @@ set(CLANG_TEST_LINK_FLAGS "-lpthread -lm")
 
 set(GCC_TEST_LINK_FLAGS "-pthread")
 
+set(EMCC_TEST_LINK_FLAGS "--emrun -s DISABLE_EXCEPTION_CATCHING=0")
+
 set(CLANG_COVERAGE_COMPILE_FLAGS "-O0 -g -fprofile-instr-generate -fcoverage-mapping")
 set(CLANG_COVERAGE_LINK_FLAGS "-lpthread -lm -fprofile-instr-generate -fcoverage-mapping")
 
@@ -33,7 +35,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(TEST_LINK_FLAGS ${GCC_TEST_LINK_FLAGS})
     set(COVERAGE_COMPILE_FLAGS ${GCC_COVERAGE_COMPILE_FLAGS})
     set(COVERAGE_LINK_FLAGS ${GCC_COVERAGE_LINK_FLAGS})
-endif()	
+endif()
+
+if(CMAKE_CXX_COMPILER MATCHES "emcc")    
+    set(TEST_LINK_FLAGS ${EMCC_TEST_LINK_FLAGS})
+endif()
 
 message("Test link flags: " ${TEST_LINK_FLAGS})
 message("Coverage compile flags: " ${COVERAGE_COMPILE_FLAGS})
@@ -87,19 +93,27 @@ set_target_properties(test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
     LINK_FLAGS ${TEST_LINK_FLAGS})
 
+if(CMAKE_CXX_COMPILER MATCHES "emcc")    
+    set_target_properties(test PROPERTIES OUTPUT_NAME "test.html")
+endif()
+
 # Coverage
 
-add_executable(testcoverage ${SOURCES})
+if(NOT CMAKE_CXX_COMPILER MATCHES "emcc")    
 
-target_include_directories(testcoverage PRIVATE 
-    googletest/googletest
-    googletest/googletest/include
-    test/include)
+    add_executable(testcoverage ${SOURCES})
 
-set_target_properties(testcoverage PROPERTIES 
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
-    COMPILE_FLAGS ${COVERAGE_COMPILE_FLAGS}
-    LINK_FLAGS ${COVERAGE_LINK_FLAGS})
+    target_include_directories(testcoverage PRIVATE 
+        googletest/googletest
+        googletest/googletest/include
+        test/include)
+
+    set_target_properties(testcoverage PROPERTIES 
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
+        COMPILE_FLAGS ${COVERAGE_COMPILE_FLAGS}
+        LINK_FLAGS ${COVERAGE_LINK_FLAGS})
+
+endif()
 
 # Example
 

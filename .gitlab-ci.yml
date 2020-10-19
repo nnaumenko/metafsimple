@@ -55,6 +55,21 @@ build-gcc:
     paths:
       - ci-build
 
+build-wasm:
+  stage: build
+  image: trzeci/emscripten
+  variables:
+    GIT_SUBMODULE_STRATEGY: normal
+  script:
+  - export CXX="emcc"
+  - cmake .
+  - make
+  - mkdir ci-build
+  - cp -r bin/* ci-build
+  artifacts:
+    paths:
+      - ci-build
+
 tests-clang:
   stage: test
   image: ubuntu:18.04
@@ -70,6 +85,17 @@ tests-gcc:
     - ci-build/test/test-gcc
   dependencies:
     - build-gcc
+
+tests-wasm:
+  stage: test
+  image: nnaumenko/emscripten-firefox
+  script:
+    - emrun --browser firefox ci-build/test.html
+  dependencies:
+    - build-wasm
+  artifacts:
+    paths:
+      - ci-build
 
 coverage:
   stage: deploy
@@ -93,3 +119,18 @@ coverage:
       - ci-profile-coverage
   dependencies:
     - build-clang
+
+pages:
+  stage: deploy
+  script:
+    - mkdir public
+    - cp -r ci-build/demo.html public
+    - mv public/demo.html public/index.html
+  dependencies:
+    - build-wasm
+    - tests-wasm
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
