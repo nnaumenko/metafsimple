@@ -124,8 +124,8 @@ pages:
   stage: deploy
   script:
     - mkdir public
-    - cp -r ci-build/demo.html public
-    - mv public/demo.html public/index.html
+    - cp ci-build/{demo.html,demo.js,demo.wasm,demo.wast} public
+    - cp public/demo.html public/index.html
   dependencies:
     - build-wasm
     - tests-wasm
