@@ -62,20 +62,21 @@ set(SOURCES ${SOURCES}
     test/unit_validate_comparisons.cpp
     test/integration_basic_reports.cpp
     test/integration_report_data.cpp
-    test/integration_wind_main.cpp
-    test/integration_visibility_main.cpp
-    test/integration_sky_condition_main.cpp
-    test/integration_weather_current.cpp
-    test/integration_temp_pres_main.cpp
     test/integration_tafs.cpp
     test/integration_metar_trends.cpp
-    test/integration_sea_surface.cpp
+    test/integration_wind_main.cpp
+    test/integration_wind_historical.cpp
+    test/integration_visibility_main.cpp
+    test/integration_visibility_other.cpp
+    test/integration_rvr.cpp
+    test/integration_sky_condition_main.cpp
+    test/integration_weather_current.cpp
+    test/integration_weather_recent.cpp
+    test/integration_temp_pres_main.cpp
     test/integration_temp_pres_rmk.cpp
     test/integration_runway_state.cpp
-    test/integration_wind_historical.cpp
-    test/integration_weather_recent.cpp
-    test/integration_rvr.cpp
     test/integration_chino_visno.cpp
+    test/integration_sea_surface.cpp
     test/integration_precip_snow.cpp
     test/integration_misc.cpp
 )
