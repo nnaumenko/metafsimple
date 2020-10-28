@@ -326,6 +326,7 @@ std::string toStr(const Precipitation& p) {
         case Precipitation::Unit::HUNDREDTHS_IN:
             return std::to_string(*in) + " \" (" + std::to_string(*mm) + " mm)";
         case Precipitation::Unit::MM:
+        case Precipitation::Unit::TENTHS_MM:
             return std::to_string(*mm) + " mm (" + std::to_string(*in) + " \")";
     }
 }

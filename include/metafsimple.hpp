@@ -21,8 +21,8 @@ namespace metafsimple {
 // Metaf-simple library version
 struct Version {
     inline static const int major = 0;
-    inline static const int minor = 7;
-    inline static const int patch = 1;
+    inline static const int minor = 8;
+    inline static const int patch = 0;
     inline static const char tag[] = "";
 };
 
@@ -164,6 +164,7 @@ struct Ceiling {
 struct Pressure {
     enum class Unit {
         HPA,
+        TENTHS_HPA,
         IN_HG,
         HUNDREDTHS_IN_HG,
         MM_HG
@@ -177,6 +178,7 @@ struct Pressure {
 struct Precipitation {
     enum class Unit {
         MM,
+        TENTHS_MM,
         IN,
         HUNDREDTHS_IN
     };
@@ -967,6 +969,8 @@ std::optional<double> Pressure::toUnit(Unit u) const {
         switch (uu) {
             case Unit::HPA:
                 return hpa;
+            case Unit::TENTHS_HPA:
+                return hpa * 10.0;
             case Unit::IN_HG:
                 return (hpa / hpaPerInHg);
             case Unit::HUNDREDTHS_IN_HG:
@@ -979,6 +983,8 @@ std::optional<double> Pressure::toUnit(Unit u) const {
     switch (unit) {
         case Unit::HPA:
             return convertHpa(u, *pressure);
+        case Unit::TENTHS_HPA:
+            return convertHpa(u, *pressure / 10.0);
         case Unit::IN_HG:
             return convertHpa(u, *pressure * hpaPerInHg);
         case Unit::HUNDREDTHS_IN_HG:
@@ -994,6 +1000,8 @@ std::optional<double> Precipitation::toUnit(Unit u) const {
         switch (uu) {
             case Unit::MM:
                 return mm;
+            case Unit::TENTHS_MM:
+                return mm * 10.0;
             case Unit::IN:
                 return (mm / mmPerInch);
             case Unit::HUNDREDTHS_IN:
@@ -1004,6 +1012,8 @@ std::optional<double> Precipitation::toUnit(Unit u) const {
     switch (unit) {
         case Unit::MM:
             return convertMm(u, *amount);
+        case Unit::TENTHS_MM:
+            return convertMm(u, *amount / 10.0);
         case Unit::IN:
             return convertMm(u, *amount * mmPerInch);
         case Unit::HUNDREDTHS_IN:
@@ -1523,13 +1533,27 @@ Precipitation BasicDataAdapter::precipitation(const metaf::Precipitation &p) {
                 return Precipitation::Unit::HUNDREDTHS_IN;
         }
     };
+    auto unitFactor = [](Precipitation::Unit u) {
+        switch (u) {
+            case Precipitation::Unit::HUNDREDTHS_IN:
+            return 100.0;
+            case Precipitation::Unit::TENTHS_MM:
+            return 10.0;
+            default:
+            return 1.0;
+        }
+    };
     if (!p.amount().has_value()) return Precipitation();
     auto u = convertUnit(p.unit());
-    const auto factor = (u == Precipitation::Unit::HUNDREDTHS_IN) ? 100.0 : 1.0;
-    int a = std::floor(*p.amount() * factor);
+    const auto factor = unitFactor(u);
+    int a = std::round(*p.amount() * factor);
     if (u == Precipitation::Unit::HUNDREDTHS_IN && !(a % 100)) {
         a /= 100;
         u = Precipitation::Unit::IN;
+    }
+    if (u == Precipitation::Unit::TENTHS_MM && !(a % 10)) {
+        a /= 10;
+        u = Precipitation::Unit::MM;
     }
     return Precipitation{a, u};
 }

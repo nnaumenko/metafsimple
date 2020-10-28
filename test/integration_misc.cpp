@@ -115,7 +115,7 @@ TEST(IntegrationMisc, phenomenaInVicinityRmk) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(IntegrationMisc, phenomenaInVicinityRmkDistanceRange) {
+TEST(IntegrationMisc, phenomenaInVicinityRmkDsnt) {
     static const auto rawReport =
         "METAR ZZZZ 261425Z /////KT //// RMK VIRGA DSNT NW-N=";
     //fake report created for this test
@@ -141,6 +141,69 @@ TEST(IntegrationMisc, phenomenaInVicinityRmkDistanceRange) {
             Distance{Distance::Details::EXACTLY, 55560, Distance::Unit::METERS}},
         CardinalDirection::NOT_SPECIFIED,
         {CardinalDirection::NW, CardinalDirection::N}});
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+TEST(IntegrationMisc, phenomenaInVicinityRmkVc) {
+    static const auto rawReport =
+        "METAR ZZZZ 261425Z /////KT //// RMK VIRGA VC ALQDS=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 14, 25};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.phenomenaInVicinity.push_back(Vicinity{
+        ObservedPhenomena::VIRGA,
+        DistanceRange{
+            Distance(),
+            Distance{Distance::Details::EXACTLY, 9260, Distance::Unit::METERS},
+            Distance{Distance::Details::EXACTLY, 18520, Distance::Unit::METERS}},
+        CardinalDirection::NOT_SPECIFIED,
+        {CardinalDirection::ALL_QUADRANTS}});
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
+TEST(IntegrationMisc, phenomenaInVicinityRmkMovUnknown) {
+    static const auto rawReport =
+        "METAR ZZZZ 261425Z /////KT //// RMK CB E MOV UNKNOWN=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 14, 25};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.phenomenaInVicinity.push_back(Vicinity{
+        ObservedPhenomena::CUMULONIMBUS,
+        DistanceRange{},
+        CardinalDirection::UNKNOWN,
+        {CardinalDirection::E}});
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
@@ -243,4 +306,31 @@ TEST(IntegrationMisc, colourCodeBlack) {
 // TODO: low/mid/high clouds
 // TODO: density altitude
 // TODO: sunshine duration
+
+TEST(IntegrationMisc, sunshineDuration) {
+     static const auto rawReport =
+        "METAR ZZZZ 262116Z /////KT //// RMK 98173=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 21, 16};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Historical refHistorical;
+    refHistorical.sunshineDurationMinutes24h = 173;
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.forecast, Forecast());
+}
+
 // TODO: hailstone size

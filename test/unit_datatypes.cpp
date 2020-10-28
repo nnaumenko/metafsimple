@@ -63,6 +63,8 @@ class DataTypes : public ::testing::Test {
 
     static const inline metafsimple::Pressure p_994hpa{
         994, metafsimple::Pressure::Unit::HPA};
+    static const inline metafsimple::Pressure p_1012_4hpa{
+        10124, metafsimple::Pressure::Unit::TENTHS_HPA};
     static const inline metafsimple::Pressure p_23_34inhg{
         2334, metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG};
     static const inline metafsimple::Pressure p_23_inhg{
@@ -73,6 +75,8 @@ class DataTypes : public ::testing::Test {
 
     static const inline metafsimple::Precipitation prec_8mm{
         8, metafsimple::Precipitation::Unit::MM};
+    static const inline metafsimple::Precipitation prec_1_5mm{
+        15, metafsimple::Precipitation::Unit::TENTHS_MM};
     static const inline metafsimple::Precipitation prec_0_14inhg{
         14, metafsimple::Precipitation::Unit::HUNDREDTHS_IN};
     static const inline metafsimple::Precipitation prec_2in{
@@ -421,17 +425,46 @@ TEST_F(DataTypes, pressure_toUnit_hpa) {
     ASSERT_TRUE(p1.has_value());
     EXPECT_NEAR(p1.value(), 994.0, margin);
 
-    const auto p2 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::HPA);
+    const auto p2 = p_1012_4hpa.toUnit(metafsimple::Pressure::Unit::HPA);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 778.8694, margin);
+    EXPECT_NEAR(p2.value(), 1012.4, margin);
 
-    const auto p3 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::HPA);
+    const auto p3 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::HPA);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 790.3831, margin);
+    EXPECT_NEAR(p3.value(), 778.8694, margin);
 
-    const auto p4 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::HPA);
+    const auto p4 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::HPA);
     ASSERT_TRUE(p4.has_value());
-    EXPECT_NEAR(p4.value(), 999.9179, margin);
+    EXPECT_NEAR(p4.value(), 790.3831, margin);
+
+    const auto p5 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::HPA);
+    ASSERT_TRUE(p5.has_value());
+    EXPECT_NEAR(p5.value(), 999.9179, margin);
+}
+
+TEST_F(DataTypes, pressure_toUnit_tenths_hpa) {
+    const auto p0 = p_empty.toUnit(metafsimple::Pressure::Unit::TENTHS_HPA);
+    EXPECT_FALSE(p0.has_value());
+
+    const auto p1 = p_994hpa.toUnit(metafsimple::Pressure::Unit::TENTHS_HPA);
+    ASSERT_TRUE(p1.has_value());
+    EXPECT_NEAR(p1.value(), 9940.0, margin);
+
+    const auto p2 = p_1012_4hpa.toUnit(metafsimple::Pressure::Unit::TENTHS_HPA);
+    ASSERT_TRUE(p2.has_value());
+    EXPECT_NEAR(p2.value(), 10124.0, margin);
+
+    const auto p3 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::TENTHS_HPA);
+    ASSERT_TRUE(p3.has_value());
+    EXPECT_NEAR(p3.value(), 7788.6939, margin);
+
+    const auto p4 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::TENTHS_HPA);
+    ASSERT_TRUE(p4.has_value());
+    EXPECT_NEAR(p4.value(), 7903.8311, margin);
+
+    const auto p5 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::TENTHS_HPA);
+    ASSERT_TRUE(p5.has_value());
+    EXPECT_NEAR(p5.value(), 9999.1793, margin);
 }
 
 TEST_F(DataTypes, pressure_toUnit_hundredths_inhg) {
@@ -445,19 +478,24 @@ TEST_F(DataTypes, pressure_toUnit_hundredths_inhg) {
     EXPECT_NEAR(p1.value(), 2935.2792, margin);
 
     const auto p2 =
-        p_23_inhg.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
+        p_1012_4hpa.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 2300.0, margin);
+    EXPECT_NEAR(p2.value(), 2989.6154, margin);
 
     const auto p3 =
-        p_23_34inhg.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
+        p_23_inhg.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 2334.0, margin);
+    EXPECT_NEAR(p3.value(), 2300.0, margin);
 
     const auto p4 =
-        p_750mmhg.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
+        p_23_34inhg.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
     ASSERT_TRUE(p4.has_value());
-    EXPECT_NEAR(p4.value(), 2952.7559, margin);
+    EXPECT_NEAR(p4.value(), 2334.0, margin);
+
+    const auto p5 =
+        p_750mmhg.toUnit(metafsimple::Pressure::Unit::HUNDREDTHS_IN_HG);
+    ASSERT_TRUE(p5.has_value());
+    EXPECT_NEAR(p5.value(), 2952.7559, margin);
 }
 
 TEST_F(DataTypes, pressure_toUnit_inhg) {
@@ -468,38 +506,46 @@ TEST_F(DataTypes, pressure_toUnit_inhg) {
     ASSERT_TRUE(p1.has_value());
     EXPECT_NEAR(p1.value(), 29.35, margin);
 
-    const auto p2 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::IN_HG);
+    const auto p2 = p_1012_4hpa.toUnit(metafsimple::Pressure::Unit::IN_HG);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 23.00, margin);
+    EXPECT_NEAR(p2.value(), 29.8962, margin);
 
-    const auto p3 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::IN_HG);
+    const auto p3 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::IN_HG);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 23.34, margin);
+    EXPECT_NEAR(p3.value(), 23.00, margin);
 
-    const auto p4 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::IN_HG);
+    const auto p4 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::IN_HG);
     ASSERT_TRUE(p4.has_value());
-    EXPECT_NEAR(p4.value(), 29.5276, margin);
+    EXPECT_NEAR(p4.value(), 23.34, margin);
+
+    const auto p5 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::IN_HG);
+    ASSERT_TRUE(p5.has_value());
+    EXPECT_NEAR(p5.value(), 29.5276, margin);
 }
 
 TEST_F(DataTypes, pressure_toUnit_mmhg) {
     const auto p0 = p_empty.toUnit(metafsimple::Pressure::Unit::MM_HG);
     EXPECT_FALSE(p0.has_value());
 
-    const auto p1 = p_994hpa.toUnit(metafsimple::Pressure::Unit::MM_HG);
+    const auto p1 = p_1012_4hpa.toUnit(metafsimple::Pressure::Unit::MM_HG);
     ASSERT_TRUE(p1.has_value());
-    EXPECT_NEAR(p1.value(), 745.5612, margin);
+    EXPECT_NEAR(p1.value(), 759.3623, margin);
 
-    const auto p2 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::MM_HG);
+    const auto p2 = p_994hpa.toUnit(metafsimple::Pressure::Unit::MM_HG);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 584.2, margin);
+    EXPECT_NEAR(p2.value(), 745.5612, margin);
 
-    const auto p3 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::MM_HG);
+    const auto p3 = p_23_inhg.toUnit(metafsimple::Pressure::Unit::MM_HG);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 592.836, margin);
+    EXPECT_NEAR(p3.value(), 584.2, margin);
 
-    const auto p4 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::MM_HG);
+    const auto p4 = p_23_34inhg.toUnit(metafsimple::Pressure::Unit::MM_HG);
     ASSERT_TRUE(p4.has_value());
-    EXPECT_NEAR(p4.value(), 750.0, margin);
+    EXPECT_NEAR(p4.value(), 592.836, margin);
+
+    const auto p5 = p_750mmhg.toUnit(metafsimple::Pressure::Unit::MM_HG);
+    ASSERT_TRUE(p5.has_value());
+    EXPECT_NEAR(p5.value(), 750.0, margin);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -512,13 +558,38 @@ TEST_F(DataTypes, precipitation_toUnit_mm) {
     ASSERT_TRUE(p1.has_value());
     EXPECT_NEAR(p1.value(), 8.0, margin);
 
-    const auto p2 = prec_2in.toUnit(metafsimple::Precipitation::Unit::MM);
+    const auto p2 = prec_1_5mm.toUnit(metafsimple::Precipitation::Unit::MM);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 50.8, margin);
+    EXPECT_NEAR(p2.value(), 1.5, margin);
 
-    const auto p3 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::MM);
+    const auto p3 = prec_2in.toUnit(metafsimple::Precipitation::Unit::MM);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 3.556, margin);
+    EXPECT_NEAR(p3.value(), 50.8, margin);
+
+    const auto p4 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::MM);
+    ASSERT_TRUE(p4.has_value());
+    EXPECT_NEAR(p4.value(), 3.556, margin);
+}
+
+TEST_F(DataTypes, precipitation_toUnit_tenths_mm) {
+    const auto p0 = prec_empty.toUnit(metafsimple::Precipitation::Unit::TENTHS_MM);
+    EXPECT_FALSE(p0.has_value());
+
+    const auto p1 = prec_8mm.toUnit(metafsimple::Precipitation::Unit::TENTHS_MM);
+    ASSERT_TRUE(p1.has_value());
+    EXPECT_NEAR(p1.value(), 80.0, margin);
+
+    const auto p2 = prec_1_5mm.toUnit(metafsimple::Precipitation::Unit::TENTHS_MM);
+    ASSERT_TRUE(p2.has_value());
+    EXPECT_NEAR(p2.value(), 15.0, margin);
+
+    const auto p3 = prec_2in.toUnit(metafsimple::Precipitation::Unit::TENTHS_MM);
+    ASSERT_TRUE(p3.has_value());
+    EXPECT_NEAR(p3.value(), 508.0, margin);
+
+    const auto p4 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::TENTHS_MM);
+    ASSERT_TRUE(p4.has_value());
+    EXPECT_NEAR(p4.value(), 35.56, margin);
 }
 
 TEST_F(DataTypes, precipitation_toUnit_hundredths_in) {
@@ -529,13 +600,17 @@ TEST_F(DataTypes, precipitation_toUnit_hundredths_in) {
     ASSERT_TRUE(p1.has_value());
     EXPECT_NEAR(p1.value(), 31.4961, margin);
 
-    const auto p2 = prec_2in.toUnit(metafsimple::Precipitation::Unit::HUNDREDTHS_IN);
+    const auto p2 = prec_1_5mm.toUnit(metafsimple::Precipitation::Unit::HUNDREDTHS_IN);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 200.0, margin);
+    EXPECT_NEAR(p2.value(), 5.9055, margin);
 
-    const auto p3 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::HUNDREDTHS_IN);
+    const auto p3 = prec_2in.toUnit(metafsimple::Precipitation::Unit::HUNDREDTHS_IN);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 14.0, margin);
+    EXPECT_NEAR(p3.value(), 200.0, margin);
+
+    const auto p4 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::HUNDREDTHS_IN);
+    ASSERT_TRUE(p4.has_value());
+    EXPECT_NEAR(p4.value(), 14.0, margin);
 }
 
 TEST_F(DataTypes, precipitation_toUnit_in) {
@@ -546,13 +621,17 @@ TEST_F(DataTypes, precipitation_toUnit_in) {
     ASSERT_TRUE(p1.has_value());
     EXPECT_NEAR(p1.value(), 0.315, margin);
 
-    const auto p2 = prec_2in.toUnit(metafsimple::Precipitation::Unit::IN);
+    const auto p2 = prec_1_5mm.toUnit(metafsimple::Precipitation::Unit::IN);
     ASSERT_TRUE(p2.has_value());
-    EXPECT_NEAR(p2.value(), 2.0, margin);
+    EXPECT_NEAR(p2.value(), 0.0591, margin);
 
-    const auto p3 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::IN);
+    const auto p3 = prec_2in.toUnit(metafsimple::Precipitation::Unit::IN);
     ASSERT_TRUE(p3.has_value());
-    EXPECT_NEAR(p3.value(), 0.14, margin);
+    EXPECT_NEAR(p3.value(), 2.0, margin);
+
+    const auto p4 = prec_0_14inhg.toUnit(metafsimple::Precipitation::Unit::IN);
+    ASSERT_TRUE(p4.has_value());
+    EXPECT_NEAR(p4.value(), 0.14, margin);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
