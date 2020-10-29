@@ -183,7 +183,7 @@ TEST(IntegrationMisc, phenomenaInVicinityRmkVc) {
 
 TEST(IntegrationMisc, phenomenaInVicinityRmkMovUnknown) {
     static const auto rawReport =
-        "METAR ZZZZ 261425Z /////KT //// RMK CB E MOV UNKNOWN=";
+        "METAR ZZZZ 261425Z /////KT //// RMK CB E-SE MOV UNKNOWN=";
     //fake report created for this test
 
     const auto result = metafsimple::simplify(rawReport);
@@ -203,7 +203,7 @@ TEST(IntegrationMisc, phenomenaInVicinityRmkMovUnknown) {
         ObservedPhenomena::CUMULONIMBUS,
         DistanceRange{},
         CardinalDirection::UNKNOWN,
-        {CardinalDirection::E}});
+        {CardinalDirection::E, CardinalDirection::SE}});
     EXPECT_EQ(result.current, refCurrent);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());

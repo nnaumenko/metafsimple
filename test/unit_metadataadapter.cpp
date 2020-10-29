@@ -1178,3 +1178,29 @@ TEST(MetadataAdapter, setApplicableTime_metar_error) {
     EXPECT_EQ(report, refReportSpeci);
     EXPECT_EQ(station, metafsimple::Station());
 }
+
+TEST(MetadataAdapter, inconsistentCorrectionNumber) {
+    metafsimple::Report refReport;
+    refReport.type = metafsimple::Report::Type::METAR;
+    refReport.warnings.push_back(
+        metafsimple::Report::Warning{
+            metafsimple::Report::Warning::Message::INCONSISTENT_DATA,
+            "metadata / report correction number in non-correctional report"});
+
+    metafsimple::Report report;
+    metafsimple::Station station;
+    metafsimple::detail::WarningLogger wl(report.warnings);
+    metafsimple::detail::MetadataAdapter mda(report, station, &wl);
+    mda.setReportType(metaf::ReportType::METAR, false);
+    mda.setAttributes(false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      false,
+                      1);
+
+    EXPECT_EQ(report, refReport);
+    EXPECT_EQ(station, metafsimple::Station());
+}

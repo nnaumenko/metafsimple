@@ -346,3 +346,7 @@ TEST(IntegrationVisibilityOther, tower) {
     EXPECT_EQ(result.historical, Historical());
     EXPECT_EQ(result.forecast, Forecast());
 }
+
+// TODO: variable runway visibility
+// TODO: variable directional visibility
+// TODO: variable sector visibility

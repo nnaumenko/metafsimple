@@ -45,15 +45,19 @@ TEST(IntegrationPrecipitationHistorical, precipitationTotal1h) {
 
 TEST(IntegrationPrecipitationHistorical, precipitationFrozen3or6h) {
     static const auto rawReport =
-        "METAR ZZZZ 262116Z /////KT //// RMK P0018=";
+        "METAR ZZZZ 261936Z /////KT //// RMK 60217=";
     //fake report created for this test
 
     const auto result = metafsimple::simplify(rawReport);
 
     Report refReport;
     refReport.type = Report::Type::METAR;
-    refReport.reportTime = Time{26, 21, 16};
+    refReport.reportTime = Time{26, 19, 36};
     refReport.error = Report::Error::NO_ERROR;
+    refReport.warnings.push_back(Report::Warning {
+        Report::Warning::Message::INVALID_TIME,
+        "60217"
+    });
     EXPECT_EQ(result.report, refReport);
 
     Station refStation;
@@ -61,8 +65,8 @@ TEST(IntegrationPrecipitationHistorical, precipitationFrozen3or6h) {
     EXPECT_EQ(result.station, refStation);
 
     Historical refHistorical;
-    refHistorical.precipitationTotal1h = 
-        Precipitation {18, Precipitation::Unit::HUNDREDTHS_IN};
+    refHistorical.precipitationFrozen3or6h = 
+        Precipitation {217, Precipitation::Unit::HUNDREDTHS_IN};
     EXPECT_EQ(result.historical, refHistorical);
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
