@@ -79,6 +79,7 @@ set(SOURCES ${SOURCES}
     test/integration_sea_surface.cpp
     test/integration_precip_snow.cpp
     test/integration_precip_historical.cpp
+    test/integration_missing_data.cpp
     test/integration_misc.cpp
 )
 
