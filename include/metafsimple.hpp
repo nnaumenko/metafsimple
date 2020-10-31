@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 8;
-    inline static const int patch = 0;
+    inline static const int patch = 1;
     inline static const char tag[] = "";
 };
 
@@ -4229,7 +4229,7 @@ void CollateVisitor::visitVisibilityGroup(const metaf::VisibilityGroup &group,
             aerodromeData().setVisibility(group.runway(), group.visibility());
             break;
         case metaf::VisibilityGroup::Type::VARIABLE_RUNWAY:
-            aerodromeData().setVisibility(group.direction(),
+            aerodromeData().setVisibility(group.runway(),
                                           group.minVisibility(),
                                           group.maxVisibility());
             break;

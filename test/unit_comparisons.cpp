@@ -12,7 +12,14 @@
 
 using namespace metafsimple;
 
-// TODO: runway <
+// Note: operator < required to use Runway in std::set
+TEST(Comparisons, runwayLess) {
+    Runway r27 {27, Runway::Designator::NONE};
+    Runway r27r {27, Runway::Designator::RIGHT};
+    Runway r26 {26, Runway::Designator::NONE};
+    EXPECT_LT(r26, r27);
+    EXPECT_LT(r27, r27r);
+}
 
 // TODO: Temperature
 // TODO: Speed

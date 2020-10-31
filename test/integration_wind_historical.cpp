@@ -98,8 +98,6 @@ TEST(IntegrationWindHistorical, windShift) {
 
     EXPECT_EQ(result.aerodrome, Aerodrome());
     EXPECT_EQ(result.forecast, Forecast());
-
-
 }
 
 TEST(IntegrationWindHistorical, windShiftFropa) {

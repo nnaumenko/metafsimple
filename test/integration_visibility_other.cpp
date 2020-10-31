@@ -347,6 +347,188 @@ TEST(IntegrationVisibilityOther, tower) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// TODO: variable runway visibility
-// TODO: variable directional visibility
-// TODO: variable sector visibility
+TEST(IntegrationVisibilityOther, variable) {
+    static const auto rawReport =
+        "KGRK 302234Z AUTO 00000KT 1 1/4SM HZ CLR 19/00 A3020"
+        " RMK AO2 VIS 1 1/4V7 SLP226 $=";  // 30 OCT 2020
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{30, 22, 34};
+    refReport.automated = true;
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "KGRK";
+    refStation.autoType = Station::AutoType::AO2;
+    refStation.requiresMaintenance = true;
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.weatherData.windCalm = true;
+    refCurrent.weatherData.visibility =
+        Distance{Distance::Details::EXACTLY,
+                 20,
+                 Distance::Unit::STATUTE_MILE_1_16S};
+    refCurrent.weatherData.weather.push_back(
+        Weather{Weather::Phenomena::HAZE,{}});
+    refCurrent.weatherData.skyCondition =
+        Essentials::SkyCondition::CLEAR_CLR;
+    refCurrent.airTemperature = Temperature{19, Temperature::Unit::C};
+    refCurrent.dewPoint = Temperature{0, Temperature::Unit::C};
+    refCurrent.relativeHumidity = 27;
+    refCurrent.weatherData.seaLevelPressure =
+        Pressure{3020, Pressure::Unit::HUNDREDTHS_IN_HG};
+    refCurrent.variableVisibility = {
+        Distance(),
+        Distance{Distance::Details::EXACTLY,
+                 20,
+                 Distance::Unit::STATUTE_MILE_1_16S},
+        Distance{Distance::Details::EXACTLY,
+                 7,
+                 Distance::Unit::STATUTE_MILES}
+    };
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast()); 
+}
+
+TEST(IntegrationVisibilityOther, variableRunway) {
+    static const auto rawReport =
+        "METAR ZZZZ 311522Z /////KT ////SM A//// "
+        " RMK VIS 2V7 RWY27=";  // fake report created for this test
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{31, 15, 22};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Aerodrome refAerodrome;
+    refAerodrome.runways.push_back(Aerodrome::RunwayData());
+    refAerodrome.runways.back().runway = Runway{27, Runway::Designator::NONE};
+    refAerodrome.runways.back().visibility = DistanceRange{
+        Distance(),
+        Distance{
+            Distance::Details::EXACTLY,
+            2,
+            Distance::Unit::STATUTE_MILES},
+        Distance{
+            Distance::Details::EXACTLY,
+            7,
+            Distance::Unit::STATUTE_MILES}};
+    EXPECT_EQ(result.aerodrome, refAerodrome);
+
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast()); 
+}
+
+TEST(IntegrationVisibilityOther, variableDirectional) {
+    static const auto rawReport =
+        "METAR ZZZZ 311522Z /////KT ////SM A//// "
+        " RMK VIS SW 3V5=";  // fake report created for this test
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{31, 15, 22};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Aerodrome refAerodrome;
+    refAerodrome.directions.push_back(Aerodrome::DirectionData());
+    refAerodrome.directions.back().cardinalDirection = CardinalDirection::SW;
+    refAerodrome.directions.back().visibility = DistanceRange{
+        Distance(),
+        Distance{
+            Distance::Details::EXACTLY,
+            3,
+            Distance::Unit::STATUTE_MILES},
+        Distance{
+            Distance::Details::EXACTLY,
+            5,
+            Distance::Unit::STATUTE_MILES}};
+    EXPECT_EQ(result.aerodrome, refAerodrome);
+
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast()); 
+}
+
+TEST(IntegrationVisibilityOther, variableDirectionSector) {
+    static const auto rawReport =
+        "METAR ZZZZ 311522Z /////KT ////SM A//// "
+        " RMK VIS SW-NW 3V5=";  // fake report created for this test
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{31, 15, 22};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Aerodrome refAerodrome;
+
+    refAerodrome.directions.push_back(Aerodrome::DirectionData());
+    refAerodrome.directions.back().cardinalDirection = CardinalDirection::SW;
+    refAerodrome.directions.back().visibility = DistanceRange{
+        Distance(),
+        Distance{
+            Distance::Details::EXACTLY,
+            3,
+            Distance::Unit::STATUTE_MILES},
+        Distance{
+            Distance::Details::EXACTLY,
+            5,
+            Distance::Unit::STATUTE_MILES}};
+
+    refAerodrome.directions.push_back(Aerodrome::DirectionData());
+    refAerodrome.directions.back().cardinalDirection = CardinalDirection::W;
+    refAerodrome.directions.back().visibility = DistanceRange{
+        Distance(),
+        Distance{
+            Distance::Details::EXACTLY,
+            3,
+            Distance::Unit::STATUTE_MILES},
+        Distance{
+            Distance::Details::EXACTLY,
+            5,
+            Distance::Unit::STATUTE_MILES}};
+
+    refAerodrome.directions.push_back(Aerodrome::DirectionData());
+    refAerodrome.directions.back().cardinalDirection = CardinalDirection::NW;
+    refAerodrome.directions.back().visibility = DistanceRange{
+        Distance(),
+        Distance{
+            Distance::Details::EXACTLY,
+            3,
+            Distance::Unit::STATUTE_MILES},
+        Distance{
+            Distance::Details::EXACTLY,
+            5,
+            Distance::Unit::STATUTE_MILES}};
+
+    EXPECT_EQ(result.aerodrome, refAerodrome);
+
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast()); 
+}
