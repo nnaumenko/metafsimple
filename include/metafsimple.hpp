@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 8;
-    inline static const int patch = 1;
+    inline static const int patch = 2;
     inline static const char tag[] = "";
 };
 
@@ -3424,12 +3424,10 @@ void CurrentDataAdapter::setSeaSurface(metaf::Temperature t,
                  BasicDataAdapter::temperature(t)) ||
         !setData(current->waveHeight, BasicDataAdapter::waveHeight(wh))) {
         log(Report::Warning::Message::DUPLICATED_DATA);
-        return;
         current->seaSurfaceTemperature = Temperature();
         current->waveHeight = WaveHeight();
+        return;
     }
-
-    ;
 }
 
 void CurrentDataAdapter::setSnowDepth(metaf::Precipitation p) {

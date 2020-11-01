@@ -357,7 +357,7 @@ std::string toStr(const Weather& w) {
     auto phenomena = [](Weather::Phenomena p) {
         switch (p) {
             case Weather::Phenomena::UNKNOWN:
-                return "";
+                return "weather phenomena not reported";
             case Weather::Phenomena::NO_SIGNIFICANT_WEATHER:
                 return "no significant weather (indicates the end of previous "
                        "weather phenomena)";
