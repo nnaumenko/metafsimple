@@ -140,7 +140,7 @@ TEST(IntegrationMetarTemperature, temperatureM00) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST(IntegrationMetarTemperature, pressureInhg) {
+TEST(IntegrationMetarPressure, pressureInhg) {
     static const auto rawReport =
         "METAR KSUN 182258Z 20009G16KT 10SM SKC 33/07 A3022="; // 18 AUG 2020
 
@@ -175,7 +175,7 @@ TEST(IntegrationMetarTemperature, pressureInhg) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(IntegrationMetarTemperature, pressureInhgNotReported) {
+TEST(IntegrationMetarPressure, pressureInhgNotReported) {
     static const auto rawReport =
         "METAR CWUW 190000Z AUTO 10007KT ////SM SCT003 BKN014 OVC021"
         " ///// A////="; // 19 AUG 2020
@@ -219,7 +219,7 @@ TEST(IntegrationMetarTemperature, pressureInhgNotReported) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(IntegrationMetarTemperature, pressureHpaNotReported) {
+TEST(IntegrationMetarPressure, pressureHpaNotReported) {
     static const auto rawReport =
         "METAR SBBW 211900Z /////KT CAVOK 30/11 Q////="; // 21 AUG 2020
 

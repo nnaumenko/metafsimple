@@ -211,6 +211,10 @@ TEST(IntegrationMisc, phenomenaInVicinityRmkMovUnknown) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
+TEST(IntegrationMisc, phenomenaInVicinityVariants) {
+    // TODO: test all types of ObservedPhenomena
+}
+
 TEST(IntegrationMisc, phenomenaInVicinityMetar) {
     static const auto rawReport =
         "METAR ZZZZ 261425Z /////KT //// VCSH ///// Q////=";
@@ -248,6 +252,12 @@ TEST(IntegrationMisc, phenomenaInVicinityMetar) {
     EXPECT_EQ(result.aerodrome, Aerodrome());
     EXPECT_EQ(result.historical, Historical());
     EXPECT_EQ(result.forecast, Forecast());
+}
+
+TEST(IntegrationMisc, phenomenaInVicinityMetarVariants) {
+    // TODO: test all types of ObservedPhenomena which can be specified in
+    // METAR body or trend: VCSH, VCTS, VCFG, VCPO, VCFC, VCVA, VCBLDU, VCBLSA,
+    // VCBLSN, VCDS, VCSS
 }
 
 TEST(IntegrationMisc, colourCode) {
@@ -303,9 +313,83 @@ TEST(IntegrationMisc, colourCodeBlack) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// TODO: low/mid/high clouds
-// TODO: density altitude
-// TODO: sunshine duration
+TEST(IntegrationMisc, colourCodes) {
+    static const std::string basicReport = "METAR ZZZZ 010000Z /////KT //// ";
+    //all reports in this test are fake reports
+
+    Simple result;
+
+    result = metafsimple::simplify(basicReport + "BLU=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::BLUE);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "WHT=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::WHITE);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "GRN=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::GREEN);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "YLO1=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::YELLOW1);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "YLO2=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::YELLOW2);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "AMB=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::AMBER);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "RED=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::RED);
+    EXPECT_FALSE(result.aerodrome.colourCodeBlack);
+}
+
+TEST(IntegrationMisc, colourCodesBlack) {
+    static const std::string basicReport = "METAR ZZZZ 010000Z /////KT BLACK";
+    //all reports in this test are fake reports
+
+    Simple result;
+
+    result = metafsimple::simplify(basicReport + "BLU=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::BLUE);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "WHT=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::WHITE);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "GRN=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::GREEN);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "YLO1=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::YELLOW1);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "YLO2=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::YELLOW2);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "AMB=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::AMBER);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+
+    result = metafsimple::simplify(basicReport + "RED=");
+    EXPECT_EQ(result.aerodrome.colourCode, Aerodrome::ColourCode::RED);
+    EXPECT_TRUE(result.aerodrome.colourCodeBlack);
+}
+
+TEST(IntegrationMisc, lowMidHighClouds) {
+    // TODO: test group 8/xxx
+}
+
+TEST(IntegrationMisc, densityAltitude) {
+    // TODO: test density altitude group
+}
 
 TEST(IntegrationMisc, sunshineDuration) {
      static const auto rawReport =
@@ -333,4 +417,19 @@ TEST(IntegrationMisc, sunshineDuration) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-// TODO: hailstone size
+TEST(IntegrationMisc, hailstoneSize) {
+    // TODO: test hailstone size group
+}
+
+TEST(IntegrationMisc, obscurations) {
+    // TODO: test ground-based and aloft obscuration groups
+}
+
+TEST(IntegrationMisc, windShearLowerLayers) {
+    // TODO: test WS RWYxx group
+}
+
+TEST(IntegrationMisc, windShearLowerLayersAllRwy) {
+    // TODO: test WS ALL RWY group
+}
+
