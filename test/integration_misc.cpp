@@ -211,10 +211,6 @@ TEST(IntegrationMisc, phenomenaInVicinityRmkMovUnknown) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(IntegrationMisc, phenomenaInVicinityVariants) {
-    // TODO: test all types of ObservedPhenomena
-}
-
 TEST(IntegrationMisc, phenomenaInVicinityMetar) {
     static const auto rawReport =
         "METAR ZZZZ 261425Z /////KT //// VCSH ///// Q////=";
@@ -384,15 +380,62 @@ TEST(IntegrationMisc, colourCodesBlack) {
 }
 
 TEST(IntegrationMisc, lowMidHighClouds) {
-    // TODO: test group 8/xxx
+    static const auto rawReport =
+        "METAR ZZZZ 011302Z /////KT //// RMK 8/578=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{1, 13, 2};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.lowCloudLayer = Current::LowCloudLayer::SC_NON_CUGEN;
+    refCurrent.midCloudLayer =
+        Current::MidCloudLayer::AC_DU_AC_OP_AC_WITH_AS_OR_NS;
+    refCurrent.highCloudLayer = Current::HighCloudLayer::CS;
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
 }
 
 TEST(IntegrationMisc, densityAltitude) {
-    // TODO: test density altitude group
+    static const auto rawReport =
+        "METAR ZZZZ 011302Z /////KT //// RMK DENSITY ALT 3500FT=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{1, 13, 2};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.densityAltitude = Height{3500, Height::Unit::FEET};
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
 }
 
 TEST(IntegrationMisc, sunshineDuration) {
-     static const auto rawReport =
+    static const auto rawReport =
         "METAR ZZZZ 262116Z /////KT //// RMK 98173=";
     //fake report created for this test
 
@@ -418,18 +461,114 @@ TEST(IntegrationMisc, sunshineDuration) {
 }
 
 TEST(IntegrationMisc, hailstoneSize) {
-    // TODO: test hailstone size group
+    static const auto rawReport =
+        "METAR ZZZZ 262116Z /////KT //// RMK GR 1 3/4=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 21, 16};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.hailstoneSizeQuartersInch = 7;
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
 }
 
 TEST(IntegrationMisc, obscurations) {
-    // TODO: test ground-based and aloft obscuration groups
+    static const auto rawReport =
+        "METAR ZZZZ 262116Z /////KT //// RMK FU BKN002=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 21, 16};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Current refCurrent;
+    refCurrent.obscurations.push_back(CloudLayer());
+    refCurrent.obscurations.back().amount = CloudLayer::Amount::BROKEN;
+    refCurrent.obscurations.back().height = Height{200, Height::Unit::FEET};
+    refCurrent.obscurations.back().details = CloudLayer::Details::SMOKE;
+    EXPECT_EQ(result.current, refCurrent);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
 }
 
 TEST(IntegrationMisc, windShearLowerLayers) {
-    // TODO: test WS RWYxx group
+    static const auto rawReport =
+        "METAR ZZZZ 262253Z /////KT //// WS RWY07C=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 22, 53};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Aerodrome refAerodrome;
+    refAerodrome.runways.push_back(Aerodrome::RunwayData());
+    refAerodrome.runways.back().runway.number = 7;
+    refAerodrome.runways.back().runway.designator = Runway::Designator::CENTER;
+    refAerodrome.runways.back().windShearLowerLayers = true;
+    EXPECT_EQ(result.aerodrome, refAerodrome);
+
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
 }
 
 TEST(IntegrationMisc, windShearLowerLayersAllRwy) {
-    // TODO: test WS ALL RWY group
-}
+    static const auto rawReport =
+        "METAR ZZZZ 262253Z /////KT //// WS ALL RWY=";
+    //fake report created for this test
 
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{26, 22, 53};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Aerodrome refAerodrome;
+    refAerodrome.runways.push_back(Aerodrome::RunwayData());
+    refAerodrome.runways.back().runway.number = 88;
+    refAerodrome.runways.back().runway.designator = Runway::Designator::NONE;
+    refAerodrome.runways.back().windShearLowerLayers = true;
+    EXPECT_EQ(result.aerodrome, refAerodrome);
+
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.forecast, Forecast());
+}

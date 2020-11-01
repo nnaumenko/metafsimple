@@ -422,3 +422,27 @@ TEST(IntegrationMissingData, tsLtngTempoUnavbl) {
     EXPECT_EQ(result.current, Current());
     EXPECT_EQ(result.forecast, Forecast());    
 }
+
+TEST(IntegrationMissingData, densityAltMisg) {
+    static const auto rawReport =
+        "METAR ZZZZ 302038Z /////KT //// RMK DENSITY ALT MISG=";
+    //fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{30, 20, 38};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    refStation.missingData.insert(Station::MissingData::DENSITY_ALT_MISG);
+    EXPECT_EQ(result.station, refStation);
+
+    EXPECT_EQ(result.historical, Historical());
+    EXPECT_EQ(result.aerodrome, Aerodrome());
+    EXPECT_EQ(result.current, Current());
+    EXPECT_EQ(result.forecast, Forecast());    
+}

@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 8;
-    inline static const int patch = 2;
+    inline static const int patch = 3;
     inline static const char tag[] = "";
 };
 
@@ -582,7 +582,8 @@ struct Station {
         TD_MISG,
         PRES_MISG,
         ICG_MISG,
-        PCPN_MISG
+        PCPN_MISG,
+        DENSITY_ALT_MISG
     };
     std::string icaoCode;
     AutoType autoType = AutoType::NONE;
@@ -3349,7 +3350,7 @@ class CurrentDataAdapter : DataAdapter {
 void CurrentDataAdapter::setObscuration(metaf::CloudGroup::Amount amount,
                                         const metaf::Distance height,
                                         std::optional<metaf::CloudType> ct) {
-    assert(!ct.has_value());
+    assert(ct.has_value());
     assert(current);
     current->obscurations.push_back(
         CloudLayer{BasicDataAdapter::cloudLayerAmount(amount),
@@ -3660,7 +3661,7 @@ void CurrentDataAdapter::addPhenomenaInVicinity(
 }
 
 void CurrentDataAdapter::setHailstoneSize(std::optional<float> s) {
-    assert(!s.has_value());
+    assert(s.has_value());
     assert(current);
     setData(current->hailstoneSizeQuartersInch, std::floor(*s * 4.0));
 }
@@ -4794,6 +4795,11 @@ void CollateVisitor::visitMiscGroup(const metaf::MiscGroup &group,
             // TODO: check against metadata
             break;
         case metaf::MiscGroup::Type::DENSITY_ALTITUDE:
+            if (!group.data().has_value()) {
+                stationData().addMissingData(
+                    Station::MissingData::DENSITY_ALT_MISG);
+                return;
+            } 
             currentData().setDensityAltitude(group.data());
             break;
         case metaf::MiscGroup::Type::HAILSTONE_SIZE:
