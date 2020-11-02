@@ -250,12 +250,6 @@ TEST(IntegrationMisc, phenomenaInVicinityMetar) {
     EXPECT_EQ(result.forecast, Forecast());
 }
 
-TEST(IntegrationMisc, phenomenaInVicinityMetarVariants) {
-    // TODO: test all types of ObservedPhenomena which can be specified in
-    // METAR body or trend: VCSH, VCTS, VCFG, VCPO, VCFC, VCVA, VCBLDU, VCBLSA,
-    // VCBLSN, VCDS, VCSS
-}
-
 TEST(IntegrationMisc, colourCode) {
     static const auto rawReport =
         "METAR ZZZZ 262253Z /////KT //// WHT=";

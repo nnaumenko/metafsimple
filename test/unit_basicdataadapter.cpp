@@ -344,3 +344,88 @@ TEST(BasicDataAdapter, weather) {
         EXPECT_TRUE(testWeather(wStr, wPh));
     }
 }
+
+TEST(BasicDataAdapter, phenomenaInVicinity) {
+    const auto thunderstorm =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::THUNDERSTORM, {}});
+    EXPECT_EQ(thunderstorm.value(),
+              metafsimple::ObservedPhenomena::THUNDERSTORM);
+
+    const auto fog =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::FOG, {}});
+    EXPECT_EQ(fog.value(),
+              metafsimple::ObservedPhenomena::FOG);
+
+    const auto precipitation =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::PRECIPITATION, {}});
+    EXPECT_EQ(precipitation.value(),
+              metafsimple::ObservedPhenomena::PRECIPITATION);
+
+    const auto dustWhirls =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::DUST_WHIRLS, {}});
+    EXPECT_EQ(dustWhirls.value(),
+              metafsimple::ObservedPhenomena::DUST_WHIRLS);
+
+    const auto funnelCloud =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::FUNNEL_CLOUD, {}});
+    EXPECT_EQ(funnelCloud.value(),
+              metafsimple::ObservedPhenomena::FUNNEL_CLOUD);
+
+    const auto blowindDust =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::BLOWING_DUST, {}});
+    EXPECT_EQ(blowindDust.value(),
+              metafsimple::ObservedPhenomena::BLOWING_DUST);
+
+    const auto blowindSand =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::BLOWING_SAND, {}});
+    EXPECT_EQ(blowindSand.value(),
+              metafsimple::ObservedPhenomena::BLOWING_SAND);
+
+    const auto blowindSnow =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::BLOWING_SNOW, {}});
+    EXPECT_EQ(blowindSnow.value(),
+              metafsimple::ObservedPhenomena::BLOWING_SNOW);
+
+    const auto sandStorm =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::SAND_STORM, {}});
+    EXPECT_EQ(sandStorm.value(),
+              metafsimple::ObservedPhenomena::SAND_STORM);
+
+    const auto dustStorm =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::DUST_STORM, {}});
+    EXPECT_EQ(dustStorm.value(),
+              metafsimple::ObservedPhenomena::DUST_STORM);
+
+    const auto volcanicAsh =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::VOLCANIC_ASH, {}});
+    EXPECT_EQ(volcanicAsh.value(),
+              metafsimple::ObservedPhenomena::VOLCANIC_ASH);
+
+    const auto invalidPhenomena =
+        metafsimple::detail::BasicDataAdapter::vicinityPhenomena(
+            metafsimple::Weather{
+                metafsimple::Weather::Phenomena::SQUALLS, {}});
+    EXPECT_FALSE(invalidPhenomena.has_value());
+}
