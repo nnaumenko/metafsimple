@@ -59,6 +59,7 @@ set(SOURCES ${SOURCES}
     test/unit_metadataadapter.cpp
     test/unit_basicdataadapter.cpp
     test/unit_currentdataadapter.cpp
+    test/unit_aerodromedataadapter.cpp
     test/unit_essentialsadapter.cpp
     test/unit_validate_comparisons.cpp
     test/integration_basic_reports.cpp
