@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 8;
-    inline static const int patch = 3;
+    inline static const int patch = 4;
     inline static const char tag[] = "";
 };
 
@@ -2994,8 +2994,6 @@ void AerodromeDataAdapter::setVisibility(DistanceRange &d,
 
 Ceiling *AerodromeDataAdapter::getCeiling(std::optional<metaf::Runway> rw,
                                           std::optional<metaf::Direction> dir) {
-    assert(rw.has_value());
-    assert(dir.has_value());
     assert(!(rw.has_value() && dir.has_value()));
     assert(aerodrome);
     if (rw.has_value()) {
@@ -3007,7 +3005,7 @@ Ceiling *AerodromeDataAdapter::getCeiling(std::optional<metaf::Runway> rw,
             getOrCreateDirection(BasicDataAdapter::cardinalDirection(*dir));
         return &aerodrome->directions[i].ceiling;
     }
-    return nullptr;
+    return &aerodrome->ceiling;
 }
 
 void AerodromeDataAdapter::setSurfaceFriction(Aerodrome::RunwayData &rd,
