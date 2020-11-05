@@ -79,6 +79,7 @@ set(SOURCES ${SOURCES}
     test/integration_runway_state.cpp
     test/integration_ceiling.cpp
     test/integration_chino_visno.cpp
+    test/integration_runway_dir_multiple_data.cpp
     test/integration_sea_surface.cpp
     test/integration_precip_snow.cpp
     test/integration_precip_historical.cpp
