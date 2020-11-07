@@ -122,6 +122,80 @@ TEST(IntegrationHistoricalPressure, pressureTendencyTrend) {
     result = metafsimple::simplify("METAR ZZZZ 070800Z /////KT RMK 5////=");
     historical = Historical();
     EXPECT_EQ(result.historical, historical);
+
+    result = metafsimple::simplify("METAR ZZZZ 070800Z /////KT RMK PRESRR=");
+    historical = Historical();
+    historical.pressureTendency = 
+        Historical::PressureTendency::RISING_RAPIDLY;
+    historical.pressureTrend = 
+        Historical::PressureTrend::UNKNOWN;
+    EXPECT_EQ(result.historical, historical);
+
+    result = metafsimple::simplify("METAR ZZZZ 070800Z /////KT RMK PRESFR=");
+    historical = Historical();
+    historical.pressureTendency = 
+        Historical::PressureTendency::FALLING_RAPIDLY;
+    historical.pressureTrend = 
+        Historical::PressureTrend::UNKNOWN;
+    EXPECT_EQ(result.historical, historical);
+
 }
 
-// TODO 24-hour and 6-hour min/max
+TEST(IntegrationHistoricalTemperature, minMax24hour) {
+    static const auto rawReport =
+        "METAR ZZZZ 071135Z /////KT RMK 401001015="; 
+        // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{7, 11, 35};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Historical refHistorical;
+    refHistorical.temperatureMax24h = 
+        Temperature {100, Temperature::Unit::TENTH_C};
+    refHistorical.temperatureMin24h = 
+        Temperature {-15, Temperature::Unit::TENTH_C};
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());    
+    EXPECT_EQ(result.current, Current());    
+    EXPECT_EQ(result.forecast, Forecast());    
+}
+
+TEST(IntegrationHistoricalTemperature, minMax6hour) {
+    static const auto rawReport =
+        "METAR ZZZZ 071135Z /////KT RMK 10142 20012="; 
+        // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{7, 11, 35};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Historical refHistorical;
+    refHistorical.temperatureMin6h = 
+        Temperature {12, Temperature::Unit::TENTH_C};
+    refHistorical.temperatureMax6h = 
+        Temperature {142, Temperature::Unit::TENTH_C};
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());    
+    EXPECT_EQ(result.current, Current());    
+    EXPECT_EQ(result.forecast, Forecast());    
+}
+
