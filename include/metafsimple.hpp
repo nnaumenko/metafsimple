@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 8;
-    inline static const int patch = 4;
+    inline static const int patch = 5;
     inline static const char tag[] = "";
 };
 
@@ -1511,18 +1511,35 @@ Pressure BasicDataAdapter::pressure(const metaf::Pressure &p) {
     auto convertUnit = [](metaf::Pressure::Unit u) {
         switch (u) {
             case metaf::Pressure::Unit::HECTOPASCAL:
-                return Pressure::Unit::HPA;
+                return Pressure::Unit::TENTHS_HPA;
             case metaf::Pressure::Unit::INCHES_HG:
                 return Pressure::Unit::HUNDREDTHS_IN_HG;
             case metaf::Pressure::Unit::MM_HG:
                 return Pressure::Unit::MM_HG;
         }
     };
+    auto unitFactor = [](Pressure::Unit u) {
+        switch (u) {
+            case Pressure::Unit::TENTHS_HPA:
+            return 10.0;
+            case Pressure::Unit::HUNDREDTHS_IN_HG:
+            return 100.0;
+            default:
+            return 1.0;
+        }
+    };
+    auto u = convertUnit(p.unit());
     if (!p.pressure().has_value()) return Pressure();
-    Pressure result{std::round(*p.pressure()), convertUnit(p.unit())};
-    if (result.unit == Pressure::Unit::HUNDREDTHS_IN_HG)
-        result.pressure = std::round(*p.pressure() * 100.0);
-    return result;
+    int pr = std::round(*p.pressure() * unitFactor(u));
+    if (u == Pressure::Unit::HUNDREDTHS_IN_HG && !(pr % 100)) {
+        pr /= 100;
+        u = Pressure::Unit::IN_HG;
+    }
+    if (u == Pressure::Unit::TENTHS_HPA && !(pr % 10)) {
+        pr /= 10;
+        u = Pressure::Unit::HPA;
+    }
+    return Pressure {pr, u};
 }
 
 Precipitation BasicDataAdapter::precipitation(const metaf::Precipitation &p) {
