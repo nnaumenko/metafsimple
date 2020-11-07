@@ -199,3 +199,56 @@ TEST(IntegrationHistoricalTemperature, minMax6hour) {
     EXPECT_EQ(result.forecast, Forecast());    
 }
 
+TEST(IntegrationHistoricalTemperature, min6hour) {
+    static const auto rawReport =
+        "METAR ZZZZ 071135Z /////KT RMK 20012="; 
+        // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{7, 11, 35};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Historical refHistorical;
+    refHistorical.temperatureMin6h = 
+        Temperature {12, Temperature::Unit::TENTH_C};
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());    
+    EXPECT_EQ(result.current, Current());    
+    EXPECT_EQ(result.forecast, Forecast());    
+}
+
+TEST(IntegrationHistoricalTemperature, max6hour) {
+    static const auto rawReport =
+        "METAR ZZZZ 071135Z /////KT RMK 10142="; 
+        // fake report created for this test
+
+    const auto result = metafsimple::simplify(rawReport);
+
+    Report refReport;
+    refReport.type = Report::Type::METAR;
+    refReport.reportTime = Time{7, 11, 35};
+    refReport.error = Report::Error::NO_ERROR;
+    EXPECT_EQ(result.report, refReport);
+
+    Station refStation;
+    refStation.icaoCode = "ZZZZ";
+    EXPECT_EQ(result.station, refStation);
+
+    Historical refHistorical;
+    refHistorical.temperatureMax6h = 
+        Temperature {142, Temperature::Unit::TENTH_C};
+    EXPECT_EQ(result.historical, refHistorical);
+
+    EXPECT_EQ(result.aerodrome, Aerodrome());    
+    EXPECT_EQ(result.current, Current());    
+    EXPECT_EQ(result.forecast, Forecast());    
+}

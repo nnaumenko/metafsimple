@@ -22,7 +22,7 @@ namespace metafsimple {
 struct Version {
     inline static const int major = 0;
     inline static const int minor = 8;
-    inline static const int patch = 5;
+    inline static const int patch = 6;
     inline static const char tag[] = "";
 };
 
@@ -1521,11 +1521,11 @@ Pressure BasicDataAdapter::pressure(const metaf::Pressure &p) {
     auto unitFactor = [](Pressure::Unit u) {
         switch (u) {
             case Pressure::Unit::TENTHS_HPA:
-            return 10.0;
+                return 10.0;
             case Pressure::Unit::HUNDREDTHS_IN_HG:
-            return 100.0;
+                return 100.0;
             default:
-            return 1.0;
+                return 1.0;
         }
     };
     auto u = convertUnit(p.unit());
@@ -1539,7 +1539,7 @@ Pressure BasicDataAdapter::pressure(const metaf::Pressure &p) {
         pr /= 10;
         u = Pressure::Unit::HPA;
     }
-    return Pressure {pr, u};
+    return Pressure{pr, u};
 }
 
 Precipitation BasicDataAdapter::precipitation(const metaf::Precipitation &p) {
@@ -1554,11 +1554,11 @@ Precipitation BasicDataAdapter::precipitation(const metaf::Precipitation &p) {
     auto unitFactor = [](Precipitation::Unit u) {
         switch (u) {
             case Precipitation::Unit::HUNDREDTHS_IN:
-            return 100.0;
+                return 100.0;
             case Precipitation::Unit::TENTHS_MM:
-            return 10.0;
+                return 10.0;
             default:
-            return 1.0;
+                return 1.0;
         }
     };
     if (!p.amount().has_value()) return Precipitation();
@@ -3207,23 +3207,29 @@ void HistoricalDataAdapter::setMinMaxTemperature(bool last24h,
                                                  metaf::Temperature max) {
     const auto tmin = BasicDataAdapter::temperature(min);
     const auto tmax = BasicDataAdapter::temperature(max);
-    assert(tmin.temperature.has_value());
-    assert(tmax.temperature.has_value());
-    assert(historical);
-    Temperature *dstmin = &historical->temperatureMin6h;
-    Temperature *dstmax = &historical->temperatureMax6h;
     if (last24h) {
-        dstmin = &historical->temperatureMin24h;
-        dstmax = &historical->temperatureMax24h;
-    }
-    if (dstmin->temperature.has_value() && dstmax->temperature.has_value()) {
+        // 24-hourly min AND max temperature
+        assert(tmin.temperature.has_value() && tmax.temperature.has_value());
+        if (historical->temperatureMin24h.temperature.has_value() ||
+            historical->temperatureMax24h.temperature.has_value()) {
+            log(Report::Warning::Message::DUPLICATED_DATA);
+            historical->temperatureMin24h = Temperature();
+            historical->temperatureMax24h = Temperature();
+            return;
+        }
+        historical->temperatureMin24h = tmin;
+        historical->temperatureMax24h = tmax;
+        return;
+    };
+    // 6-hourly min and/OR max
+    assert(tmin.temperature.has_value() || tmax.temperature.has_value());
+    if (!setData(historical->temperatureMin6h, tmin) ||
+        !setData(historical->temperatureMax6h, tmax)) {
         log(Report::Warning::Message::DUPLICATED_DATA);
-        *dstmin = Temperature();
-        *dstmax = Temperature();
+        historical->temperatureMin6h = Temperature();
+        historical->temperatureMax6h = Temperature();
         return;
     }
-    *dstmin = tmin;
-    *dstmax = tmax;
 }
 
 void HistoricalDataAdapter::setPressureTendency(
@@ -4814,7 +4820,7 @@ void CollateVisitor::visitMiscGroup(const metaf::MiscGroup &group,
                 stationData().addMissingData(
                     Station::MissingData::DENSITY_ALT_MISG);
                 return;
-            } 
+            }
             currentData().setDensityAltitude(group.data());
             break;
         case metaf::MiscGroup::Type::HAILSTONE_SIZE:
